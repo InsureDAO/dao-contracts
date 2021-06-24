@@ -48,6 +48,7 @@ npx hardhat coverage
 You may find the following guides useful: 
 1. [LP (simple summary of InsureDAO)](https://insuredao.fi/)
 2. [InsureDAO pool and governance (now updating the contents)](https://app.gitbook.com/@insuredao/s/insuredao/)
+3. [Governance whitepaper](https://docs.google.com/document/d/1KH1pLwgLSWC_EJ7rmktIzDIG0ldOOnRCUhg14C0n4kc/edit?usp=sharing)
 
 
 ## Community
