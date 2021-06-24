@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/ConverterV1.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> ConverterV1.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>0/22</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>0/8</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>0/4</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">0% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>0/22</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line low'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">pragma solidity ^0.6.0;
+&nbsp;
+import "./libraries/token/ERC20/IERC20.sol";
+import "./InsureToken.sol";
+&nbsp;
+import "./libraries/math/Math.sol";
+import "./libraries/math/SafeMath.sol";
+import "./libraries/utils/ReentrancyGuard.sol";
+import "./interfaces/IUniswapV2Router02.sol";
+&nbsp;
+//Using Uniswap V2
+//All token's are 18 decimals.
+contract ConverterV1{
+    using SafeMath for uint256;
+&nbsp;
+    IUniswapV2Router02 public UniswapV2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
+    InsureToken public insure_token;
+    IERC20 public WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2); //rinkeby
+    IERC20 public DAI = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F); //rinkyby
+&nbsp;
+<span class="fstat-no" title="function not covered" >    constructor(address _insure)public{</span>
+<span class="cstat-no" title="statement not covered" >        insure_token = InsureToken(_insure)</span>;
+    }
+    
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function swap_exact_to_insure(uint256 _amountIn, address _to)external returns(bool){</span>
+        //setup for swap
+<span class="cstat-no" title="statement not covered" >        require(DAI.transferFrom(msg.sender, address(this), _amountIn), 'transferFrom failed.')</span>;
+<span class="cstat-no" title="statement not covered" >        require(DAI.approve(address(UniswapV2), _amountIn), 'approve failed.')</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        address[] memory path = new address[](3);</span>
+<span class="cstat-no" title="statement not covered" >        path[0] = address(DAI)</span>;
+<span class="cstat-no" title="statement not covered" >        path[1] = address(WETH)</span>;
+<span class="cstat-no" title="statement not covered" >        path[2] = address(insure_token)</span>; //insure token
+&nbsp;
+        //swap
+<span class="cstat-no" title="statement not covered" >        UniswapV2.swapExactTokensForTokens(_amountIn, 0, path, _to, block.timestamp.add(25))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        return true;</span>
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function getAmountsIn(uint256 _amountOut)external view returns(uint256){</span>
+<span class="cstat-no" title="statement not covered" >        address[] memory path = new address[](3);</span>
+<span class="cstat-no" title="statement not covered" >        path[0] = address(insure_token)</span>;
+<span class="cstat-no" title="statement not covered" >        path[1] = address(WETH)</span>;
+<span class="cstat-no" title="statement not covered" >        path[2] = address(DAI)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        uint256[] memory amountsIn = UniswapV2.getAmountsIn(_amountOut, path);</span>
+<span class="cstat-no" title="statement not covered" >        return amountsIn[0];</span> //required Insure Token
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external{</span>
+        //setup for swap
+<span class="cstat-no" title="statement not covered" >        require(insure_token.transferFrom(msg.sender, address(this), _amountInMax), 'transferFrom failed.')</span>;
+<span class="cstat-no" title="statement not covered" >        require(insure_token.approve(address(UniswapV2), _amountInMax), 'approve failed.')</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        address[] memory path = new address[](3);</span>
+<span class="cstat-no" title="statement not covered" >        path[0] = address(insure_token)</span>; //insure token
+<span class="cstat-no" title="statement not covered" >        path[1] = address(WETH)</span>;
+<span class="cstat-no" title="statement not covered" >        path[2] = address(DAI)</span>;
+        
+<span class="cstat-no" title="statement not covered" >        UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp.add(25))</span>;
+    }
+&nbsp;
+}</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 22 2021 17:16:59 GMT+0900 (GMT+09:00)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

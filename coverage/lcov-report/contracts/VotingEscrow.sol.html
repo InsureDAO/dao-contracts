@@ -1,0 +1,2174 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/VotingEscrow.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> VotingEscrow.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">53.09% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>129/243</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">35.96% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>41/114</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">56% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>14/25</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">53.04% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>131/247</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line medium'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552
+553
+554
+555
+556
+557
+558
+559
+560
+561
+562
+563
+564
+565
+566
+567
+568
+569
+570
+571
+572
+573
+574
+575
+576
+577
+578
+579
+580
+581
+582
+583
+584
+585
+586
+587
+588
+589
+590
+591
+592
+593
+594
+595
+596
+597
+598
+599
+600
+601
+602
+603
+604
+605
+606
+607
+608
+609
+610
+611
+612
+613
+614
+615
+616
+617
+618
+619
+620
+621
+622
+623
+624
+625
+626
+627
+628
+629
+630
+631
+632
+633
+634
+635
+636
+637
+638
+639
+640
+641
+642
+643
+644
+645
+646
+647
+648
+649
+650
+651
+652
+653
+654
+655
+656
+657
+658
+659
+660
+661
+662
+663
+664
+665
+666
+667
+668
+669
+670
+671
+672
+673
+674
+675
+676
+677
+678
+679
+680
+681
+682
+683
+684
+685
+686
+687
+688
+689
+690
+691
+692
+693
+694
+695
+696
+697
+698
+699
+700
+701
+702
+703
+704</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25×</span>
+<span class="cline-any cline-yes">25×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">445×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">445×</span>
+<span class="cline-any cline-yes">445×</span>
+<span class="cline-any cline-yes">435×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-yes">47276×</span>
+<span class="cline-any cline-yes">47276×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">47276×</span>
+<span class="cline-any cline-yes">392×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">46884×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">47276×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">47276×</span>
+<span class="cline-any cline-yes">392×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">46884×</span>
+<span class="cline-any cline-yes">46884×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">438×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">pragma solidity ^0.6.0;
+&nbsp;
+/***
+*@notice Votes have a weight depending on time, so that users are
+*        committed to the future of (whatever they are voting for)
+*@dev Vote weight decays linearly over time. Lock time cannot be
+*     more than `MAXTIME` (4 years).
+*SPDX-License-Identifier: MIT
+*/
+&nbsp;
+// Voting escrow to have time-weighted votes
+// Votes have a weight depending on time, so that users are committed
+// to the future of (whatever they are voting for).
+// The weight in this implementation is linear, and lock cannot be more than maxtime
+// w ^
+// 1 +        /
+//   |      /
+//   |    /
+//   |  /
+//   |/
+// 0 +--------+------&gt; time
+//       maxtime (4 years?)
+&nbsp;
+import "./libraries/token/ERC20/IERC20.sol";
+&nbsp;
+// Interface for checking whether address belongs to a whitelisted
+// type of a smart wallet.
+// When new types are added - the whole contract is changed
+// The check() method is modifying to be able to use caching
+// for individual wallet addresses
+import "./interfaces/ISmartWalletChecker.sol";
+&nbsp;
+import "./libraries/math/Math.sol";
+import "./libraries/math/SafeMath.sol";
+import "./libraries/math/SignedSafeMath.sol";
+import "./libraries/utils/ReentrancyGuard.sol";
+&nbsp;
+import "hardhat/console.sol";
+&nbsp;
+&nbsp;
+contract VotingEscrow is ReentrancyGuard{
+    using SafeMath for uint256;
+    using SignedSafeMath for int128;
+&nbsp;
+    struct Point{
+        int128 bias;
+        int128 slope; // - dweight / dt
+        uint256 ts; //timestamp
+        uint256 blk;  // block
+    }
+    // We cannot really do block numbers per se b/c slope is per time, not per block
+    // and per block could be fairly bad b/c Ethereum changes blocktimes.
+    // What we can do is to extrapolate ***At functions
+&nbsp;
+    struct LockedBalance{
+        int128 amount;
+        uint256 end;
+    }
+&nbsp;
+&nbsp;
+    int128 constant DEPOSIT_FOR_TYPE = 0;
+    int128 constant CREATE_LOCK_TYPE = 1;
+    int128 constant INCREASE_LOCK_AMOUNT = 2;
+    int128 constant INCREASE_UNLOCK_TIME = 3;
+&nbsp;
+    event CommitOwnership(address admin);
+    event ApplyOwnership(address admin);
+&nbsp;
+    event Deposit(address indexed provider, uint256 value, uint256 indexed locktime, int128 _type, uint256 ts);
+    event Withdraw(address indexed provider, uint256 value, uint256 ts);
+&nbsp;
+    event Supply(uint256 prevSupply, uint256 supply);
+&nbsp;
+&nbsp;
+    uint256 constant WEEK = 7 * 86400;  // all future times are rounded by week
+    uint256 constant MAXTIME = 4 * 365 * 86400;  // 4 years
+    uint256 constant MULTIPLIER = 10 ** 18;
+&nbsp;
+    address public token;
+    uint256 public supply;
+&nbsp;
+    mapping(address =&gt; LockedBalance)public locked;
+&nbsp;
+&nbsp;
+    //everytime user deposit/withdraw/change_locktime, these values will be updated;
+    uint256 public epoch;
+    Point[100000000000000000000000000000] public point_history;  // epoch -&gt; unsigned point. 
+    mapping(address =&gt; Point[1000000000]) public user_point_history; // user -&gt; Point[user_epoch]
+    mapping(address =&gt; uint256) public user_point_epoch;
+    mapping(uint256 =&gt; int128) public slope_changes;  // time -&gt; signed slope change
+&nbsp;
+    // Aragon's view methods for compatibility
+    address public controller;
+    bool public transfersEnabled;
+&nbsp;
+    string public name;
+    string public symbol;
+    string public version;
+    uint256 public decimals;
+&nbsp;
+    // Checker for whitelisted (smart contract) wallets which are allowed to deposit
+    // The goal is to prevent tokenizing the escrow
+    address public future_smart_wallet_checker;
+    address public smart_wallet_checker;
+&nbsp;
+    address public admin;  // Can and will be a smart contract
+    address public future_admin;
+&nbsp;
+    constructor(address token_addr, string memory _name, string memory _symbol, string memory _version)public {
+        /***
+        *@notice Contract constructor
+        *@param token_addr `ERC20CRV` token address
+        *@param _name Token name
+        *@param _symbol Token symbol
+        *@param _version Contract version - required for Aragon compatibility
+        */
+        admin = msg.sender;
+        token = token_addr;
+        point_history[0].blk = block.number;
+        point_history[0].ts = block.timestamp;
+        controller = msg.sender;
+        transfersEnabled = true;
+&nbsp;
+        uint256 _decimals = 18;
+        assert (_decimals &lt;= 255);
+        decimals = _decimals;
+&nbsp;
+        name = _name;
+        symbol = _symbol;
+        version = _version;
+    }
+&nbsp;
+    function commit_transfer_ownership(address addr)external{
+        /***
+        *@notice Transfer ownership of VotingEscrow contract to `addr`
+        *@param addr Address to have ownership transferred to
+        */
+        require (msg.sender == admin, "dev: admin only");
+        future_admin = addr;
+        emit CommitOwnership(addr);
+    }
+&nbsp;
+    function apply_transfer_ownership()external{
+        /***
+        *@notice Apply ownership transfer
+        */
+        require (msg.sender == admin, "dev: admin only");
+        address _admin = future_admin;
+        require (_admin != address(0), "dev: admin not set");
+        admin = _admin;
+        emit ApplyOwnership(_admin);
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function commit_smart_wallet_checker(address addr)external{</span>
+        /***
+        *@notice Set an external contract to check for approved smart contract wallets
+        *@param addr Address of Smart contract checker
+        */
+<span class="cstat-no" title="statement not covered" >        assert (msg.sender == admin)</span>;
+<span class="cstat-no" title="statement not covered" >        future_smart_wallet_checker = addr</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_smart_wallet_checker()external{</span>
+        /***
+        *@notice Apply setting external contract to check approved smart contract wallets
+        */
+<span class="cstat-no" title="statement not covered" >        assert (msg.sender == admin)</span>;
+<span class="cstat-no" title="statement not covered" >        smart_wallet_checker = future_smart_wallet_checker</span>;
+    }
+&nbsp;
+    function assert_not_contract(address addr)internal{
+        /***
+        *@notice Check if the call is from a whitelisted smart contract, revert if not
+        *@param addr Address to be checked
+        */
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (addr != tx.origin){
+<span class="cstat-no" title="statement not covered" >            address checker = smart_wallet_checker;</span>
+<span class="cstat-no" title="statement not covered" >            if (checker != address(0)){</span>
+<span class="cstat-no" title="statement not covered" >                if(ISmartWalletChecker(checker).check(addr)){</span>
+<span class="cstat-no" title="statement not covered" >                    return;</span>
+                }
+            }
+<span class="cstat-no" title="statement not covered" >            revert("Smart contract depositors not allowed")</span>;
+        }
+    }
+&nbsp;
+    function get_last_user_slope(address addr)external view returns(uint256){
+        /***
+        *@notice Get the most recently recorded rate of voting power decrease for `addr`
+        *@param addr Address of the user wallet
+        *@return Value of the slope
+        */
+        uint256 uepoch = user_point_epoch[addr];
+        return uint256(user_point_history[addr][uepoch].slope);
+    }
+&nbsp;
+    function user_point_history__ts(address _addr, uint256 _idx)external view returns (uint256){
+        /***
+        *@notice Get the timestamp for checkpoint `_idx` for `_addr`
+        *@param _addr User wallet address
+        *@param _idx User epoch number
+        *@return Epoch time of the checkpoint
+        */
+        return user_point_history[_addr][_idx].ts;
+    }
+&nbsp;
+    function locked__end(address _addr)external view returns (uint256){
+        /***
+        *@notice Get timestamp when `_addr`'s lock finishes
+        *@param _addr User wallet
+        *@return Epoch time of the lock end
+        */
+        return locked[_addr].end;
+    }
+&nbsp;
+    function _checkpoint(address addr, LockedBalance memory old_locked, LockedBalance memory new_locked)internal {
+        /***
+        *@notice Record global and per-user data to checkpoint
+        *@param addr User's wallet address. No user checkpoint if 0x0
+        *@param old_locked Pevious locked amount / end lock time for the user
+        *@param new_locked New locked amount / end lock time for the user
+        */
+        Point memory u_old;
+        Point memory u_new;
+        int128 old_dslope = 0;
+        int128 new_dslope = 0;
+        uint256 _epoch = epoch;
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (addr != address(0)){
+            // Calculate slopes and biases
+            // Kept at zero when they have to
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (old_locked.end &gt; block.timestamp &amp;&amp; old_locked.amount &gt; 0){
+<span class="cstat-no" title="statement not covered" >                u_old.slope = old_locked.amount.div(int128(MAXTIME))</span>;
+<span class="cstat-no" title="statement not covered" >                u_old.bias = u_old.slope.mul(int128(old_locked.end.sub(block.timestamp)))</span>;
+            }
+            <span class="missing-if-branch" title="else path not taken" >E</span>if (new_locked.end &gt; block.timestamp &amp;&amp; new_locked.amount &gt; 0){
+                u_new.slope = new_locked.amount.div(int128(MAXTIME));
+                u_new.bias = u_new.slope.mul(int128(new_locked.end.sub(block.timestamp)));
+            }
+&nbsp;
+            // Read values of scheduled changes in the slope
+            // old_locked.end can be in the past and in the future
+            // new_locked.end can ONLY by in the FUTURE unless everything expired than zeros
+            old_dslope = slope_changes[old_locked.end];
+            <span class="missing-if-branch" title="else path not taken" >E</span>if (new_locked.end != 0){
+                <span class="missing-if-branch" title="if path not taken" >I</span>if (new_locked.end == old_locked.end){
+<span class="cstat-no" title="statement not covered" >                    new_dslope = old_dslope</span>;
+                }else{
+                    new_dslope = slope_changes[new_locked.end];
+                }
+            }
+        }
+        Point memory last_point = Point({bias: 0, slope: 0, ts: block.timestamp, blk: block.number});
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (_epoch &gt; 0){
+<span class="cstat-no" title="statement not covered" >            last_point = point_history[_epoch]</span>;
+        }
+        uint256 last_checkpoint = last_point.ts;
+        // initial_last_point is used for extrapolation to calculate block number
+        // (approximately, for *At methods) and save them
+        // as we cannot figure that out exactly from inside the contract
+        Point memory initial_last_point = last_point;
+        uint256 block_slope = 0;  // dblock/dt
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (block.timestamp &gt; last_point.ts){
+<span class="cstat-no" title="statement not covered" >            block_slope = MULTIPLIER.mul(block.number.sub(last_point.blk)).div(block.timestamp.sub(last_point.ts))</span>;
+        }
+        // If last point is already recorded in this block, slope=0
+        // But that's ok b/c we know the block in such case
+&nbsp;
+        // Go over weeks to fill history and calculate what the current point is
+        uint256 t_i = (last_checkpoint.div(WEEK)).mul(WEEK);
+        for (uint i;  i &lt; 255; i++){
+            // Hopefully it won't happen that this won't get used in 5 years!
+            // If it does, users will be able to withdraw but vote weight will be broken
+            t_i = t_i.add(WEEK);
+            int128 d_slope = 0;
+            <span class="missing-if-branch" title="else path not taken" >E</span>if(t_i &gt; block.timestamp){
+                t_i = block.timestamp;
+            }else{
+<span class="cstat-no" title="statement not covered" >                d_slope = slope_changes[t_i]</span>;
+            }
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(t_i.sub(last_checkpoint))));
+            last_point.slope = last_point.slope.add(d_slope);
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (last_point.bias &lt; 0){  // This can happen
+<span class="cstat-no" title="statement not covered" >                last_point.bias = 0</span>;
+            }
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (last_point.slope &lt; 0){  // This cannot happen - just in case
+<span class="cstat-no" title="statement not covered" >                last_point.slope = 0</span>;
+            }
+            last_checkpoint = t_i;
+            last_point.ts = t_i;
+            last_point.blk = initial_last_point.blk.add(block_slope.mul(t_i.sub(initial_last_point.ts)).div(MULTIPLIER));
+            _epoch = _epoch.add(1);
+            <span class="missing-if-branch" title="else path not taken" >E</span>if (t_i == block.timestamp){
+                last_point.blk = block.number;
+                break;
+            }else{
+<span class="cstat-no" title="statement not covered" >                point_history[_epoch] = last_point</span>;
+            }
+        }
+        epoch = _epoch;
+        // Now point_history is filled until t=now
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (addr != address(0)){
+            // If last point was in this block, the slope change has been applied already
+            // But in such case we have 0 slope(s)
+            last_point.slope = last_point.slope.add(u_new.slope.sub(u_old.slope));
+            last_point.bias = last_point.bias.add(u_new.bias.sub(u_old.bias));
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (last_point.slope &lt; 0){
+<span class="cstat-no" title="statement not covered" >                last_point.slope = 0</span>;
+            }
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (last_point.bias &lt; 0){
+<span class="cstat-no" title="statement not covered" >                last_point.bias = 0</span>;
+            }
+        }
+        // Record the changed point into history
+        point_history[_epoch] = last_point;
+&nbsp;
+        address addr2 = addr; //To avoid being "Stack Too Deep"
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (addr2 != address(0)){
+            // Schedule the slope changes (slope is going down)
+            // We subtract new_user_slope from [new_locked.end]
+            // and add old_user_slope to [old_locked.end]
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (old_locked.end &gt; block.timestamp){
+                // old_dslope was &lt;something&gt; - u_old.slope, so we cancel that
+<span class="cstat-no" title="statement not covered" >                old_dslope = old_dslope.add(u_old.slope)</span>;
+<span class="cstat-no" title="statement not covered" >                if (new_locked.end == old_locked.end){</span>
+<span class="cstat-no" title="statement not covered" >                    old_dslope = old_dslope.sub(u_new.slope)</span>;  // It was a new deposit, not extension
+                }
+<span class="cstat-no" title="statement not covered" >                slope_changes[old_locked.end] = old_dslope</span>;
+            }
+            <span class="missing-if-branch" title="else path not taken" >E</span>if (new_locked.end &gt; block.timestamp){
+                <span class="missing-if-branch" title="else path not taken" >E</span>if (new_locked.end &gt; old_locked.end){
+                    new_dslope = new_dslope.sub(u_new.slope);  // old slope disappeared at this point
+                    slope_changes[new_locked.end] = new_dslope;
+                }
+                // else we recorded it already in old_dslope
+            }
+&nbsp;
+            // Now handle user history
+            uint256 user_epoch = user_point_epoch[addr2].add(1);
+&nbsp;
+            user_point_epoch[addr2] = user_epoch;
+            u_new.ts = block.timestamp;
+            u_new.blk = block.number;
+            user_point_history[addr2][user_epoch] = u_new;
+        }
+    }
+&nbsp;
+    function _deposit_for(address _addr, uint256 _value, uint256 unlock_time, LockedBalance memory locked_balance, int128 _type)internal{
+        /***
+        *@notice Deposit and lock tokens for a user
+        *@param _addr User's wallet address
+        *@param _value Amount to deposit
+        *@param unlock_time New time when to unlock the tokens, or 0 if unchanged
+        *@param locked_balance Previous locked amount / timestamp
+        */
+        LockedBalance memory _locked = LockedBalance(locked_balance.amount, locked_balance.end);
+        LockedBalance memory old_locked = LockedBalance(locked_balance.amount, locked_balance.end);
+&nbsp;
+        uint256 supply_before = supply;
+        supply = supply_before.add(_value);
+        //Adding to existing lock, or if a lock is expired - creating a new one
+        _locked.amount = _locked.amount.add(int128(_value));
+        <span class="missing-if-branch" title="else path not taken" >E</span>if(unlock_time != 0){
+            _locked.end = unlock_time;
+        }
+        locked[_addr] = _locked;
+&nbsp;
+        // Possibilities
+        // Both old_locked.end could be current or expired (&gt;/&lt; block.timestamp)
+        // value == 0 (extend lock) or value &gt; 0 (add to lock or extend lock)
+        // _locked.end &gt; block.timestamp (always)
+        
+        _checkpoint(_addr, old_locked, _locked);
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>if (_value != 0){
+            assert(IERC20(token).transferFrom(_addr, address(this), _value));
+        }
+&nbsp;
+        emit Deposit(_addr, _value, _locked.end, _type, block.timestamp);
+        emit Supply(supply_before, supply_before.add(_value));
+    }
+&nbsp;
+    
+<span class="fstat-no" title="function not covered" >    function checkpoint()external{</span>
+        /***
+        *@notice Record global data to checkpoint
+        */
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory a;</span>
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory b;</span>
+<span class="cstat-no" title="statement not covered" >        _checkpoint(address(0), a , b)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function deposit_for(address _addr, uint256 _value)external nonReentrant{</span>
+        /***
+        *@notice Deposit `_value` tokens for `_addr` and add to the lock
+        *@dev Anyone (even a smart contract) can deposit for someone else, but
+        *    cannot extend their locktime and deposit for a brand new user
+        *@param _addr User's wallet address
+        *@param _value Amount to add to user's lock
+        */
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory _locked = locked[_addr];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require (_value &gt; 0, "dev: need non-zero value")</span>;
+<span class="cstat-no" title="statement not covered" >        require(_locked.amount &gt; 0, "No existing lock found")</span>;
+<span class="cstat-no" title="statement not covered" >        require(_locked.end &gt; block.timestamp, "Cannot add to expired lock. Withdraw")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        _deposit_for(_addr, _value, 0, locked[_addr], DEPOSIT_FOR_TYPE)</span>;
+    }
+&nbsp;
+    function create_lock(uint256 _value, uint256 _unlock_time)external nonReentrant{
+        /***
+        *@notice Deposit `_value` tokens for `msg.sender` and lock until `_unlock_time`
+        *@param _value Amount to deposit
+        *@param _unlock_time Epoch time when tokens unlock, rounded down to whole weeks
+        */
+&nbsp;
+        assert_not_contract(msg.sender);
+        uint256 unlock_time = _unlock_time.div(WEEK).mul(WEEK);  // Locktime is rounded down to weeks
+        LockedBalance memory _locked = locked[msg.sender];
+&nbsp;
+        assert (_value &gt; 0 );
+        <span class="missing-if-branch" title="else path not taken" >E</span>require (_locked.amount == 0, "Withdraw old tokens first");
+        <span class="missing-if-branch" title="else path not taken" >E</span>require (unlock_time &gt; block.timestamp, "Can only lock until time in the future");
+        <span class="missing-if-branch" title="else path not taken" >E</span>require (unlock_time &lt;= block.timestamp.add(MAXTIME), "Voting lock can be 4 years max");
+&nbsp;
+        _deposit_for(msg.sender, _value, unlock_time, _locked, CREATE_LOCK_TYPE);
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function increase_amount(uint256 _value)external nonReentrant{</span>
+        /***
+        *@notice Deposit `_value` additional tokens for `msg.sender`
+        *        without modifying the unlock time
+        *@param _value Amount of tokens to deposit and add to the lock
+        */
+<span class="cstat-no" title="statement not covered" >        assert_not_contract(msg.sender)</span>;
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory _locked = locked[msg.sender];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        assert (_value &gt; 0)</span>;
+<span class="cstat-no" title="statement not covered" >        require (_locked.amount &gt; 0, "No existing lock found")</span>;
+<span class="cstat-no" title="statement not covered" >        require (_locked.end &gt; block.timestamp, "Cannot add to expired lock. Withdraw")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        _deposit_for(msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function increase_unlock_time(uint256 _unlock_time)external nonReentrant{</span>
+        /***
+        *@notice Extend the unlock time for `msg.sender` to `_unlock_time`
+        *@param _unlock_time New epoch time for unlocking
+        */
+<span class="cstat-no" title="statement not covered" >        assert_not_contract(msg.sender)</span>; //@shun: need to convert to solidity
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory _locked = locked[msg.sender];</span>
+<span class="cstat-no" title="statement not covered" >        uint256 unlock_time = _unlock_time.div(WEEK).mul(WEEK);</span>  // Locktime is rounded down to weeks
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        require (_locked.end &gt; block.timestamp, "Lock expired")</span>;
+<span class="cstat-no" title="statement not covered" >        require (_locked.amount &gt; 0, "Nothing is locked")</span>;
+<span class="cstat-no" title="statement not covered" >        require (unlock_time &gt; _locked.end, "Can only increase lock duration")</span>;
+<span class="cstat-no" title="statement not covered" >        require (unlock_time &lt;= block.timestamp.add(MAXTIME), "Voting lock can be 4 years max")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        _deposit_for(msg.sender, 0, unlock_time, _locked, INCREASE_UNLOCK_TIME)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function withdraw()external nonReentrant{</span>
+        /***
+        *@notice Withdraw all tokens for `msg.sender`
+        *@dev Only possible if the lock has expired
+        */
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory _locked = locked[msg.sender];</span>
+<span class="cstat-no" title="statement not covered" >        require( block.timestamp &gt;= _locked.end, "The lock didn't expire")</span>;
+<span class="cstat-no" title="statement not covered" >        uint256 value = uint256(_locked.amount);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        LockedBalance memory old_locked = _locked;</span>
+<span class="cstat-no" title="statement not covered" >        _locked.end = 0</span>;
+<span class="cstat-no" title="statement not covered" >        _locked.amount = 0</span>;
+<span class="cstat-no" title="statement not covered" >        locked[msg.sender] = _locked</span>;
+<span class="cstat-no" title="statement not covered" >        uint256 supply_before = supply;</span>
+<span class="cstat-no" title="statement not covered" >        supply = supply_before.sub(value)</span>;
+&nbsp;
+        // old_locked can have either expired &lt;= timestamp or zero end
+        // _locked has only 0 end
+        // Both can have &gt;= 0 amount
+<span class="cstat-no" title="statement not covered" >        _checkpoint(msg.sender, old_locked, _locked)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        assert (IERC20(token).transfer(msg.sender, value))</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        emit Withdraw(msg.sender, value, block.timestamp);</span>
+<span class="cstat-no" title="statement not covered" >        emit Supply(supply_before, supply_before.sub(value));</span>
+    }
+&nbsp;
+&nbsp;
+    // The following ERC20/minime-compatible methods are not real balanceOf and supply!
+    // They measure the weights for the purpose of voting, so they don't represent
+    // real coins.
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function find_block_epoch(uint256 _block, uint256 max_epoch)internal view returns (uint256){</span>
+        /***
+        *@notice Binary search to estimate timestamp for block number
+        *@param _block Block to find
+        *@param max_epoch Don't go beyond this epoch
+        *@return Approximate timestamp for block
+        */
+        // Binary search
+<span class="cstat-no" title="statement not covered" >        uint256 _min = 0;</span>
+<span class="cstat-no" title="statement not covered" >        uint256 _max = max_epoch;</span>
+<span class="cstat-no" title="statement not covered" >        for (uint i; i &lt;= 128; i++){  // Will be always enough for 128-bit numbers</span>
+<span class="cstat-no" title="statement not covered" >            if (_min &gt;= _max){</span>
+                break;
+            }
+<span class="cstat-no" title="statement not covered" >            uint256 _mid = (_min.add(_max).add(1)).div(2);</span>
+<span class="cstat-no" title="statement not covered" >            if (point_history[_mid].blk &lt;= _block){</span>
+<span class="cstat-no" title="statement not covered" >                _min = _mid</span>;
+            }else{
+<span class="cstat-no" title="statement not covered" >                _max = _mid.sub(1)</span>;
+            }
+        }
+<span class="cstat-no" title="statement not covered" >        return _min;</span>
+    }
+&nbsp;
+    function balanceOf(address addr , uint256 _t)external view returns (uint256){
+        /***
+        *@notice Get the current voting power for `msg.sender`
+        *@dev Adheres to the ERC20 `balanceOf` interface for Aragon compatibility
+        *@param addr User wallet address
+        *@param _t Epoch time to return voting power at
+        *@return User voting power
+        */
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if(_t == 0){
+<span class="cstat-no" title="statement not covered" >            _t = block.timestamp</span>;
+        }
+&nbsp;
+        uint256 _epoch = user_point_epoch[addr];
+        if (_epoch == 0){
+            return 0;
+        }else{
+            Point memory last_point = user_point_history[addr][_epoch];
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(_t.sub(last_point.ts))));
+            if (last_point.bias &lt; 0){
+                last_point.bias = 0;
+            }
+            return uint256(last_point.bias);
+        }
+    }
+&nbsp;
+&nbsp;
+    //Struct to avoid "Stack Too Deep"
+    struct Parameters{
+        uint256 _min;
+        uint256 _max;
+        uint256 max_epoch;
+        uint256 d_block;
+        uint256 d_t;
+    }
+<span class="fstat-no" title="function not covered" >    function balanceOfAt(address addr, uint256 _block)external view returns (uint256){</span>
+        /***
+        *@notice Measure voting power of `addr` at block height `_block`
+        *@dev Adheres to MiniMe `balanceOfAt` interface https//github.com/Giveth/minime
+        *@param addr User's wallet address
+        *@param _block Block to calculate the voting power at
+        *@return Voting power
+        */
+        // Copying and pasting totalSupply code because Vyper cannot pass by
+        // reference yet
+<span class="cstat-no" title="statement not covered" >        assert(_block &lt;= block.number)</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        Parameters memory _;</span>
+&nbsp;
+        // Binary search
+<span class="cstat-no" title="statement not covered" >        _._min = 0</span>;
+<span class="cstat-no" title="statement not covered" >        _._max = user_point_epoch[addr]</span>;
+<span class="cstat-no" title="statement not covered" >        for(uint i; i &lt;= 128; i++){  // Will be always enough for 128-bit numbers</span>
+<span class="cstat-no" title="statement not covered" >            if (_._min &gt;= _._max){</span>
+                break;
+            }
+<span class="cstat-no" title="statement not covered" >            uint256 _mid = (_._min.add(_._max).add(1)).div(2);</span>
+<span class="cstat-no" title="statement not covered" >            if (user_point_history[addr][_mid].blk &lt;= _block){</span>
+<span class="cstat-no" title="statement not covered" >                _._min = _mid</span>;
+            }else{
+<span class="cstat-no" title="statement not covered" >                _._max = _mid.sub(1)</span>;
+            }
+        }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        Point memory upoint = user_point_history[addr][_._min];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        _.max_epoch = epoch</span>;
+<span class="cstat-no" title="statement not covered" >        uint256 _epoch = find_block_epoch(_block, _.max_epoch);</span>
+<span class="cstat-no" title="statement not covered" >        Point memory point_0 = point_history[_epoch];</span>
+<span class="cstat-no" title="statement not covered" >        _.d_block = 0</span>;
+<span class="cstat-no" title="statement not covered" >        _.d_t = 0</span>;
+<span class="cstat-no" title="statement not covered" >        if (_epoch &lt; _.max_epoch){</span>
+<span class="cstat-no" title="statement not covered" >            Point memory point_1 = point_history[_epoch.add(1)];</span>
+<span class="cstat-no" title="statement not covered" >            _.d_block = point_1.blk.sub(point_0.blk)</span>;
+<span class="cstat-no" title="statement not covered" >            _.d_t = point_1.ts.sub(point_0.ts)</span>;
+        }else{
+<span class="cstat-no" title="statement not covered" >            _.d_block = block.number.sub(point_0.blk)</span>;
+<span class="cstat-no" title="statement not covered" >            _.d_t = block.timestamp.sub(point_0.ts)</span>;
+        }
+<span class="cstat-no" title="statement not covered" >        uint256 block_time = point_0.ts;</span>
+<span class="cstat-no" title="statement not covered" >        if (_.d_block != 0){</span>
+<span class="cstat-no" title="statement not covered" >            block_time = block_time.add(_.d_t.mul(_block.sub(point_0.blk)).div(_.d_block))</span>;
+        }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        upoint.bias = upoint.bias.sub(upoint.slope.mul(int128(block_time.sub(upoint.ts))))</span>;
+<span class="cstat-no" title="statement not covered" >        if (upoint.bias &gt;= 0){</span>
+<span class="cstat-no" title="statement not covered" >            return uint256(upoint.bias);</span>
+        }else{
+<span class="cstat-no" title="statement not covered" >            return 0;</span>
+        }
+    }
+&nbsp;
+    function supply_at(Point memory point, uint256 t)internal view returns (uint256){
+        /***
+        *@notice Calculate total voting power at some point in the past
+        *@param point The point (bias/slope) to start search from
+        *@param t Time to calculate the total voting power at
+        *@return Total voting power at that time
+        */
+        Point memory last_point = point;
+        uint256 t_i = last_point.ts.div(WEEK).mul(WEEK);
+        for(uint256 i; i&lt; 255; i++){
+            t_i = t_i.add(WEEK);
+            int128 d_slope = 0;
+&nbsp;
+            if (t_i &gt; t){
+                t_i = t;
+            }else{
+                d_slope = slope_changes[t_i];
+            }
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(t_i.sub(last_point.ts))));
+&nbsp;
+            if (t_i == t){
+                break;
+            }
+            last_point.slope = last_point.slope.add(d_slope);
+            last_point.ts = t_i;
+        }
+&nbsp;
+        <span class="missing-if-branch" title="if path not taken" >I</span>if (last_point.bias &lt; 0){
+<span class="cstat-no" title="statement not covered" >            last_point.bias = 0</span>;
+        }
+        return uint256(last_point.bias);
+    }
+&nbsp;
+    function totalSupply(uint256 t)external view returns (uint256){
+        /***
+        *@notice Calculate total voting power
+        *@dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
+        *@return Total voting power
+        */
+        <span class="missing-if-branch" title="if path not taken" >I</span>if(t == 0){
+<span class="cstat-no" title="statement not covered" >            t = block.timestamp</span>;
+        }
+&nbsp;
+        uint256 _epoch = epoch;
+        Point memory last_point = point_history[_epoch];
+&nbsp;
+        return supply_at(last_point, t);
+        
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function totalSupplyAt(uint256 _block)external view returns (uint256){</span>
+        /***
+        *@notice Calculate total voting power at some point in the past
+        *@param _block Block to calculate the total voting power at
+        *@return Total voting power at `_block`
+        */
+<span class="cstat-no" title="statement not covered" >        assert (_block &lt;= block.number)</span>;
+<span class="cstat-no" title="statement not covered" >        uint256 _epoch = epoch;</span>
+<span class="cstat-no" title="statement not covered" >        uint256 target_epoch = find_block_epoch(_block, _epoch);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        Point memory point = point_history[target_epoch];</span>
+<span class="cstat-no" title="statement not covered" >        uint256 dt = 0;</span>
+<span class="cstat-no" title="statement not covered" >        if (target_epoch &lt; _epoch){</span>
+<span class="cstat-no" title="statement not covered" >            Point memory point_next = point_history[target_epoch.add(1)];</span>
+<span class="cstat-no" title="statement not covered" >            if (point.blk != point_next.blk){</span>
+<span class="cstat-no" title="statement not covered" >                dt = (_block.sub(point.blk)).mul(point_next.ts.sub(point.ts)).div(point_next.blk.sub(point.blk))</span>;
+            }
+        }else{
+<span class="cstat-no" title="statement not covered" >            if (point.blk != block.number){</span>
+<span class="cstat-no" title="statement not covered" >                dt = (_block.sub(point.blk)).mul(block.timestamp.sub(point.ts)).div(block.number.sub(point.blk))</span>;
+            }
+        }
+        // Now dt contains info on how far are we beyond point
+&nbsp;
+        
+<span class="cstat-no" title="statement not covered" >        return supply_at(point, point.ts.add(dt));</span>
+    }
+&nbsp;
+&nbsp;
+    // Dummy methods for compatibility with Aragon
+<span class="fstat-no" title="function not covered" >    function changeController(address _newController)external {</span>
+        /***
+        *@dev Dummy method required for Aragon compatibility
+        */
+<span class="cstat-no" title="statement not covered" >        assert (msg.sender == controller)</span>;
+<span class="cstat-no" title="statement not covered" >        controller = _newController</span>;
+    }
+&nbsp;
+    function get_user_point_epoch(address _user)external view returns(uint256){
+        return user_point_epoch[_user];
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 22 2021 17:16:59 GMT+0900 (GMT+09:00)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

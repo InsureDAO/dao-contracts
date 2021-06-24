@@ -1,0 +1,1697 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for contracts/PoolProxy.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">contracts/</a> PoolProxy.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">32.86% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>46/140</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">28.43% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>29/102</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">27.66% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>13/47</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">33.1% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>47/142</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line low'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">90×</span>
+<span class="cline-any cline-yes">90×</span>
+<span class="cline-any cline-yes">90×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">23×</span>
+<span class="cline-any cline-yes">22×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17×</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-yes">10×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">pragma solidity ^0.6.0;
+&nbsp;
+/***
+*@title PoolProxy
+*@author InsureDAO
+*SPDX-License-Identifier: MIT
+*@notice Ownership proxy for Insurance Pools
+*/
+//This contracts hold many tokens to be distributed.
+&nbsp;
+import "./interfaces/ITemplate.sol";
+import "./interfaces/IDistributor.sol";
+import "./interfaces/IRegistry.sol";
+import "./interfaces/IParameters.sol";
+import "./interfaces/IVault.sol";
+import "./interfaces/IFactory.sol";
+import "./interfaces/IUniversalMarket.sol";
+&nbsp;
+&nbsp;
+import "./libraries/token/ERC20/IERC20.sol";
+import "./libraries/math/Math.sol";
+import "./libraries/math/SafeMath.sol";
+import "./libraries/math/SignedSafeMath.sol";
+import "./libraries/utils/ReentrancyGuard.sol";
+&nbsp;
+import "hardhat/console.sol";
+&nbsp;
+//Proxy and fee management for single asset
+contract PoolProxy is ReentrancyGuard{
+    using SafeMath for uint256;
+&nbsp;
+    event CommitAdmins(address ownership_admin, address parameter_admin, address emergency_admin);
+    event ApplyAdmins(address ownership_admin, address parameter_admin, address emergency_admin); 
+    event CommitReportingAdmins(address pool_address, address reporting_admin);
+    event ApplyReportingAdmins(address pool_address, address reporting_admin);
+    event AddDistributor(address distributor);
+&nbsp;
+&nbsp;
+    address public ownership_admin;
+    address public parameter_admin;
+    address public emergency_admin;
+    mapping(address =&gt; address)public reporting_admin;
+&nbsp;
+    address registry;
+&nbsp;
+    address public future_ownership_admin;
+    address public future_parameter_admin;
+    address public future_emergency_admin;
+    mapping(address =&gt; address)public future_reporting_admin;
+&nbsp;
+    struct Distributor{
+        string name;
+        address addr;
+    }
+&nbsp;
+    /***
+    DAI
+    id 1 = dev
+    id 2 = buy back and burn
+    id 3 = reporting member
+    */
+&nbsp;
+    mapping(address =&gt; mapping(uint256 =&gt; Distributor))public distributors; // token distibutor contracts. token =&gt; ID =&gt; Distributor / (ex. DAI =&gt; 2 =&gt; FeeDistributorV1)
+    mapping(address =&gt; uint256) public n_distributors; //distributors# of token
+    mapping(address =&gt; mapping(uint256 =&gt; uint256))public distributor_weight; // token =&gt; ID =&gt; weight
+    mapping(address =&gt; mapping(uint256 =&gt; uint256))public distributable; //distributor =&gt; allocated amount
+    mapping(address =&gt; uint256)public total_weights; //token =&gt; total allocation point
+&nbsp;
+    bool public distributor_kill;
+&nbsp;
+    constructor(
+        address _ownership_admin,
+        address _parameter_admin,
+        address _emergency_admin
+    )public{
+        ownership_admin = _ownership_admin;
+        parameter_admin = _parameter_admin;
+        emergency_admin = _emergency_admin;
+    }
+&nbsp;
+    //-------- distributor ---------//
+    function add_distributor(address _token, string memory _name, address _addr)external returns(bool){
+        /***
+        *@notice add new distributor
+        */
+        require(msg.sender == ownership_admin, "only ownership admin");
+        require(_token != address(0), "_token cannot be zero address");
+&nbsp;
+&nbsp;
+        Distributor memory new_distributor = Distributor({name: _name, addr: _addr});
+        uint256 id = n_distributors[_token];
+        distributors[_token][id] = new_distributor;
+        n_distributors[_token] = n_distributors[_token].add(1);
+        //distributor weight is 0 at this point.
+    }
+&nbsp;
+    //when true, distributable will be inherited
+    function _set_distributor(address _token, uint256 _id, Distributor memory _distributor)internal {
+        /***
+        *@notice overwrites new distributor to distributor already existed;
+        *@dev new distributor takes over the old distributor's weight and distributable state;
+        */
+        require(_id &lt; n_distributors[_token], "not added yet");
+&nbsp;
+        //if Distributor set to ZERO_ADDRESS, set the weight to 0.
+        if(_distributor.addr == address(0)){
+            _set_distributor_weight(_token, _id, 0);
+        }
+&nbsp;
+        distributors[_token][_id] = _distributor;
+    }
+&nbsp;
+    function set_distributor(address _token, uint256 _id, string memory _name, address _distributor)external {
+        /***
+        *@notice Set burner of `_coin` to `_burner` address
+        *@param _token Token address
+        *@param _id Distribution ID
+        *@param _name Distributor name
+        *@param _distributor Distributor contract address
+        */
+        require(msg.sender == ownership_admin, "only ownership admin");
+&nbsp;
+        Distributor memory new_distributor = Distributor(_name, _distributor);
+&nbsp;
+        _set_distributor(_token, _id, new_distributor);
+    }
+&nbsp;
+    function _set_distributor_weight(address _token, uint256 _id, uint256 _weight)internal{
+        require(_id &lt; n_distributors[_token], "not added yet");
+        require(distributors[_token][_id].addr != address(0), "distributor not set");
+        
+        uint256 new_weight = _weight;
+        uint256 old_weight = distributor_weight[_token][_id];
+&nbsp;
+        //update distibutor weight and total_weight
+        distributor_weight[_token][_id] = new_weight;
+        total_weights[_token] = total_weights[_token].add(new_weight).sub(old_weight);
+    }
+&nbsp;
+    function set_distributor_weight(address _token, uint256 _id, uint256 _weight)external returns(bool){
+        require(msg.sender == parameter_admin, "only parameter admin");
+&nbsp;
+        _set_distributor_weight(_token, _id, _weight);
+&nbsp;
+        return true;
+    }
+&nbsp;
+    function set_distributor_weight_many(address[20] memory _tokens, uint256[20] memory _ids, uint256[20] memory _weights)external{
+        require(msg.sender == parameter_admin, "only parameter admin");
+&nbsp;
+        for(uint256 i=0; i&lt;20; i++){
+            if(_tokens[i] == address(0)){
+                break;
+            }
+            _set_distributor_weight(_tokens[i], _ids[i], _weights[i]);
+        }
+    }
+&nbsp;
+    function get_distributor_name(address _token, uint256 _id)external view returns(string memory){
+        return distributors[_token][_id].name;
+    }
+&nbsp;
+    function get_distributor_address(address _token, uint256 _id)external view returns(address){
+        return distributors[_token][_id].addr;
+    }
+&nbsp;
+    //------------- distribution ----------------//
+    function withdraw_admin_fee(address _token) external nonReentrant{//any accounts
+        /***
+        *@notice Withdraw admin fees from `_vault`
+        *@param _vault Vault address to withdraw admin fees from
+        */
+        //Do we really need nonReentrant for this?
+        require(_token != address(0), "_token cannot be zero address");
+&nbsp;
+        address _vault = IRegistry(registry).getVault(_token); //dev: revert when registry not set
+        uint256 amount = IVault(_vault).withdrawAllAttribution(address(this));
+&nbsp;
+        <span class="missing-if-branch" title="else path not taken" >E</span>if(amount != 0){
+            //allocate the fee to corresponding distributors
+            for(uint256 id=0; id&lt;n_distributors[_token]; id++){
+                uint256 aloc_point = distributor_weight[_token][id];
+&nbsp;
+                uint256 aloc_amount = amount.mul(aloc_point).div(total_weights[_token]); //round towards zero.
+                distributable[_token][id] = distributable[_token][id].add(aloc_amount); //count up allocated fee
+            }
+        }
+    }
+&nbsp;
+    /***
+    *@notice Re_allocate _token in this contract with the latest allocation. For token left after rounding down
+    */
+    /**
+    function re_allocate(address _token)external{
+        require(msg.sender == parameter_admin, "only parameter admin");
+&nbsp;
+        uint256 amount = IERC20(_token).balanceOf(address(this));
+&nbsp;
+        //allocate the fee to corresponding distributors
+        for(uint256 id=0; id&lt;n_distributors[_token]; id++){
+            uint256 aloc_point = distributor_weight[_token][id];
+&nbsp;
+            uint256 aloc_amount = amount.mul(aloc_point).div(total_weights[_token]); //round towards zero.
+            distributable[_token][id] = aloc_amount;
+        }
+    }
+    */
+&nbsp;
+    
+    function distribute(address _token, uint256 _id)external nonReentrant{//any EOA
+        /***
+        *@notice distribute accrued `_token` via a preset distributor
+        *@dev Only callable by an EOA to prevent
+        *@param _id distributor id
+        */
+        assert(tx.origin == msg.sender);
+        require(!distributor_kill, "distribution killed");
+        <span class="missing-if-branch" title="if path not taken" >I</span>require(_id &lt; n_distributors[_token], "not added yet");
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        address _addr = distributors[_token][_id].addr;</span>
+<span class="cstat-no" title="statement not covered" >        uint256 amount = distributable[_token][_id];</span>
+<span class="cstat-no" title="statement not covered" >        distributable[_token][_id] = 0</span>;
+<span class="cstat-no" title="statement not covered" >        IERC20(_token).approve(_addr, amount)</span>;
+<span class="cstat-no" title="statement not covered" >        bool _result = IDistributor(_addr).distribute(_token);</span>
+<span class="cstat-no" title="statement not covered" >        require(_result, "dev: should implement distribute()")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        if(!_result){</span>
+<span class="cstat-no" title="statement not covered" >            distributable[_token][_id] = amount</span>;
+        }
+    }
+&nbsp;
+    
+<span class="fstat-no" title="function not covered" >    function distribute_many(address[20] memory _tokens, uint256[20] memory _ids)external nonReentrant{//any EOA</span>
+        /***
+        *@notice distribute accrued admin fees from multiple coins
+        *@dev Only callable by an EOA to prevent flashloan exploits
+        *@param _id List of distributor id
+        */
+<span class="cstat-no" title="statement not covered" >        assert(tx.origin == msg.sender)</span>;
+<span class="cstat-no" title="statement not covered" >        require(!distributor_kill, "distribution killed")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        for(uint i=0; i &lt; 20; i++){</span>
+<span class="cstat-no" title="statement not covered" >            if(_tokens[i] == address(0)){</span>
+                break;
+            }
+<span class="cstat-no" title="statement not covered" >            require(_ids[i] &lt; n_distributors[_tokens[i]], "not added yet")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >            address _addr = distributors[_tokens[i]][_ids[i]].addr;</span>
+<span class="cstat-no" title="statement not covered" >            uint256 amount = distributable[_tokens[i]][_ids[i]];</span>
+<span class="cstat-no" title="statement not covered" >            distributable[_tokens[i]][_ids[i]] = 0</span>;
+<span class="cstat-no" title="statement not covered" >            IERC20(_tokens[i]).approve(_addr, amount)</span>;
+<span class="cstat-no" title="statement not covered" >            require(IDistributor(_addr).distribute(_tokens[i]), "dev: should implement distribute()")</span>;
+        }
+    }
+&nbsp;
+    function set_distributor_kill(bool _is_killed)external{
+        /***
+        @notice Kill or unkill `distribute` functionality
+        @param _is_killed Distributor kill status
+        */
+        require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied");
+        distributor_kill = _is_killed;
+    }
+&nbsp;
+&nbsp;
+    //-------- configuration ---------//
+    // admins
+<span class="fstat-no" title="function not covered" >    function commit_set_admins(address _o_admin, address _p_admin, address _e_admin)external{</span>
+        /***
+        *@notice Set ownership admin to `_o_admin`, parameter admin to `_p_admin` and emergency admin to `_e_admin`
+        *@param _o_admin Ownership admin
+        *@param _p_admin Parameter admin
+        *@param _e_admin Emergency admin
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        future_ownership_admin = _o_admin</span>;
+<span class="cstat-no" title="statement not covered" >        future_parameter_admin = _p_admin</span>;
+<span class="cstat-no" title="statement not covered" >        future_emergency_admin = _e_admin</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        emit CommitAdmins(_o_admin, _p_admin, _e_admin);</span>
+    }
+<span class="fstat-no" title="function not covered" >    function apply_set_admins()external{</span>
+        /***
+        *@notice Apply the effects of `commit_set_admins`
+        */
+<span class="cstat-no" title="statement not covered" >        require( msg.sender == ownership_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        address _o_admin = future_ownership_admin;</span>
+<span class="cstat-no" title="statement not covered" >        address _p_admin = future_parameter_admin;</span>
+<span class="cstat-no" title="statement not covered" >        address _e_admin = future_emergency_admin;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        ownership_admin = _o_admin</span>;
+<span class="cstat-no" title="statement not covered" >        parameter_admin = _p_admin</span>;
+<span class="cstat-no" title="statement not covered" >        emergency_admin = _e_admin</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        emit ApplyAdmins(_o_admin, _p_admin, _e_admin);</span>
+    }
+&nbsp;
+    // reporting admins
+<span class="fstat-no" title="function not covered" >    function commit_set_reporting_admin(address _pool, address _r_admin)external{</span>
+        /***
+        *@notice Set reporting admin to `_r_admin`
+        *@param _pool Target address
+        *@param _r_admin Reporting admin
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        future_reporting_admin[_pool] = _r_admin</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        emit CommitReportingAdmins(_pool, _r_admin);</span>
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_set_reporting_admin(address _pool)external{</span>
+        /***
+        *@notice Apply the effects of `commit_set_reporting_admin`
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        require(future_reporting_admin[_pool] != address(0), "future admin not set")</span>;
+<span class="cstat-no" title="statement not covered" >        address _r_admin = future_reporting_admin[_pool];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        reporting_admin[_pool] = _r_admin</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        emit ApplyReportingAdmins(_pool, _r_admin);</span>
+    }
+&nbsp;
+&nbsp;
+&nbsp;
+    //--------------Vault-----------------//
+<span class="fstat-no" title="function not covered" >    function commit_transfer_ownership_vault(address _vault, address _future_owner)external{</span>
+        /***
+        *@param _vault address of Vault contract of the Vault
+        *@param _future_owner address of the future owner
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IVault(_vault).commit_transfer_ownership(_future_owner)</span>;
+&nbsp;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_transfer_ownership_vault(address _vault)external{</span>
+        /***
+        *@notice 
+        *@param _vault Vault address
+        */
+        
+<span class="cstat-no" title="statement not covered" >        IVault(_vault).apply_transfer_ownership()</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_controller(address _vault, address _controller)external{</span>
+        /***
+        *@param _vault Vault address
+        *@param _controller new controller address
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IVault(_vault).setController(_controller)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_min(address _vault, uint256 _min)external {</span>
+        /***
+        *@notice how much can the vault can lend out to controller
+        *@param _vault Vault address
+        *@param _min minimum
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IVault(_vault).setMin(_min)</span>;
+    }
+&nbsp;
+&nbsp;
+    //--------------Parameters-----------------//
+<span class="fstat-no" title="function not covered" >    function commit_transfer_ownership_parameters(address _parameters, address _future_owner)external{</span>
+        /***
+        *@param _parameters Parameters address
+        *@param _future_owner address of the future owner
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).commit_transfer_ownership(_future_owner)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_transfer_ownership_parameters(address _parameters)external{</span>
+        /***
+        *@param _parameters Parameters address
+        */
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).apply_transfer_ownership()</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_vault(address _parameters, address _token, address _vault)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setVault(_token, _vault)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_lockup(address _parameters, address _address, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setLockup(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_grace(address _parameters, address _address, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setGrace(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_mindate(address _parameters, address _address, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setMindate(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_premium2(address _parameters, address _address, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setPremium2(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_fee2(address _parameters, address _address, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setFee2(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_withdrawable(address _parameters, address _address, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setWithdrawable(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_premium_model(address _parameters, address _address, address _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setPremiumModel(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_fee_model(address _parameters, address _address, address _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setFeeModel(_address, _target)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_condition_parameters(address _parameters, bytes32 _reference, bytes32 _target) external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IParameters(_parameters).setCondition(_reference, _target)</span>;
+    }
+&nbsp;
+&nbsp;
+    //--------------Registry-----------------//
+    function set_registry(address _registry)external {
+        <span class="missing-if-branch" title="else path not taken" >E</span>require(msg.sender == ownership_admin, "Access denied");
+        registry = _registry;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function commit_transfer_ownership_registry(address _registry, address _future_admin)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IRegistry(_registry).commit_transfer_ownership(_future_admin)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_transfer_ownership_registry(address _registry)external{</span>
+        /***
+        *@param _registry Registry address
+        */
+<span class="cstat-no" title="statement not covered" >        IRegistry(_registry).apply_transfer_ownership()</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function support_market(address _registry, address _market) external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IRegistry(_registry).supportMarket(_market)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_cds(address _registry, address _address, address _target) external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IRegistry(_registry).setCDS(_address, _target)</span>;
+    }
+&nbsp;
+&nbsp;
+    //--------------Factory-----------------//
+<span class="fstat-no" title="function not covered" >    function commit_transfer_ownership_factory(address _factory, address _future_admin)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == ownership_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IFactory(_factory).commit_transfer_ownership(_future_admin)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_transfer_ownership_factory(address _factory)external{</span>
+        /***
+        *@param _factory Factory address
+        */
+<span class="cstat-no" title="statement not covered" >        IFactory(_factory).apply_transfer_ownership()</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IUniversalMarket _template = IUniversalMarket(_template_addr);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IFactory(_factory).approveReference(_template, _slot, _target, _approval)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IUniversalMarket _template = IUniversalMarket(_template_addr);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IFactory(_factory).approveTemplate(_template, _approval, _isOpen)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function set_condition_factory(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        IUniversalMarket _template = IUniversalMarket(_template_addr);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        IFactory(_factory).setCondition(_template, _slot, _target)</span>;
+    }
+&nbsp;
+&nbsp;
+    //--------------Pool-----------------//
+<span class="fstat-no" title="function not covered" >    function set_paused(address _pool, bool _state)external nonReentrant{</span>
+        /***
+        *@notice 
+        *@param _pool Pool address to pause
+        */
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        ITemplate(_pool).setPaused(_state)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function change_metadata(address _pool, string calldata _metadata) external {</span>
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == parameter_admin, "Access denied")</span>;
+<span class="cstat-no" title="statement not covered" >        ITemplate(_pool).changeMetadata(_metadata)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    function apply_cover(</span>
+        address _pool,
+        uint256 _pending,
+        uint256 _payoutNumerator,
+        uint256 _payoutDenominator,
+        uint256 _incidentTimestamp,
+        bytes32[] calldata _targets
+    ) external{
+<span class="cstat-no" title="statement not covered" >        require(msg.sender == reporting_admin[_pool], "Access denied")</span>;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >        ITemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets)</span>;
+    }
+&nbsp;
+<span class="fstat-no" title="function not covered" >    fallback()external payable{</span>
+        // required to receive ETH fees
+    }
+&nbsp;
+}</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 22 2021 17:16:59 GMT+0900 (GMT+09:00)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>
