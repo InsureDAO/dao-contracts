@@ -7,7 +7,7 @@ Folked and Translated from Vyper of Curve Governance DAO, then modified some par
 
 InsureDAO consists of multiple smart contracts connected by [Aragon](https://github.com/aragon/aragonOS). Interaction with Aragon occurs through a [modified implementation](https://github.com/curvefi/curve-aragon-voting) of the [Aragon Voting App](https://github.com/aragon/aragon-apps/tree/master/apps/voting). Aragon's standard one token, one vote method is replaced with a weighting system based on locking tokens. InsureDAO has a token (INSURE) which is used for both governance and value accrual.
 
-InsureDAO's governance part is originally from [Curve Finance](https://github.com/curvefi/curve-dao-contracts). Some modification was made to be fit with the [Insurance Pool](https://github.com/insureDAO/pool-contracts).
+InsureDAO's governance part is originally from [Curve Finance](https://github.com/curvefi/curve-dao-contracts). Some modification was made to be fit with the [InsureDAO Pool](https://github.com/insureDAO/pool-contracts).
 
 ## Testing and Development
 
