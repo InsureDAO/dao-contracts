@@ -13,7 +13,7 @@ InsureDAO's governance part is originally from [Curve Finance](https://github.co
 
 ### Requirement
 - node v10.24.1
-### Dependencies (Dev's environment)
+### Dependencies
 - hardhat v2.3.3
 - @nomiclabs/hardhat-ethers v2.0.2
 - @nomiclabs/hardhat-waffle v2.0.1
