@@ -1,0 +1,10 @@
+node_modules/
+bin/
+contracts/interfaces/.DS_Store
+contracts/.DS_Store
+.vscode/
+artifacts/
+cache/
+coverage/
+coverage.json
+.DS_Store
