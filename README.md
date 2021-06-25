@@ -11,18 +11,27 @@ InsureDAO's governance part is originally from [Curve Finance](https://github.co
 
 ## Testing and Development
 
-### Dependencies
-- Solidity v0.6.12
-- hardhat v2.3.0
+### Requirement (Dev's environment)
+- node v10.24.1
+### Dependencies (Dev's environment)
+- hardhat v2.3.3
+- @nomiclabs/hardhat-ethers v2.0.2
+- @nomiclabs/hardhat-waffle v2.0.1
+- @nomiclabs/hardhat-web3 v2.0.0
+- ethereum-waffle v3.4.0
+- ethers v5.3.1
+- chai v4.3.4
+- solidity-coverage v0.7.16
 
 ### Setup
 clone the repo and install the developer dependencies:
 
 ```
-git clone https://github.com/insuredao/insuredao-dao-contracts.git
-cd insuredao-dao-contracts
+git clone https://github.com/insureDAO/dao-contracts.git
+cd dao-contracts
 npm install --save-dev
 ```
+This will install latest packages which is not same as above.
 
 ### Running the Tests
 The test suite is split between [unit](test/unitary) and [integration](test/integration) tests. To run the entire suite:
@@ -34,6 +43,10 @@ npx hardhat test
 To run only the unit tests or integration tests, modify ['hardhat.config'](hardhat.config.js)
 ```
 tests: "./test/unitary",
+```
+or
+```
+tests: "./test/integration",
 ```
 
 #### Running a test coverage
