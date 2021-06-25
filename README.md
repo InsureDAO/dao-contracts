@@ -11,7 +11,7 @@ InsureDAO's governance part is originally from [Curve Finance](https://github.co
 
 ## Testing and Development
 
-### Requirement (Dev's environment)
+### Requirement
 - node v10.24.1
 ### Dependencies (Dev's environment)
 - hardhat v2.3.3
@@ -22,6 +22,8 @@ InsureDAO's governance part is originally from [Curve Finance](https://github.co
 - ethers v5.3.1
 - chai v4.3.4
 - solidity-coverage v0.7.16
+
+Those are Developer's current environment.
 
 ### Setup
 clone the repo and install the developer dependencies:
