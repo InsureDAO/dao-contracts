@@ -29,7 +29,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    tests: "./test/unitary/Minter",
+    tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
   },

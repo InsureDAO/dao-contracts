@@ -53,8 +53,8 @@ describe('Minter', function(){
         await Insure.set_minter(minter.address);
     });
 
-    describe("test_emergency_mint", function(){
-        it("test_emergency_mint", async()=>{
+    describe("emergency_minter", function(){
+        it("test_emergency_minter", async()=>{
             let amount = BigNumber.from("1000");
 
             await minter.set_converter(converter.address);

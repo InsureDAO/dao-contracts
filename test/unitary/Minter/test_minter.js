@@ -86,7 +86,7 @@ describe('Minter', function(){
         }
     });
 
-    describe.skip("test_minter", function(){
+    describe("test_minter", function(){
         it("test_mint", async()=>{
             await lg1.connect(alice).deposit(ten_to_the_17, alice.address);
 
