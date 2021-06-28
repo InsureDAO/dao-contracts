@@ -7,7 +7,7 @@ describe('InsureToken', function(){
         const name = "InsureToken";
         const simbol = "Insure";
         const decimal = 18;
-        const INITIAL_SUPPLY = BigNumber.from('1303030303000000000000000000');
+        const INITIAL_SUPPLY = BigNumber.from('126000000000000000000000000');
         const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
         const YEAR = BigNumber.from(86400*365);

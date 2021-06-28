@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 // @version 0.2.4
 /***
 *@title Simple Vesting Escrow

@@ -63,5 +63,19 @@ describe('Minter', function(){
             expect(await Insure.balanceOf(converter.address)).to.equal(55);//55 defined at TestConverter.sol
         });
 
+        it("test_revert_set_admin", async()=>{
+            expect(await minter.admin()).to.equal(creator.address);
+
+            await expect(minter.connect(alice).set_admin(alice.address)).to.revertedWith("dev: admin only");
+        });
+
+        it("test_set_admin", async()=>{
+            expect(await minter.admin()).to.equal(creator.address);
+
+            await minter.set_admin(alice.address);
+
+            expect(await minter.admin()).to.equal(alice.address);
+        });
+
     });
 });

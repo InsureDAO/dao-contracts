@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 /***
 *@title Token Minter
 *@author InsureDAO
@@ -110,7 +110,7 @@ contract Minter is ReentrancyGuard{
     }
 
     //-----------------emergency mint-----------------//
-    address admin;
+    address public admin;
     IConverter public converter;
 
     function set_admin(address _admin) external{

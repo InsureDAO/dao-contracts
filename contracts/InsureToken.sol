@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 /***
 *@title InsureToken
 *@author InsureDAO
@@ -36,21 +36,39 @@ contract InsureToken is IERC20{
     //General constants
     uint256 constant YEAR = 86400 * 365;
 
-    // Allocation:
+    // Allocation within 5years:
     // =========
-    // * shareholders - 30%
-    // * emplyees - 3%
-    // * DAO-controlled reserve - 5%
-    // * Early users - 5%
-    // == 43% ==
-    // left for inflation: 57%
+    // * Team & Development: 24%
+    // * Liquidity Mining: 40%
+    // * Investors: 10%
+    // * Foundation Treasury: 14%
+    // * Community Treasury: 10%
+    // =========
+    //
+    // After 5years:
+    // =========
+    // * Liquidity Mining: 40%< (Mint Fixed amount every year)
+    //
+    // Mint 2_800_000 INSURE every year.
+    // 6th year: 1.32% inflation rate
+    // 7th year: 1.30% inflation rate
+    // 8th year: 1.28% infration rate
+    // so on
+    // =========
 
     // Supply parameters
-    uint256 constant INITIAL_SUPPLY = 1_303_030_303; //will be vested
-    uint256 constant INITIAL_RATE = 274_815_283 * 10 ** 18 / YEAR; // leading to 43% premine
+    uint256 constant INITIAL_SUPPLY = 126_000_000; //will be vested
     uint256 constant RATE_REDUCTION_TIME = YEAR;
+    uint256[6] public RATES = 
+        [
+            28_000_000 * 10 ** 18 / YEAR, //INITIAL_RATE
+            22_400_000 * 10 ** 18 / YEAR,
+            16_800_000 * 10 ** 18 / YEAR,
+            11_200_000 * 10 ** 18 / YEAR,
+            5_600_000 * 10 ** 18 / YEAR,
+            2_800_000 * 10 ** 18 / YEAR
+        ];
 
-    uint256 constant RATE_REDUCTION_COEFFICIENT = 1189207115002721024;  // 2 ** (1/4) * 1e18
     uint256 constant RATE_DENOMINATOR = 10 ** 18;
     uint256 constant INFLATION_DELAY = 86400; //1day
 
@@ -105,12 +123,16 @@ contract InsureToken is IERC20{
         start_epoch_time = start_epoch_time.add(RATE_REDUCTION_TIME);
         mining_epoch = mining_epoch.add(1);
 
-        if (_rate == 0){
-            _rate = INITIAL_RATE;
-        }else{
-            _start_epoch_supply = _start_epoch_supply.add(_rate.mul(RATE_REDUCTION_TIME));
+        if (mining_epoch == 0){
+            _rate = RATES[uint256(mining_epoch)];
+        }else if(mining_epoch < int128(6)){
+            _start_epoch_supply = _start_epoch_supply.add(RATES[uint256(mining_epoch) - 1].mul(YEAR));
             start_epoch_supply = _start_epoch_supply;
-            _rate = _rate.mul(RATE_DENOMINATOR).div(RATE_REDUCTION_COEFFICIENT);
+            _rate = RATES[uint256(mining_epoch)];
+        }else{
+            _start_epoch_supply = _start_epoch_supply.add(RATES[5].mul(YEAR));
+            start_epoch_supply = _start_epoch_supply;
+            _rate = RATES[5];
         }
         rate = _rate;
         emit UpdateMiningParameters(block.timestamp, _rate, _start_epoch_supply, mining_epoch);
@@ -179,14 +201,20 @@ contract InsureToken is IERC20{
         uint256 to_mint = 0;
         uint256 current_epoch_time = start_epoch_time;
         uint256 current_rate = rate;
+        int128 current_epoch = mining_epoch;
 
         // Special case if end is in future (not yet minted) epoch
         if (end > current_epoch_time.add(RATE_REDUCTION_TIME)){
             current_epoch_time = current_epoch_time.add(RATE_REDUCTION_TIME);
-            current_rate = current_rate.mul(RATE_DENOMINATOR).div(RATE_REDUCTION_COEFFICIENT);
+            if(current_epoch < 5){
+                current_rate = RATES[uint256(mining_epoch) + 1];
+            }else{
+                current_rate = RATES[5];
+            }
         }
 
         require(end <= current_epoch_time.add(RATE_REDUCTION_TIME), "dev: too far in future");
+
 
         for(uint i = 0; i < 999; i++){  // InsureDAO will not work in 1000 years.
             if(end >= current_epoch_time){
@@ -207,8 +235,14 @@ contract InsureToken is IERC20{
                 }
             }
             current_epoch_time = current_epoch_time.sub(RATE_REDUCTION_TIME);
-            current_rate = current_rate.mul(RATE_REDUCTION_COEFFICIENT).div(RATE_DENOMINATOR);  // double-division with rounding made rate a bit less => good
-            assert(current_rate <= INITIAL_RATE);  // This should never happen
+            if(current_epoch < 5){
+                current_rate = RATES[uint256(current_epoch) + 1];
+                current_epoch = current_epoch.add(1);
+            }else{
+                current_rate = RATES[5];
+                current_epoch = current_epoch.add(1);
+            }
+            assert(current_rate <= RATES[0]);  // This should never happen
         }
         return to_mint;
     }

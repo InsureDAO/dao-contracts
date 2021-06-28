@@ -112,7 +112,7 @@ describe('LiquidityGauge', function() {
         minter = await Minter.deploy(Insure.address, gauge_controller.address, registry.address);
         liquidity_gauge = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, creator.address);
 
-        let rdm = Math.floor(Math.random()*5);//0~4の整数
+        let rdm = Math.floor(Math.random()*5);//0~4 integer
         st_account = accounts[rdm];
 
         for(let i=1; i<5; i++){

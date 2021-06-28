@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
 *@notice Votes have a weight depending on time, so that users are
@@ -420,7 +420,7 @@ contract VotingEscrow is ReentrancyGuard{
         uint256 unlock_time = _unlock_time.div(WEEK).mul(WEEK);  // Locktime is rounded down to weeks
         LockedBalance memory _locked = locked[msg.sender];
 
-        assert (_value > 0 );
+        require (_value > 0, "dev: need non-zero value");
         require (_locked.amount == 0, "Withdraw old tokens first");
         require (unlock_time > block.timestamp, "Can only lock until time in the future");
         require (unlock_time <= block.timestamp.add(MAXTIME), "Voting lock can be 4 years max");

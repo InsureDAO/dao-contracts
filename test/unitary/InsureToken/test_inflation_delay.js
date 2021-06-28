@@ -7,7 +7,8 @@ describe('InsureToken', function(){
         const name = "InsureToken";
         const simbol = "Insure";
         const decimal = 18;
-        const INITIAL_SUPPLY = BigNumber.from("1303030303000000000000000000");
+        const INITIAL_SUPPLY = BigNumber.from("126000000000000000000000000");
+        const INITIAL_RATE = BigNumber.from("28000000000000000000000000");
 
         const YEAR = BigNumber.from(86400*365);
         const WEEK = BigNumber.from(86400*7);
@@ -27,8 +28,10 @@ describe('InsureToken', function(){
             await Insure.update_mining_parameters();//mining_epoch: -1 => 0 / Rate: 0 => initial_rate
 
             let new_rate = await Insure.rate();
+            console.log(new_rate.mul(YEAR).div("1000000000000000000").toNumber());
             expect(new_rate.gt('0')).to.equal(true);
-            expect(new_rate).to.equal("8714335457889396245");//initial_rate
+            console.log((await Insure.mining_epoch()).toNumber());
+            expect(new_rate).to.equal(INITIAL_RATE.div(YEAR));
         });
 
         it("test_start_epoch_time", async () => {

@@ -218,5 +218,69 @@ describe('Minter', function(){
             expect((await minter.minted(alice.address, three_gauges[0]))).to.equal(zero);
         });
 
+        it("test_mint_many_multiple_gauges", async()=>{
+            //setup
+            await lg1.connect(alice).deposit(ten_to_the_17, alice.address);
+            await lg2.connect(alice).deposit(ten_to_the_17, alice.address);
+            await lg3.connect(alice).deposit(ten_to_the_17, alice.address);
+
+            await ethers.provider.send("evm_increaseTime", [MONTH.toNumber()]);
+
+
+            let addresses = [lg1.address, lg2.address, lg3.address, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS];
+            await minter.connect(alice).mint_many(addresses);
+
+            //check
+            let total_minted = BigNumber.from('0');
+
+            for(let i=0; i<3; i++){
+                let gauge = three_gauges_contracts[i];
+                let minted = await minter.minted(alice.address, gauge.address);
+                expect(minted).to.equal(await gauge.integrate_fraction(alice.address));
+                total_minted = total_minted.add(minted);
+            }
+
+            expect(await Insure.balanceOf(alice.address)).to.equal(total_minted);
+        });
+
+        it("test_toggle_approve_mint", async()=>{
+            await minter.connect(alice).toggle_approve_mint(bob.address);
+            expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(true);
+
+            await minter.connect(alice).toggle_approve_mint(bob.address);
+            expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(false);
+        });
+
+        it("test_mint_for", async()=>{
+            await lg1.connect(alice).deposit(ten_to_the_17, alice.address);
+
+            await ethers.provider.send("evm_increaseTime", [MONTH.toNumber()]);
+
+            await minter.connect(alice).toggle_approve_mint(bob.address);
+            expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(true);
+
+            await minter.connect(bob).mint_for(lg1.address, alice.address);
+
+            let expected = await lg1.integrate_fraction(alice.address);
+            expect(expected.gt(BigNumber.from('0'))).to.be.equal(true);
+            expect(await Insure.balanceOf(alice.address)).to.equal(expected);
+            expect(await minter.minted(alice.address, three_gauges[0])).to.equal(expected);
+        });
+
+        it("test_mint_for_fail", async()=>{
+            await lg1.connect(alice).deposit(ten_to_the_17, alice.address);
+
+            await ethers.provider.send("evm_increaseTime", [MONTH.toNumber()]);
+
+            expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(false);
+
+            await minter.connect(bob).mint_for(lg1.address, alice.address);
+
+            expect(await Insure.balanceOf(alice.address)).to.equal(0);
+            expect(await minter.minted(alice.address, three_gauges[0])).to.equal(0);
+        });
+
+
+
     });
 });

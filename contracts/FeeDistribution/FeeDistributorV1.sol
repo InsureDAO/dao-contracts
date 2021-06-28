@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 //SPDX-License-Identifier: MIT
 /***
 * Buy back and burn Insure Token from DAI/Insure pool on Uniswap.

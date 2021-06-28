@@ -1,7 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
-const { BN } = require("bn.js");
 
 describe('InsureToken', function() {
     let owner;
@@ -26,7 +25,7 @@ describe('InsureToken', function() {
         let old_timestamp = latestBlock.timestamp;
 
         await ethers.provider.send("evm_increaseTime", [86401]);
-        await Insure.update_mining_parameters(); //mining_epochを-1から0にする
+        await Insure.update_mining_parameters(); //mining_epoch -1 => 0
     });
     describe("emergency_mint", function(){
 

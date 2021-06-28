@@ -7,16 +7,14 @@ describe('InsureToken', function() {
     const simbol = "Insure";
     const decimal = 18;
 
-    const INITIAL_SUPPLY = BigNumber.from('1303030303000000000000000000');
-    const INITIAL_RATE = BigNumber.from('274815283000000000000000000');
-    const RATE_REDUCTION_COEFFICIENT = BigNumber.from('1189207115002721024');
-    const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-
     const DAY = BigNumber.from(86400);
     const WEEK = BigNumber.from(86400*7);
     const YEAR = BigNumber.from(86400*365);
 
-    const YEAR_1_SUPPLY = INITIAL_RATE.div(YEAR).mul(YEAR);
+    const INITIAL_SUPPLY = BigNumber.from('126000000000000000000000000');
+    const INITIAL_RATE = (BigNumber.from('28000000')).mul(BigNumber.from("10").pow("18")).div(YEAR);
+
+    const YEAR_1_SUPPLY = INITIAL_RATE.mul(YEAR);
 
     //return random integer between min and max
     function ramdom_duration(min, max){

@@ -50,10 +50,10 @@ describe('VestingEscrow', function() {
                     amounts.push(BigNumber.from('0'));
                 }
             }
-            //accounts[]にvestingする
+            //vest accounts[]
             await vesting.fund(recipients, amounts, {from: accounts[0]});
     
-            //vestingされている
+            //vested
             expect(await vesting.initial_locked(accounts[0])).to.equal(ten_to_the_17);//ok
             expect(await vesting.initial_locked(accounts[1])).to.equal(ten_to_the_17.mul(BigNumber.from('2')));//ok
             expect(await vesting.initial_locked(accounts[9])).to.equal(ten_to_the_17.mul(BigNumber.from('10')));//ok
