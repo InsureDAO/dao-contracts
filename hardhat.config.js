@@ -27,7 +27,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    tests: "./test",
+    tests: "./test/integration/VotingEscrow",
     cache: "./cache",
     artifacts: "./artifacts"
   },

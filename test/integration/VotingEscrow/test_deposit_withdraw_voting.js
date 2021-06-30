@@ -11,6 +11,7 @@ describe('LiquidityGauge', function() {
     const simbol = "Insure";
     const decimal = 18;
 
+    const MAX_TIME = YEAR.mul("4");
     const two_to_the_256_minus_1 = (BigNumber.from('2')).pow(BigNumber.from('256')).sub(BigNumber.from('1'));
     const ten_to_the_40 = BigNumber.from("10000000000000000000000000000000000000000");
     
@@ -135,10 +136,94 @@ describe('LiquidityGauge', function() {
         }
     }
 
-    let func = ["rule_create_lock", "rule_increase_amount"];
+    async function rule_increase_unlock_time(){
+        console.log("rule_increase_unlock_time");
+
+        //st_account
+        let rdm = Math.floor(Math.random()*10);//0~9 integer
+        st_account_n = rdm;
+        st_account = accounts[st_account_n];
+
+        //unlock_time
+        let timestamp = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
+        st_lock_duration = rdm_value(255);//number of weeks
+        let unlock_time = timestamp.add(st_lock_duration.mul(WEEK)).div(WEEK).mul(WEEK);
+
+        if(voting_balances[st_account_n]["unlock_time"].lte(timestamp)){
+            console.log("--revert: 1, account:",st_account_n);
+            await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Lock expired");
+
+        }else if(voting_balances[st_account_n]["value"].eq("0")){
+            console.log("--revert: 2, account:",st_account_n);
+            await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Nothing is locked");
+
+        }else if(voting_balances[st_account_n]["unlock_time"].gte(unlock_time)){
+            console.log("--revert: 3, account:",st_account_n);
+            await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Can only increase lock duration");
+
+        }else if(unlock_time.gt(timestamp.add(YEAR.mul("4")))){
+            console.log("--revert: 4, account:",st_account_n);
+            await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Voting lock can be 4 years max");
+
+        }else{
+            console.log("--success, account:",st_account_n);
+            tx = await voting_escrow.connect(st_account).increase_unlock_time(unlock_time);
+            receipt = await tx.wait();
+            voting_balances[st_account_n]["unlock_time"] = receipt.events[0]["args"]["locktime"];
+        }
+    }
+
+    async function rule_withdraw(){
+        console.log("rule_withdraw");
+        // Withdraw tokens from the voting escrow.
+        
+        //st_account
+        let rdm = Math.floor(Math.random()*10);//0~9 integer
+        st_account_n = rdm;
+        st_account = accounts[st_account_n];
+
+        let timestamp = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
+
+        if(voting_balances[st_account_n]["unlock_time"].gt(timestamp)){
+            console.log("--reverted");
+            await expect(voting_escrow.connect(st_account).withdraw()).to.revertedWith("The lock didn't expire");
+        }else{
+            console.log("--success");
+            await voting_escrow.connect(st_account).withdraw();
+            voting_balances[st_account_n]["value"] = BigNumber.from("0");
+        }
+    }
+
+    async function rule_checkpoint(){
+        console.log("rule_checkpoint");
+
+        //st_account
+        let rdm = Math.floor(Math.random()*10);//0~9 integer
+        st_account_n = rdm;
+        st_account = accounts[st_account_n];
+
+        await voting_escrow.connect(st_account).checkpoint();
+    }
+
+    async function rule_advance_time(){
+        console.log("rule_advance_time");
+
+        let st_sleep_duration = Math.floor(Math.random()*3)+1; //1~4
+        await ethers.provider.send("evm_increaseTime", [WEEK.mul(st_sleep_duration).toNumber()]);
+        await ethers.provider.send("evm_mine");
+
+        if(st_sleep_duration == 1){
+            console.log("Time advanced:", st_sleep_duration, "WEEK");
+        }else{
+            console.log("Time advanced:", st_sleep_duration, "WEEKs");
+        }
+        
+    }
+
+    let func = ["rule_create_lock", "rule_increase_amount", "rule_increase_unlock_time", "rule_withdraw", "rule_checkpoint", "rule_advance_time"];
 
     describe("test_votingescrow_admin", function(){
-        for(let x=0; x<5; x++){
+        for(let x=0; x<30; x++){
             it("try "+eval("x+1"), async()=>{
                 for(let i=0;i<30;i++){
                     let n = await rdm_value(func.length);
@@ -146,5 +231,45 @@ describe('LiquidityGauge', function() {
                 }
             });
         }
+    });
+
+    afterEach(async ()=>{
+        console.log("=====Invariant checks=====");
+
+        console.log("invariant_token_balances");
+        for(i=0; i<accounts.lenght; i++){
+            expect(await token.balanceOf(accounts[i].address)).to.equal(ten_to_the_40.sub(voting_balances[i]["value"]));
+        }
+
+        console.log("invariant_escrow_current_balances");
+        let total_supply = BigNumber.from("0");
+        let timestamp = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
+
+        for(acct = 0; acct < accounts.length; acct++){
+            let data = voting_balances[acct];
+
+            let balance = await voting_escrow.balanceOf(accounts[acct].address, 0);
+            total_supply = total_supply.add(balance);
+
+            if(data["unlock_time"].gt(timestamp) && data["value"].div(YEAR).gt("0")){
+                expect(balance.isZero()).to.equal(false);
+            }else if(data["value"].isZero() || data["unlock_time"].lte(timestamp)){
+                expect(balance.isZero()).to.equal(true);
+            }
+        }
+        expect(await voting_escrow.totalSupply(0)).to.equal(total_supply);
+
+        
+        console.log("invariant_historic_balances");
+        total_supply = BigNumber.from("0");
+        let blocknumber = (await ethers.provider.getBlock('latest')).number - 4;
+        console.log(blocknumber);
+
+        for(acct = 0; acct < accounts.length; acct++){
+            total_supply = total_supply.add(await voting_escrow.balanceOfAt(accounts[acct].address, blocknumber));
+        }
+
+        expect(await voting_escrow.totalSupplyAt(blocknumber)).to.equal(total_supply);
+
     });
 });

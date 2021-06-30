@@ -513,7 +513,7 @@ contract VotingEscrow is ReentrancyGuard{
         }
         return _min;
     }
-
+    
     function balanceOf(address addr , uint256 _t)external view returns (uint256){
         /***
         *@notice Get the current voting power for `msg.sender`
