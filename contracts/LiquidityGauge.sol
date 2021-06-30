@@ -20,8 +20,6 @@ import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
-
 contract LiquidityGauge is ReentrancyGuard{
     using SafeMath for uint256;
     using SignedSafeMath for int256;

@@ -11,8 +11,6 @@ import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 
-import "hardhat/console.sol";
-
 //The variables will be changed to fit to insureDAO token schedule.
 contract InsureToken is IERC20{
     using SafeMath for uint256;

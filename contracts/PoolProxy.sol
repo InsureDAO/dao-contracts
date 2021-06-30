@@ -23,8 +23,6 @@ import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
-
 //Proxy and fee management for single asset
 contract PoolProxy is ReentrancyGuard{
     using SafeMath for uint256;

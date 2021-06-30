@@ -12,8 +12,6 @@ import "./libraries/math/SafeMath.sol";
 import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
-
 contract VestingEscrow is ReentrancyGuard{
     using SafeMath for uint256;
     

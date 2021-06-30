@@ -13,8 +13,6 @@ import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/token/ERC20/IERC20.sol";
 
-import "hardhat/console.sol";
-
 contract VestingEscrowFactory{
     uint256 constant MIN_VESTING_DURATION = 86400 * 365; //1year
 

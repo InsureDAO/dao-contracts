@@ -21,8 +21,6 @@ import "./libraries/math/SignedSafeMath.sol";
 import "./interfaces/IRegistry.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
-
 contract Minter is ReentrancyGuard{
     using SafeMath for uint256;
 

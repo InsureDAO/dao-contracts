@@ -14,8 +14,6 @@ import "./libraries/math/SafeMath.sol";
 import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
-
 contract VestingEscrowSimple is ReentrancyGuard{
     using SafeMath for uint256;
     function min(uint256 a, uint256 b) internal pure returns (uint256) {

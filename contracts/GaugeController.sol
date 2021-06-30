@@ -10,8 +10,6 @@ import "./InsureToken.sol";
 import "./VotingEscrow.sol";
 import "./libraries/math/SafeMath.sol";
 
-import "hardhat/console.sol";
-
 contract GaugeController{
     using SafeMath for uint256;
 

@@ -27,6 +27,7 @@ describe('InsureToken', function() {
         await ethers.provider.send("evm_increaseTime", [86401]);
         await Insure.update_mining_parameters(); //mining_epoch -1 => 0
     });
+    
     describe("emergency_mint", function(){
 
         it("test_emergency_mint", async () => {
