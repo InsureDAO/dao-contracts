@@ -35,11 +35,11 @@ contract LiquidityGauge is ReentrancyGuard{
     uint256 constant WEEK = 604800;
 
     //Contracts
-    IMinter minter;
-    InsureToken insure_token;
-    ITemplate template;
-    GaugeController controller;
-    VotingEscrow voting_escrow;
+    IMinter public minter;
+    InsureToken public insure_token;
+    ITemplate public template;
+    GaugeController public controller;
+    VotingEscrow public voting_escrow;
 
 
     mapping(address => uint256) public balanceOf;

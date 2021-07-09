@@ -32,7 +32,7 @@ async function main() {
 
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-    const REGISTRY_ADDRESS = "0x0000000000000000000000000000000000000000";
+    const REGISTRY_ADDRESS = "0x8AbEFD67D4503b1493f17a91c5C54003F84820f3";
     let VESTING_ADDRESSES = ["0x9c56673F8446d8B982054dAD1C19D3098dB0716A"];
     let VESTING_ALLOCATION = [BigNumber.from("1000").mul("1000000000000000000")];//1000e18
     const ARAGON_AGENT = "0x1000000000000000000000000000000000000000";
@@ -42,9 +42,10 @@ async function main() {
     ]
 
     const POOL_TOKENS = [
-        ["Pool1", ZERO_ADDRESS , 12],
-        ["Pool2", ZERO_ADDRESS , 24],
-        ["Index1", ZERO_ADDRESS, 100],
+        ["Pool1", "0xF69c15D80d4Ca643b184A51365364dcC39563392" , 12],
+        ["Pool2", "0xD839bC81e9f31c03b9B2B49Cc5dF1524D1348766" , 24],
+        ["Index1", "0xB90aB5F87a3e90988f4bEBf814ec3edb28c4e04B", 100],
+        ["CDS", "0xAC7a18A6447E6f61c2EF2048545F5961E331efCC", 200]
     ]
 
     const POOL_PROXY_ADMINS = {
@@ -70,7 +71,7 @@ async function main() {
 
     //TEST POOLS
     const TestLP = await hre.ethers.getContractFactory("TestLP");
-    for(let i=0; i<3; i++){
+    for(let i=0; i<4; i++){
         let mock_lp_token = await TestLP.deploy("InsureDAO LP token", "indexSURE", decimal, ten_to_the_21);
         POOL_TOKENS[i][1] = mock_lp_token.address;
     }
@@ -99,18 +100,20 @@ async function main() {
     //Minter
     const minter = await Minter.deploy(token.address, gauge_controller.address, REGISTRY_ADDRESS);
     console.log("Minter deployed to:", minter.address);
-    await token.set_minter(minter.address);
+    let tx = await token.set_minter(minter.address);
+    await tx.wait();
     console.log("InsureToken minter is:", await token.minter());
 
     //set gauge_type
-    await GAUGE_TYPES.forEach(el => {
-        let name = el[0];
-        let weight = el[1];
-        gauge_controller.add_type(name, weight);
-    });
+    for(let el in GAUGE_TYPES){
+        let name = GAUGE_TYPES[el][0];
+        let weight = GAUGE_TYPES[el][1];
+        tx = await gauge_controller.add_type(name, weight);
+        await tx.wait();
+    };
     console.log((await gauge_controller.gauge_type_names(1))); //Liquidity
 
-    //LiquidityGauge x3
+    //LiquidityGauge x4
     for(let el in POOL_TOKENS){ //LiquidityGauge
         let name = POOL_TOKENS[el][0];
         let lp_token = POOL_TOKENS[el][1];
@@ -166,10 +169,14 @@ async function main() {
         VESTING_ADDRESSES.push(ZERO_ADDRESS);
     }
     for(i=VESTING_ALLOCATION.length; i<100; i++){
-        VESTING_ALLOCATION.push(0);
+        VESTING_ALLOCATION.push(BigNumber.from("0"));
     }
+
     await token.approve(vesting_escrow.address, ten_to_the_21);
-    await vesting_escrow.add_tokens(ten_to_the_21);
+
+    tx = await vesting_escrow.add_tokens(ten_to_the_21);
+    await tx.wait();
+
     await vesting_escrow.fund(
         VESTING_ADDRESSES,
         VESTING_ALLOCATION
