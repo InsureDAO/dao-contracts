@@ -2,8 +2,6 @@ pragma solidity 0.6.12;
 //SPDX-License-Identifier: MIT
 /***
 * Distribute part of admin fee to Reporting members;
-* Distribute all amount in the contract whenever distribute() is smashed;
-* 
 */
 
 import "../libraries/token/ERC20/IERC20.sol";
@@ -12,10 +10,12 @@ import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
 
-contract ReportingDistribution is ReentrancyGuard{
+contract ReportingDistributionV1 is ReentrancyGuard{
     using SafeMath for uint256;
 
     event Distribution(uint256 amount, uint256 blocktime);
+    event UpdateReportingMember(address _address, bool is_rpt);
+    event Claim(address receiver, uint256 amount);
     event CommitRecovery(address recovery);
     event ApplyRecovery(address recovery);
     event CommitAdmin(address admin);
@@ -30,10 +30,19 @@ contract ReportingDistribution is ReentrancyGuard{
     address public future_recovery;
     bool public is_killed;
     
-    mapping(uint256 => address) reporters; //ID => address
-    uint256 reporters_length;
-    mapping(address => uint256) claimable_fee;
-    mapping(address => bool) is_kicked;
+    mapping(uint256 => address) public reporters; //ID => address (0=unset)
+    uint256 public reporters_length;
+
+    mapping(address => bool) public has_registered;
+    mapping(address => bool) public is_kicked;
+    uint256 public active_reporter;
+
+    uint256 public fee_total;
+    uint256 public bonus_total;
+    uint256 public bonus_ratio; //ratio of fee goes to bonus. 100 = 100%. initially 0%;
+    uint256 public bonus_ratio_divider = 100;
+
+    mapping(address => uint256) public claimable_fee;
 
     constructor(
         address _insure_reporting,
@@ -55,43 +64,165 @@ contract ReportingDistribution is ReentrancyGuard{
         admin = _admin;
     }
 
+//Reporter management
+    function register_reporter(address _addr)external{
+        /***
+        * @notice register reporter
+        * @param _addr address to be registered
+        */
+        require(_addr != address(0), "zero address");
+        require(has_registered[_addr] == false, "already registered");
 
+        if(IERC20(insure_reporting).balanceOf(_addr) != 0){
+            reporters_length = reporters_length.add(1);
+            reporters[reporters_length] = _addr;
+            has_registered[_addr] = true;
+            active_reporter = active_reporter.add(1);
+        }
+    }
+
+    function _update_reporter(address _addr)internal nonReentrant returns(bool){
+        /***
+        * @notice update reporters
+        * @param _addr address to be updated
+        * @return bool (is RPT member now)
+        */
+        require(_addr != address(0), "zero address");
+
+        if(has_registered[_addr]){
+            if(IERC20(insure_reporting).balanceOf(_addr) != 0){
+                if(is_kicked[_addr] == true){//kicked => not kicked
+                    is_kicked[_addr] = false;
+                    active_reporter = active_reporter.add(1);
+                }
+                
+                emit UpdateReportingMember(_addr, true);
+                return true;
+            }else{
+                if(is_kicked[_addr] == false){//not kicked => kicked
+                    is_kicked[_addr] = true;
+                    active_reporter = active_reporter.sub(1);
+                }
+                emit UpdateReportingMember(_addr, false);
+                return false;
+            }
+        }else{
+            emit UpdateReportingMember(_addr, false);
+            return false; //not registered.
+        }
+    }
+
+    function update_reporter(address _addr)external returns(bool){
+        require(!is_killed, "dev: contract is killed");
+
+        _update_reporter(_addr);
+    }
+
+    function update_reporter_many(address[20] memory _addrs)external {
+        require(!is_killed, "dev: contract is killed");
+
+        for(uint256 i = 0; i<20; i++){
+            if(_addrs[i] == address(0)){
+                break;
+            }
+
+            _update_reporter(_addrs[i]);
+        }
+    }
+
+//Distribute
     function distribute(address _coin)external returns(bool){
         /***
         * @notice Recieve DAI into the contract and trigger a token checkpoint
         * @param _coin address of the coin being received (must be DAI)
         * @return bool success
         */
-        //
         require(_coin == token);
         require(!is_killed, "dev: contract is killed");
-        uint256 total_amount = IERC20(_coin).allowance(msg.sender, address(this)); //Amount of token PoolProxy allows me
+        uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
-            IERC20(_coin).transferFrom(msg.sender, address(this), total_amount); //allowance will be 0
-            uint256 _rpt_supply = IERC20(insure_reporting).totalSupply();
-            for(uint256 i=0; i < reporters_length; i++){
-                address _addr = reporters[i];
-                if(_addr != address(0) && is_kicked[_addr] == false){
-                    uint256 _rpt_balance = IERC20(insure_reporting).balanceOf(_addr);
-                    uint256 _amount = total_amount.mul(_rpt_balance).div(_rpt_supply);
-                    claimable_fee[_addr] = claimable_fee[_addr].add(_amount);
+            IERC20(_coin).transferFrom(address(msg.sender), address(this), total_amount); //allowance will be 0
+
+            uint256 bonus = total_amount.mul(bonus_ratio).div(bonus_ratio_divider);
+            bonus_total = bonus_total.add(bonus);
+            fee_total = fee_total.add(total_amount.sub(bonus));
+
+            if(fee_total != 0){
+                //update all reporters & active_member#
+                for(uint256 i=1; i <= reporters_length; i++){
+                    address _addr = reporters[i];
+                    _update_reporter(_addr);
                 }
+
+                uint256 distributed;
+                for(uint256 i=1; i <= reporters_length; i++){
+                    address _addr = reporters[i];
+
+                    if(!is_kicked[_addr]){//if not kicked
+                        uint256 _amount = total_amount.div(active_reporter);
+                        claimable_fee[_addr] = claimable_fee[_addr].add(_amount);
+                        distributed = distributed.add(_amount);
+                    }
+                }
+                fee_total = fee_total.sub(distributed);
+            }
+
+            emit Distribution(total_amount, block.timestamp);
+        }
+
+        return true;
+    }
+
+    function bonus_distribution(uint256[100] memory _ids, uint256[100] memory _allocations)external{
+        /***
+        * @notice Distribute Bonus based
+        * @param _ids Reporter IDs
+        * @param _allocations allocation points
+        */
+        require(address(msg.sender) == admin, "only admin");
+
+        //calc total allocation point
+        uint256 total_allocation; //0
+        for(uint256 i=0;i<100;i++){
+            if(_ids[i]!=0){
+                require(i<= reporters_length);
+                total_allocation = total_allocation.add(_allocations[i]);
+            }else{
+                break;
             }
         }
-        emit Distribution(total_amount, block.timestamp);
+
+        //distribute based on the allocation point.
+        uint256 distributed;
+        for(uint256 i=0;i<100;i++){
+            if(_ids[i]!=0){
+                //distribute all registerd address. (including kicked member for case he was kicked during the term)
+                address _addr = reporters[_ids[i]];
+                uint256 _amount = bonus_total.mul(_allocations[i]).div(total_allocation);
+
+                distributed = distributed.add(_amount);
+                claimable_fee[_addr] = claimable_fee[_addr].add(_amount);
+            }else{
+                break;
+            }
+        }
+        bonus_total = bonus_total.sub(distributed);
     }
 
+
+//Claim
     function _claim(address _addr)internal returns(uint256){
-        require(is_kicked[_addr] != true);
         require(claimable_fee[_addr] != 0, "dev: no claimable fee");
 
-        uint256 amount = claimable_fee[_addr];
+        uint256 _amount = claimable_fee[_addr];
         claimable_fee[_addr] = 0;
-        require(IERC20(token).transfer(_addr, amount));
-        return amount;
+        require(IERC20(token).transfer(_addr, _amount));
+
+        emit Claim(_addr, _amount);
+        return _amount;
     }
 
-    function claim(address _addr)external returns(uint256){
+    function claim(address _addr)external nonReentrant returns(uint256){
         /***
         *@notice Claim fees for _addr
         *@param _addr Address to claim fees for
@@ -103,56 +234,13 @@ contract ReportingDistribution is ReentrancyGuard{
         return amount;
     }
 
-    function claim_many(address[20] memory _addrs)external returns(bool){
-        require(is_killed != true, "dev: contract is killed");
-        for(uint256 i = 0; i<20; i++){
-            if(_addrs[i] == address(0)){
-                break;
-            }
-            _claim(_addrs[i]);
-        }
 
-        return true;
-    }
+//Config
+    function set_bonus_ratio(uint256 _ratio)external{
+        require(address(msg.sender) == admin, "only admin");
+        require(_ratio <= 100, "exceed max");
 
-    function _update_reporter(address _addr)internal nonReentrant returns(bool){
-        /***
-        * @notice register or kick the reporter depends on whether he has SURERPT or not.
-        * @param _addr address to be updated
-        * @return bool success
-        */
-        
-        if(IERC20(insure_reporting).balanceOf(_addr) == 0){
-            //kick the reporter
-            if(claimable_fee[_addr] != 0){
-                uint256 amount = claimable_fee[_addr];
-                claimable_fee[_addr] = 0;
-                IERC20(token).transferFrom(address(this), _addr, amount);
-            }
-            is_kicked[_addr] = true;
-            return true;
-        }else{
-            //register the address
-            reporters_length = reporters_length.add(1);
-            reporters[reporters_length] = _addr;
-            return true;
-        }
-    }
-
-    function update_reporter(address _addr)external {
-        require(is_killed != true, "dev: contract is killed");
-        _update_reporter(_addr);
-    }
-
-    function update_reporters(address[20] memory _addrs)external {
-        require(is_killed != true, "dev: contract is killed");
-        for(uint256 i = 0; i<20; i++){
-            if(_addrs[i] == address(0)){
-                break;
-            }
-
-            _update_reporter(_addrs[i]);
-        }
+        bonus_ratio = _ratio;
     }
 
     function kill_me()external{
@@ -161,13 +249,14 @@ contract ReportingDistribution is ReentrancyGuard{
         *@dev Killing transfers the entire DAI balance to the recovery address
         * and blocks the ability to claim or burn. The contract cannot be unkilled.
         */
-        require(msg.sender == admin, "dev: admin only");
-        is_killed == true;
+        require(address(msg.sender) == admin, "dev: admin only");
+        is_killed = true;
 
         uint256 amount = IERC20(token).balanceOf(address(this));
-        IERC20(token).transfer(recovery, amount);
+        if(amount != 0){
+            IERC20(token).transfer(recovery, amount);
+        }
     }
-
 
     function recover_balance(address _coin)external returns(bool){
         /***
@@ -176,11 +265,11 @@ contract ReportingDistribution is ReentrancyGuard{
         *@param _coin Token address
         *@return bool success
         */
-        require(msg.sender == admin, "dev: admin only");
-        require(_coin == token);
+        require(address(msg.sender) == admin, "dev: admin only");
+        require(recovery != address(0), "recovery to zero address");
 
-        uint256 amount = IERC20(token).balanceOf(address(this));
-        IERC20(token).transfer(recovery, amount);
+        uint256 amount = IERC20(_coin).balanceOf(address(this));
+        IERC20(_coin).transfer(recovery, amount);
 
         return true;
     }
@@ -193,7 +282,7 @@ contract ReportingDistribution is ReentrancyGuard{
         *@return bool success
         */
 
-        require(msg.sender == admin, "dev: admin only");
+        require(address(msg.sender) == admin, "dev: admin only");
         future_recovery = _recovery;
 
         emit CommitRecovery(future_recovery);
@@ -204,7 +293,7 @@ contract ReportingDistribution is ReentrancyGuard{
         *@notice Apply a transfer of recovery address.
         *@return bool success
         */
-        require(msg.sender == admin, "dev: admin only");
+        require(address(msg.sender) == admin, "dev: admin only");
         require(future_recovery != address(0));
 
         recovery = future_recovery;
@@ -218,7 +307,7 @@ contract ReportingDistribution is ReentrancyGuard{
         *@param _future_admin new admin address
         *@return bool success
         */
-        require(msg.sender == admin, "dev: admin only");
+        require(address(msg.sender) == admin, "dev: admin only");
         future_admin = _future_admin;
 
         emit CommitAdmin(future_admin);
@@ -229,7 +318,7 @@ contract ReportingDistribution is ReentrancyGuard{
         *@notice Accept a transfer of ownership
         *@return bool success
         */
-        require(msg.sender == future_admin, "dev: future_admin only");
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
 
         admin = future_admin;
 

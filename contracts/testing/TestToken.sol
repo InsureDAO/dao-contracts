@@ -85,4 +85,16 @@ contract TestToken{
 
         emit Transfer(address(0), msg.sender, _value);
     }
+
+    function _burn(address _to, uint256 _value)internal {
+        assert(_to != address(0));
+
+        total_supply = total_supply.sub(_value);
+        balanceOf[_to] = balanceOf[_to].sub(_value);
+        emit Transfer(_to, address(0), _value);
+    }
+
+    function burn(uint256 _value)external{
+        _burn(msg.sender, _value);
+    }
 }
