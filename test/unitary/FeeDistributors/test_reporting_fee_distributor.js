@@ -12,7 +12,8 @@ describe('ReportingFeeDistributorV1', () => {
     const FEE = BigNumber.from("1000000")
   
     beforeEach(async () => {
-      [creator, alice, bob] = await ethers.getSigners();
+      [creator, alice, bob, chad, dad] = await ethers.getSigners();
+      addresses = [creator.address, alice.address, bob.address, chad.address, dad.address]
       const Token = await ethers.getContractFactory('TestToken');
       const Distributor = await ethers.getContractFactory('ReportingDistributionV1');
 
@@ -21,7 +22,7 @@ describe('ReportingFeeDistributorV1', () => {
       dstr = await Distributor.deploy(rpt_token.address, fee.address, alice.address, creator.address);
     });
 
-    describe.skip("Condition", function () {
+    describe("Condition", function () {
         it("contract should be deployed", async () => {
           await expect(fee.address).to.exist;
           await expect(rpt_token.address).to.exist;
@@ -37,7 +38,7 @@ describe('ReportingFeeDistributorV1', () => {
         });
     });
 
-    describe.skip("test_register", function () {
+    describe("test_register", function () {
         it("register successfull", async()=>{
             //add RPT member
             await rpt_token._mint_for_testing(1);
@@ -81,7 +82,7 @@ describe('ReportingFeeDistributorV1', () => {
         });
     });
 
-    describe.skip("test_update_reporter", function(){
+    describe("test_update_reporter", function(){
         it("registered, rpt member", async()=>{
             //add RPT member
             await rpt_token._mint_for_testing(1);
@@ -229,7 +230,7 @@ describe('ReportingFeeDistributorV1', () => {
         });
     });
 
-    describe.skip("test_update_reporter_many", function(){
+    describe("test_update_reporter_many", function(){
         it("break; correctlly", async()=>{
             //add RPT member
             await rpt_token._mint_for_testing(1);
@@ -281,28 +282,407 @@ describe('ReportingFeeDistributorV1', () => {
             await dstr.register_reporter(creator.address);
 
             //mint fee and approve to dstr
+            //use bob as Fee container
             await fee.connect(bob)._mint_for_testing(FEE);
             await fee.connect(bob).approve(dstr.address, FEE);
 
+
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.claimable_fee(creator.address)).to.equal(FEE);
+            expect(await dstr.fee_total()).to.equal(0);
+            expect(await dstr.bonus_total()).to.equal(0);
+        });
+
+        it("distribute multiple correctlly", async()=>{
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+
+            //mint fee and approve to dstr
+            //use bob as Fee container
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.claimable_fee(creator.address)).to.equal(FEE.div(2));
+            expect(await dstr.claimable_fee(alice.address)).to.equal(FEE.div(2));
+
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+
+            expect(await dstr.fee_total()).to.equal(expected);
+            expect(await dstr.bonus_total()).to.equal(0);
+        });
+
+        it("distribute multiple correctlly", async()=>{
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+            await rpt_token.connect(chad)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+            await dstr.register_reporter(chad.address);
+
+            //mint fee and approve to dstr
+            //use bob as Fee container
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.claimable_fee(creator.address)).to.equal(FEE.div("3"));
+            expect(await dstr.claimable_fee(alice.address)).to.equal(FEE.div("3"));
+            expect(await dstr.claimable_fee(chad.address)).to.equal(FEE.div("3"));
+
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+
+            expect(await dstr.fee_total()).to.equal(expected);
+            expect(await dstr.bonus_total()).to.equal(0);
+        });
+        //distribute twice
+        it("distribute multiple twice correctlly", async()=>{
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+            await rpt_token.connect(chad)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+            await dstr.register_reporter(chad.address);
+
+            //1
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+            await dstr.connect(bob).distribute(fee.address);
+
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+            expect(await dstr.fee_total()).to.equal(expected);
+
+
+            //2
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+            await dstr.connect(bob).distribute(fee.address);
+
+            total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+            expect(await dstr.fee_total()).to.equal(expected);
+        });
+
+        //distribute include kicked
+        it("distribute multiple correctlly", async()=>{
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+            await rpt_token.connect(chad)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+            await dstr.register_reporter(chad.address);
+
+            //mint fee and approve to dstr
+            //use bob as Fee container
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+            //kick
+            await rpt_token.connect(alice).burn(1);
+
+
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.claimable_fee(creator.address)).to.equal(FEE.div("2")); //divided by the number of active_member
+            expect(await dstr.claimable_fee(alice.address)).to.equal(0);
+            expect(await dstr.claimable_fee(chad.address)).to.equal(FEE.div("2"));
+
+            //check if bonus_total & dee_total tracks the number correctlly
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+
+            expect(await dstr.fee_total()).to.equal(expected);
+            expect(await dstr.bonus_total()).to.equal(0);
+        });
+
+        it("revert if killed", async()=>{
+            await dstr.kill_me();
+            await expect(dstr.distribute(fee.address)).to.revertedWith("dev: contract is killed");
+        });
+
+        it("revert if token is wrong", async()=>{
+            await expect(dstr.distribute(rpt_token.address)).to.revertedWith("cannnot distribute this token");
+        });
+    });
+
+    describe("test_bonus_distribute", function(){
+        it("bonus distribute correctlly", async()=>{
+            //prep
+            let ids = [1]
+            let allocations = [100]
+
+            for(i=ids.length;i<100;i++){
+                ids.push(0);
+                allocations.push(0);
+            }
+
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+
+            //mint fee and approve to dstr
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+            //set bonus_ratio
+            await dstr.set_bonus_ratio(100); //100%
+
+            //distribute
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.fee_total()).to.equal(0);
+            expect(await dstr.bonus_total()).to.equal(FEE);
+            expect(await dstr.reporters(1)).to.equal(creator.address);
+            expect(await dstr.reporters(2)).to.equal(alice.address);
+
+            //bonus distribtution
+            await dstr.bonus_distribution(ids, allocations);
+
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+
+            expect(await dstr.bonus_total()).to.equal(expected);
+            expect(await dstr.fee_total()).to.equal(0);
+        });
+
+        it("bonus distribute multiple correctlly", async()=>{
+            //prep
+            let ids = [1, 2]
+            let allocations = [100, 157]
+
+            for(i=ids.length;i<100;i++){
+                ids.push(0);
+                allocations.push(0);
+            }
+
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+
+            //mint fee and approve to dstr
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+            //set bonus_ratio
+            await dstr.set_bonus_ratio(100); //100%
+
+            //distribute
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.fee_total()).to.equal(0);
+            expect(await dstr.bonus_total()).to.equal(FEE);
+            expect(await dstr.reporters(1)).to.equal(creator.address);
+            expect(await dstr.reporters(2)).to.equal(alice.address);
+
+            //bonus distribtution
+            await dstr.bonus_distribution(ids, allocations);
+
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+
+            expect(await dstr.bonus_total()).to.equal(expected);
+            expect(await dstr.fee_total()).to.equal(0);
+        });
+
+        it("bonus distribute multiple correctlly part2", async()=>{
+            //prep
+            let ids = [1, 2, 1]
+            let allocations = [100, 157, 500]
+
+            for(i=ids.length;i<100;i++){
+                ids.push(0);
+                allocations.push(0);
+            }
+
+            //add RPT member
+            await rpt_token._mint_for_testing(1);
+            await rpt_token.connect(alice)._mint_for_testing(1);
+
+            //register
+            await dstr.register_reporter(creator.address);
+            await dstr.register_reporter(alice.address);
+
+            //mint fee and approve to dstr
+            await fee.connect(bob)._mint_for_testing(FEE);
+            await fee.connect(bob).approve(dstr.address, FEE);
+
+            //set bonus_ratio
+            await dstr.set_bonus_ratio(100); //100%
+
+            //distribute
+            await dstr.connect(bob).distribute(fee.address);
+
+            expect(await dstr.fee_total()).to.equal(0);
+            expect(await dstr.bonus_total()).to.equal(FEE);
+            expect(await dstr.reporters(1)).to.equal(creator.address);
+            expect(await dstr.reporters(2)).to.equal(alice.address);
+
+            //bonus distribtution
+            await dstr.bonus_distribution(ids, allocations);
+
             
+            expect(await dstr.claimable_fee(creator.address)).to.equal((FEE.mul(100).div(757)).add(FEE.mul(500).div(757)));//100+157+500
+            expect(await dstr.claimable_fee(alice.address)).to.equal(FEE.mul(157).div(757));//100+157+500
+
+            let total_distributed = BigNumber.from("0");
+            for(i=0;i<addresses.length; i++){
+                total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+            }
+            let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
+
+            expect(await dstr.bonus_total()).to.equal(expected);
+            expect(await dstr.fee_total()).to.equal(0);
+        });
+
+        it("revert if not admin", async()=>{
+            //prep
+            let ids = [1, 2, 1]
+            let allocations = [100, 157, 500]
+
+            for(i=ids.length;i<100;i++){
+                ids.push(0);
+                allocations.push(0);
+            }
+
+            await expect(dstr.connect(alice).bonus_distribution(ids, allocations)).to.revertedWith("only admin");
         });
     });
 
-    describe.skip("test_bonus_distribute", function(){
-        it("", async()=>{
+    describe("test_claim", function(){
+        it("claim successflly", async()=>{
+            //distribute
+             await rpt_token._mint_for_testing(1);
+             await dstr.register_reporter(creator.address);
 
+             await fee.connect(bob)._mint_for_testing(FEE);
+             await fee.connect(bob).approve(dstr.address, FEE);
+ 
+             await dstr.connect(bob).distribute(fee.address);
+
+             expect(await fee.balanceOf(creator.address)).to.equal(0);
+             expect(await dstr.claimable_fee(creator.address)).to.equal(FEE);
+ 
+             //claim
+             await dstr.claim();
+
+             expect(await fee.balanceOf(creator.address)).to.equal(FEE);
+             expect(await dstr.claimable_fee(creator.address)).to.equal(0);
+        });
+
+        it("revert claim", async()=>{
+            await expect(dstr.claim()).to.revertedWith("no claimable fee");
         });
     });
 
-    describe.skip("test_claim", function(){
-        it("", async()=>{
+    describe("test_config", function(){
+        //set_bonus_ratio
+        it("set bonus correctly", async()=>{
+            expect(await dstr.bonus_ratio()).to.equal(0);
+            expect(await dstr.bonus_ratio_divider()).to.equal(100);
 
+            await dstr.set_bonus_ratio(100);
+
+            expect(await dstr.bonus_ratio()).to.equal(100);
+            expect(await dstr.bonus_ratio_divider()).to.equal(100);
         });
-    });
+        it("revert set bonus", async()=>{
+            await expect(dstr.connect(alice).set_bonus_ratio(100)).to.revertedWith("only admin");
+            await expect(dstr.set_bonus_ratio(101)).to.revertedWith("exceed max");
+        });
 
-    describe.skip("test_config", function(){
-        it("", async()=>{
+        //kill_me
+        it("kill_me successfully", async()=>{
+            expect(await dstr.is_killed()).to.equal(false);
+            await dstr.kill_me();
+            expect(await dstr.is_killed()).to.equal(true);
 
+            await dstr.kill_me();
+            expect(await dstr.is_killed()).to.equal(true);
+        });
+
+        it("revert kill_me", async()=>{
+            await expect(dstr.connect(alice).kill_me()).to.revertedWith("dev: admin only");
+
+            await dstr.change_recovery(ZERO_ADDRESS);
+            await expect(dstr.kill_me()).to.revertedWith("dev: recovery address is ZERO_ADDRESS");
+        });
+
+        //recovery
+        it("recover successfully", async()=>{
+            await fee.connect(bob)._mint_for_testing(1000);
+            await fee.connect(bob).transfer(dstr.address, 1000);
+
+            expect(await fee.balanceOf(dstr.address)).to.equal(1000);
+
+            //kill
+            await dstr.kill_me();
+
+            //recover
+            await dstr.recover_balance(fee.address);
+
+            expect(await fee.balanceOf(dstr.address)).to.equal(0);
+            expect(await fee.balanceOf(alice.address)).to.equal(1000);
+        });
+
+        it("revert recover", async()=>{
+            await expect(dstr.connect(alice).recover_balance(fee.address)).to.revertedWith("dev: admin only");
+            await expect(dstr.recover_balance(fee.address)).to.revertedWith("dev: not killed");
+
+            await dstr.change_recovery(ZERO_ADDRESS);
+            await expect(dstr.recover_balance(fee.address)).to.revertedWith("recovery to ZERO_ADDRESS");
         });
     });
 

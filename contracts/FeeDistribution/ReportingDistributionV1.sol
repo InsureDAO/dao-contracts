@@ -9,6 +9,7 @@ import "../libraries/token/ERC20/IERC20.sol";
 import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
+import "hardhat/console.sol";
 
 contract ReportingDistributionV1 is ReentrancyGuard{
     using SafeMath for uint256;
@@ -16,8 +17,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     event Distribution(uint256 amount, uint256 blocktime);
     event UpdateReportingMember(address _address, bool is_rpt);
     event Claim(address receiver, uint256 amount);
-    event CommitRecovery(address recovery);
-    event ApplyRecovery(address recovery);
+    event ChangeRecovery(address recovery);
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
 
@@ -27,7 +27,6 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     address public admin; //upgradable
     address public future_admin; 
     address public recovery; //upgradable
-    address public future_recovery;
     bool public is_killed;
     
     mapping(uint256 => address) public reporters; //ID => address (0=unset)
@@ -40,7 +39,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     uint256 public fee_total;
     uint256 public bonus_total;
     uint256 public bonus_ratio; //ratio of fee goes to bonus. 100 = 100%. initially 0%;
-    uint256 public bonus_ratio_divider = 100;
+    uint256 public constant bonus_ratio_divider = 100;
 
     mapping(address => uint256) public claimable_fee;
 
@@ -137,7 +136,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         * @param _coin address of the coin being received (must be DAI)
         * @return bool success
         */
-        require(_coin == token);
+        require(_coin == token, "cannnot distribute this token");
         require(!is_killed, "dev: contract is killed");
         uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
@@ -212,7 +211,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
 //Claim
     function _claim(address _addr)internal returns(uint256){
-        require(claimable_fee[_addr] != 0, "dev: no claimable fee");
+        require(claimable_fee[_addr] != 0, "no claimable fee");
 
         uint256 _amount = claimable_fee[_addr];
         claimable_fee[_addr] = 0;
@@ -222,20 +221,20 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         return _amount;
     }
 
-    function claim(address _addr)external nonReentrant returns(uint256){
+    function claim()external nonReentrant returns(uint256){
         /***
         *@notice Claim fees for _addr
         *@param _addr Address to claim fees for
         *@return 
         */
-        require(is_killed != true, "dev: contract is killed");
-        uint256 amount = _claim(_addr);
+
+        uint256 amount = _claim(msg.sender);
 
         return amount;
     }
 
 
-//Config
+//Config & Emergency
     function set_bonus_ratio(uint256 _ratio)external{
         require(address(msg.sender) == admin, "only admin");
         require(_ratio <= 100, "exceed max");
@@ -246,58 +245,43 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     function kill_me()external{
         /***
         *@notice Kill the contract
-        *@dev Killing transfers the entire DAI balance to the recovery address
-        * and blocks the ability to claim or burn. The contract cannot be unkilled.
+        *@dev claim() and recover_balance() are possible after the kill. CANNOT BE UNKILLED
         */
         require(address(msg.sender) == admin, "dev: admin only");
+        require(recovery != address(0), "dev: recovery address is ZERO_ADDRESS");
         is_killed = true;
-
-        uint256 amount = IERC20(token).balanceOf(address(this));
-        if(amount != 0){
-            IERC20(token).transfer(recovery, amount);
-        }
     }
 
     function recover_balance(address _coin)external returns(bool){
         /***
-        *@notice Recover ERC20 tokens from this contract
+        *@notice Recover any ERC20 tokens from this contract
         *@dev Tokens are sent to the recovery address.
         *@param _coin Token address
         *@return bool success
         */
         require(address(msg.sender) == admin, "dev: admin only");
-        require(recovery != address(0), "recovery to zero address");
+        require(recovery != address(0), "recovery to ZERO_ADDRESS");
+        require(is_killed, "dev: not killed");
 
         uint256 amount = IERC20(_coin).balanceOf(address(this));
-        IERC20(_coin).transfer(recovery, amount);
+        if(amount != 0){
+            IERC20(_coin).transfer(recovery, amount);
+        }
 
         return true;
     }
 
-    function commit_transfer_recovery(address _recovery)external returns(bool){
+    function change_recovery(address _recovery)external returns(bool){
         /***
-        *@notice Commit a transfer of recovery address.
-        *@dev Must be apply by the owner via `apply_transfer_recovery`
+        *@notice Change the recovery address.
         *@param _recovery new recovery address
         *@return bool success
         */
 
         require(address(msg.sender) == admin, "dev: admin only");
-        future_recovery = _recovery;
+        recovery = _recovery;
 
-        emit CommitRecovery(future_recovery);
-    }
-
-    function apply_transfer_recovery()external returns(bool){
-        /***
-        *@notice Apply a transfer of recovery address.
-        *@return bool success
-        */
-        require(address(msg.sender) == admin, "dev: admin only");
-        require(future_recovery != address(0));
-
-        recovery = future_recovery;
-        emit ApplyRecovery(recovery);
+        emit ChangeRecovery(recovery);
     }
     
     function commit_transfer_ownership(address _future_admin)external returns(bool){

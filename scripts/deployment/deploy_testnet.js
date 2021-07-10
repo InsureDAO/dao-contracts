@@ -32,7 +32,7 @@ async function main() {
 
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-    const REGISTRY_ADDRESS = "0x8AbEFD67D4503b1493f17a91c5C54003F84820f3";
+    const REGISTRY_ADDRESS = "0x39A72261f0D5c656f4dEcBA33240DF5223377e19";
     let VESTING_ADDRESSES = ["0x9c56673F8446d8B982054dAD1C19D3098dB0716A"];
     let VESTING_ALLOCATION = [BigNumber.from("1000").mul("1000000000000000000")];//1000e18
     const ARAGON_AGENT = "0x1000000000000000000000000000000000000000";
@@ -42,10 +42,10 @@ async function main() {
     ]
 
     const POOL_TOKENS = [
-        ["Pool1", "0xF69c15D80d4Ca643b184A51365364dcC39563392" , 12],
-        ["Pool2", "0xD839bC81e9f31c03b9B2B49Cc5dF1524D1348766" , 24],
-        ["Index1", "0xB90aB5F87a3e90988f4bEBf814ec3edb28c4e04B", 100],
-        ["CDS", "0xAC7a18A6447E6f61c2EF2048545F5961E331efCC", 200]
+        ["Pool1", "0xcCEE07453563e71B9c6fa8693667ff388Ce12D86" , 12],
+        ["Pool2", "0x6d9A44C3e2aBA622795eE63D00E110d970D2D394" , 24],
+        ["Index1", "0x2F8014F13d2eA9eDd7Bcf4E97771e51c75e1a8B0", 100],
+        ["CDS", "0x33a32e5F7F89dFe17f215591fFa227146699DD2d", 200]
     ]
 
     const POOL_PROXY_ADMINS = {
@@ -165,7 +165,8 @@ async function main() {
         VESTING_ALLOCATION.push(BigNumber.from("0"));
     }
 
-    await token.approve(vesting_escrow.address, ten_to_the_21);
+    tx = await token.approve(vesting_escrow.address, ten_to_the_21);
+    await tx.wait();
 
     tx = await vesting_escrow.add_tokens(ten_to_the_21);
     await tx.wait();
