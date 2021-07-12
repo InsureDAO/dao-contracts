@@ -684,6 +684,7 @@ describe('ReportingFeeDistributorV1', () => {
             await dstr.change_recovery(ZERO_ADDRESS);
             await expect(dstr.recover_balance(fee.address)).to.revertedWith("recovery to ZERO_ADDRESS");
         });
+        
     });
 
 
