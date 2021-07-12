@@ -467,7 +467,7 @@ contract GaugeController{
         _change_gauge_weight(addr, weight);
     }
 
-    struct VotingParameter{ //VotingParameter
+    struct VotingParameter{ //to avoid "Stack too deep" issue
         uint256 slope;
         uint256 lock_end;
         uint256 _n_gauges;
