@@ -13,6 +13,7 @@ describe('GaugeController', function(){
 
     const YEAR = BigNumber.from(86400*365);
     const WEEK = BigNumber.from(86400*7);
+    const DAY = BigNumber.from(86400);
 
     const name = "InsureToken";
     const simbol = "Insure";
@@ -65,7 +66,7 @@ describe('GaugeController', function(){
 
     });
 
-    describe("test_gaugecontroller_admin", function(){
+    describe("test_gauges_weights", function(){
         it("test_add_gauges", async()=>{
             await gauge_controller.add_gauge(three_gauges[0], 1, 0);
             await gauge_controller.add_gauge(three_gauges[1], 1, 0);
@@ -148,7 +149,7 @@ describe('GaugeController', function(){
             await gauge_controller.add_type('Insurance', 0);
 
             await gauge_controller.change_type_weight(2, TYPE_WEIGHTS[1]);
-            await gauge_controller.change_type_weight(1, BigNumber.from('31337'))
+            await gauge_controller.change_type_weight(1, BigNumber.from('31337'));
 
             expect(await gauge_controller.get_type_weight(0)).to.equal('0');
             expect(await gauge_controller.get_type_weight(1)).to.equal('31337');
@@ -165,7 +166,7 @@ describe('GaugeController', function(){
             let gauge_type = [0,0,1];
             let total_weight = (TYPE_WEIGHTS[0].mul(GAUGE_WEIGHTS[0])).add(TYPE_WEIGHTS[0].mul(GAUGE_WEIGHTS[1])).add(TYPE_WEIGHTS[1].mul(GAUGE_WEIGHTS[2]));
 
-            await ethers.provider.send("evm_increaseTime", [YEAR.div("2").toNumber()]);
+            await ethers.provider.send("evm_increaseTime", [WEEK.mul(2).toNumber()]);
             await ethers.provider.send("evm_mine");
 
             let t = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
@@ -173,9 +174,10 @@ describe('GaugeController', function(){
             for(let i=0; i<3; i++){
                 await gauge_controller.gauge_relative_weight_write(three_gauges[i], t);
                 let relative_weight = await gauge_controller.gauge_relative_weight(three_gauges[i], t);
+                console.log(relative_weight);
                 expect(relative_weight).to.equal(ten_to_the_18.mul(GAUGE_WEIGHTS[i]).mul(TYPE_WEIGHTS[gauge_type[i]]).div(total_weight));
             }
-            //await time.increase(YEAR.div(BigNumber.from('2')));
+
             await ethers.provider.send("evm_increaseTime", [YEAR.div("2").toNumber()]);
             await ethers.provider.send("evm_mine");
 
@@ -185,7 +187,6 @@ describe('GaugeController', function(){
                 expect(relative_weight).to.equal(ten_to_the_18.mul(GAUGE_WEIGHTS[i]).mul(TYPE_WEIGHTS[gauge_type[i]]).div(total_weight));
             }
 
-            //await time.increase(YEAR.div(BigNumber.from('10')));
             await ethers.provider.send("evm_increaseTime", [YEAR.div("10").toNumber()]);
             await ethers.provider.send("evm_mine");
 

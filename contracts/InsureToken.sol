@@ -102,6 +102,7 @@ contract InsureToken is IERC20{
         start_epoch_supply = init_supply;
     }
 
+    //delete this
     function get_rate()external view returns(uint256){
         return rate;
     }

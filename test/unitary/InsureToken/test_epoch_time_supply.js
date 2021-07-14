@@ -15,7 +15,7 @@ describe("InsureToken", function(){
   
     const INITIAL_SUPPLY = BigNumber.from('126000000000000000000000000');
     const INITIAL_RATE = (BigNumber.from('28000000')).mul(BigNumber.from("10").pow("18")).div(YEAR);
-  
+      
     beforeEach(async () => {
       [creator, alice, bob] = await ethers.getSigners();
       const Token = await ethers.getContractFactory('InsureToken')
