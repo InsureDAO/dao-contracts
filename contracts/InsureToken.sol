@@ -45,7 +45,7 @@ contract InsureToken is IERC20{
     //
     // After 5years:
     // =========
-    // * Liquidity Mining: 40%< (Mint Fixed amount every year)
+    // * Liquidity Mining: 40%~ (Mint fixed amount every year)
     //
     // Mint 2_800_000 INSURE every year.
     // 6th year: 1.32% inflation rate

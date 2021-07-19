@@ -126,6 +126,7 @@ contract LiquidityGauge is ReentrancyGuard{
         emit UpdateLiquidityLimit(addr, l, L, lim, _working_supply, voting_balance, voting_total);
     }
 
+    //to avoid "stack too deep"
     struct CheckPointParameters{
         uint256 _period;
         uint256 _period_time;

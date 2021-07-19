@@ -1,12 +1,12 @@
 pragma solidity 0.6.12;
 
-import "./libraries/token/ERC20/IERC20.sol";
-import "./InsureToken.sol";
+import "../libraries/token/ERC20/IERC20.sol";
+import "../InsureToken.sol";
 
-import "./libraries/math/Math.sol";
-import "./libraries/math/SafeMath.sol";
-import "./libraries/utils/ReentrancyGuard.sol";
-import "./interfaces/IUniswapV2Router02.sol";
+import "../libraries/math/Math.sol";
+import "../libraries/math/SafeMath.sol";
+import "../libraries/utils/ReentrancyGuard.sol";
+import "../interfaces/IUniswapV2Router02.sol";
 
 //InsureDAO util contract using Uniswap V2
 contract ConverterV1{

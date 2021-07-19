@@ -6,7 +6,6 @@ pragma solidity 0.6.12;
 *SPDX-License-Identifier: MIT
 *@notice Ownership proxy for Insurance Pools
 */
-//This contracts hold many tokens to be distributed.
 
 import "./interfaces/ITemplate.sol";
 import "./interfaces/IDistributor.sol";
@@ -23,7 +22,7 @@ import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-//Proxy and fee management for single asset
+//Proxy and fee management
 contract PoolProxy is ReentrancyGuard{
     using SafeMath for uint256;
 

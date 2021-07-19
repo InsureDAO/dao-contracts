@@ -56,7 +56,7 @@ contract GaugeController{
     // Needed for enumeration
     address[1000000000] public gauges;
 
-    // zero meaning the gauge has not been set
+    // "0" means that a gauge has not been set
     mapping (address => uint256) gauge_types_;
     mapping (address => mapping(address => VotedSlope))public vote_user_slopes; // user -> gauge_addr -> VotedSlope
     mapping (address => uint256)public vote_user_power; // Total vote power used by user
@@ -84,11 +84,6 @@ contract GaugeController{
     mapping (uint256 => mapping(uint256 => uint256)) public points_type_weight;  // type_id -> time -> type weight
     uint256[1000000000] public time_type_weight; // type_id -> last scheduled time (next week)
 
-    function get_voting_escrow()external view returns(address){
-        return address(voting_escrow);
-    }
-
-
     constructor(address _token, address _voting_escrow)public {
         /***
         *@notice Contract constructor
@@ -102,6 +97,10 @@ contract GaugeController{
         token = IInsureToken(_token);
         voting_escrow = IVotingEscrow(_voting_escrow);
         time_total = block.timestamp.div(WEEK).mul(WEEK);
+    }
+
+    function get_voting_escrow()external view returns(address){
+        return address(voting_escrow);
     }
 
     function commit_transfer_ownership(address addr)external {

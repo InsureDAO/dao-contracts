@@ -32,6 +32,11 @@ contract Minter is ReentrancyGuard{
     IInsureToken public insure_token;
     IGaugeController public gauge_controller;
 
+    //for emergency_mint
+    address public admin;
+    IConverter public converter;
+
+
     // user -> gauge -> value
     mapping(address => mapping(address => uint256))public minted; //INSURE minted amount of user from specific gauge.
 
@@ -107,9 +112,7 @@ contract Minter is ReentrancyGuard{
         allowed_to_mint_for[minting_user][msg.sender] = !allowed_to_mint_for[minting_user][msg.sender];
     }
 
-    //-----------------emergency mint-----------------//
-    address public admin;
-    IConverter public converter;
+    //-----------------emergency mint-----------------/
 
     function set_admin(address _admin) external{
         /***

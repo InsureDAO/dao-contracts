@@ -10,7 +10,7 @@ import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
 import "../interfaces/IUniswapV2Router01.sol";
-import "../ConverterV1.sol";
+import "../Converters/ConverterV1.sol";
 
 interface BURN{
      function burn(uint256 _value)external returns(bool);
@@ -21,7 +21,6 @@ contract FeeDistributionV1{
 
      address insure_token;
      ConverterV1 public converter;
-     address constant public UniswapV2Router01 = address(0xf164fC0Ec4E93095b804a4795bBe1e041497b92a);
      
 
      constructor(address _insure_token, address _converter)public{
