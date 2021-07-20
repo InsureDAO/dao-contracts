@@ -8,6 +8,11 @@ const { BigNumber } = require('ethers');
  * - INFLATION_DELAY > now - (Wed 12pm UTC)
  */
 
+/***
+ * For testnet, only the basic contracts will be deployed.
+ * No vesting and admin management.
+ */
+
 async function main() {
     await hre.run('compile');
 
