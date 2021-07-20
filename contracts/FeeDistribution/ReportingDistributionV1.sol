@@ -52,7 +52,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
-        *@param _token Fee token address (DAI)
+        *@param _token Fee token address (USDC)
         *@param _recovery Address to transfer `_token` balance to if this contract is killed
         *@param _admin Admin address
         */
@@ -132,8 +132,8 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 //Distribute
     function distribute(address _coin)external returns(bool){
         /***
-        * @notice Recieve DAI into the contract and trigger a token checkpoint
-        * @param _coin address of the coin being received (must be DAI)
+        * @notice Recieve USDC into the contract and trigger a token checkpoint
+        * @param _coin address of the coin being received (must be USDC)
         * @return bool success
         */
         require(_coin == token, "cannnot distribute this token");

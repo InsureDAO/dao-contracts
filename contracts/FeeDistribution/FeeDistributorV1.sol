@@ -1,7 +1,7 @@
 pragma solidity 0.6.12;
 //SPDX-License-Identifier: MIT
 /***
-* Buy back and burn Insure Token from DAI/Insure pool on Uniswap.
+* Buy back and burn Insure Token from USDC/Insure pool on Uniswap.
 */
 
 import "../libraries/token/ERC20/IERC20.sol";
@@ -30,10 +30,10 @@ contract FeeDistributionV1{
 
      function distribute(address _token)external returns(bool){
           /***
-          *@param _token DAI address
+          *@param _token USDC address
           *@dev transfer all approved amount of _token by msg.sender to this contract.
           *     Then, immediately exequte buying back Insure tokens from UniswapV2 and burn them.
-          *     It's intended that it's called by PoolProxy with DAI, but it also works that calling this function from any accounts with any token when enough amount of the token is approved.
+          *     It's intended that it's called by PoolProxy with USDC, but it also works that calling this function from any accounts with any token when enough amount of the token is approved.
           */
 
           //collect _token.

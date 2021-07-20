@@ -51,13 +51,13 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     /***
-    DAI
+    USDC
     id 1 = dev
     id 2 = buy back and burn
     id 3 = reporting member
     */
 
-    mapping(address => mapping(uint256 => Distributor))public distributors; // token distibutor contracts. token => ID => Distributor / (ex. DAI => 2 => FeeDistributorV1)
+    mapping(address => mapping(uint256 => Distributor))public distributors; // token distibutor contracts. token => ID => Distributor / (ex. USDC => 2 => FeeDistributorV1)
     mapping(address => uint256) public n_distributors; //distributors# of token
     mapping(address => mapping(uint256 => uint256))public distributor_weight; // token => ID => weight
     mapping(address => mapping(uint256 => uint256))public distributable; //distributor => allocated amount
