@@ -12,13 +12,13 @@ import "./GaugeController.sol";
 import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/ILiquidityGauge.sol";
 import "./interfaces/dao/IGaugeController.sol";
-import "./interfaces/IConverter.sol";
+import "./interfaces/dao/IConverter.sol";
 
 
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
-import "./interfaces/IRegistry.sol";
+import "./interfaces/pool/IRegistry.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
 contract Minter is ReentrancyGuard{

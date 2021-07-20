@@ -7,13 +7,13 @@ pragma solidity 0.6.12;
 *@notice Ownership proxy for Insurance Pools
 */
 
-import "./interfaces/ITemplate.sol";
-import "./interfaces/IDistributor.sol";
-import "./interfaces/IRegistry.sol";
-import "./interfaces/IParameters.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IFactory.sol";
-import "./interfaces/IUniversalMarket.sol";
+import "./interfaces/pool/ITemplate.sol";
+import "./interfaces/dao/IDistributor.sol";
+import "./interfaces/pool/IRegistry.sol";
+import "./interfaces/pool/IParameters.sol";
+import "./interfaces/pool/IVault.sol";
+import "./interfaces/pool/IFactory.sol";
+import "./interfaces/pool/IUniversalMarket.sol";
 
 
 import "./libraries/token/ERC20/IERC20.sol";

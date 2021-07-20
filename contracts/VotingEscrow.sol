@@ -28,7 +28,7 @@ import "./libraries/token/ERC20/IERC20.sol";
 // When new types are added - the whole contract is changed
 // The check() method is modifying to be able to use caching
 // for individual wallet addresses
-import "./interfaces/ISmartWalletChecker.sol";
+import "./interfaces/dao/ISmartWalletChecker.sol";
 
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";

@@ -17,7 +17,7 @@ module.exports = {
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
-      accounts: [`0x${key}`] //Dev: Change the address when do the public testnet event. And DO NOT push to the Github
+      accounts: [`0x${key}`] //Dev: Change the address when do the public testnet event
     }
   },
   solidity: {

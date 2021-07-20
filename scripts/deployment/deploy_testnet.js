@@ -1,18 +1,14 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional 
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+/***
+ * Before the launch, make sure that
+ * - BOOST_WARMUP = 0;
+ * - INFLATION_DELAY > now - (Wed 12pm UTC)
+ */
+
 async function main() {
-    // Hardhat always runs the compile task when running scripts with its command
-    // line interface.
-    //
-    // If this script is run directly using `node` you may want to call compile 
-    // manually to make sure everything is compiled
     await hre.run('compile');
 
     const [deployer] = await ethers.getSigners();
@@ -117,71 +113,10 @@ async function main() {
         await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
     }
 
-    //change ownership
-    /**
-    await gauge_controller.commit_transfer_ownership(ARAGON_AGENT);
-    await gauge_controller.apply_transfer_ownership();
-    await voting_escrow.commit_transfer_ownership(ARAGON_AGENT);
-    await voting_escrow.apply_transfer_ownership();
-    */
-
     console.log("========== Basic Deployment END ==========");
-    console.log("========== Additional Deployment START ==========");
-
-
-    //Poolproxy
-    const PoolProxy = await hre.ethers.getContractFactory("PoolProxy");
-    const pool_proxy = await PoolProxy.deploy(POOL_PROXY_ADMINS["Ownership"], POOL_PROXY_ADMINS["Params"], POOL_PROXY_ADMINS["Emergency"]);
-    console.log("PoolProxy deployed to:", pool_proxy.address);
-    console.log("  Ownership:", POOL_PROXY_ADMINS["Ownership"]);
-    console.log("  Params:", POOL_PROXY_ADMINS["Params"]);
-    console.log("  Emergency:", POOL_PROXY_ADMINS["Emergency"]);
-
-
-    //VestingEscrow
-    const VestingEscrow = await hre.ethers.getContractFactory("VestingEscrow");
-    let now = (await ethers.provider.getBlock('latest')).timestamp;
-    let start_time = now + 300;
-    let end_time = 1628364267;
-    const vesting_escrow = await VestingEscrow.deploy(
-        token.address, //token
-        start_time, //start_time
-        end_time, //end_time
-        false, //can_disable
-        FUNDING_ADMINS
-    );
-    console.log("VestingEscrow deployed to:", vesting_escrow.address);
-    console.log("  Vesting Token:", token.address);
-    console.log("  Start:", start_time);
-    console.log("  End:", end_time);
-    console.log("  duration:", end_time - start_time, ", about", (end_time - start_time)/86400, "days");
-
-    
-    //vesting
-    for(i=VESTING_ADDRESSES.length; i<100; i++){
-        VESTING_ADDRESSES.push(ZERO_ADDRESS);
-    }
-    for(i=VESTING_ALLOCATION.length; i<100; i++){
-        VESTING_ALLOCATION.push(BigNumber.from("0"));
-    }
-
-    tx = await token.approve(vesting_escrow.address, ten_to_the_21);
-    await tx.wait();
-
-    tx = await vesting_escrow.add_tokens(ten_to_the_21);
-    await tx.wait();
-
-    await vesting_escrow.fund(
-        VESTING_ADDRESSES,
-        VESTING_ALLOCATION
-    );
-    
-    
 
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main()
     .then(() => process.exit(0))
     .catch(error => {

@@ -12,8 +12,8 @@ import "./GaugeController.sol";
 import "./InsureToken.sol";
 import "./VotingEscrow.sol";
 
-import "./interfaces/IMinter.sol";
-import "./interfaces/ITemplate.sol";
+import "./interfaces/dao/IMinter.sol";
+import "./interfaces/pool/ITemplate.sol";
 
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
