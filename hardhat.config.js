@@ -5,6 +5,10 @@ require("solidity-coverage");
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+const fs = require("fs");
+const key = fs.readFileSync(".key").toString().trim();
+const infuraKey = fs.readFileSync(".infuraKey").toString().trim();
+
 module.exports = {
   solidity: "0.6.12",
   defaultNetwork: "hardhat",
@@ -12,8 +16,8 @@ module.exports = {
     hardhat: {
     },
     rinkeby: {
-      url: "https://rinkeby.infura.io/v3/20995f9f21e54277b75bb71c5368bf75",
-      accounts: ['0x76b0c4e68c8a890e8b55dc326229e2becb9ae73195aaaab54bd629caede6593f'] //Dev: Change the address when do the public testnet event. And DO NOT push to the Github
+      url: `https://rinkeby.infura.io/v3/${infuraKey}`,
+      accounts: [`0x${key}`] //Dev: Change the address when do the public testnet event. And DO NOT push to the Github
     }
   },
   solidity: {
