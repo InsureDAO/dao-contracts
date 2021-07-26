@@ -6,13 +6,13 @@ import "../InsureToken.sol";
 import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
-import "../interfaces/IUniswapV2Router02.sol";
+import "../interfaces/ISwapRouter.sol";
 
 //InsureDAO util contract using Uniswap V2
 contract ConverterV1{
     using SafeMath for uint256;
 
-    IUniswapV2Router02 public UniswapV2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
+    ISwapRouter public UniswapV2 = ISwapRouter(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
     InsureToken public insure_token;
     IERC20 public WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2); //rinkeby
     IERC20 public USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby
