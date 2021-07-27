@@ -313,6 +313,86 @@ contract PoolProxy is ReentrancyGuard{
     }
 
 
+    //--------------Factory-----------------//
+    function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
+        require(msg.sender == ownership_admin, "Access denied");
+        IFactory(_factory).commit_transfer_ownership(_future_admin);
+    }
+
+    function apply_transfer_ownership_factory(address _factory)external{
+        /***
+        *@param _factory Factory address
+        */
+        IFactory(_factory).apply_transfer_ownership();
+    }
+
+    function approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{
+        require(msg.sender == parameter_admin, "Access denied");
+        IUniversalMarket _template = IUniversalMarket(_template_addr);
+
+        IFactory(_factory).approveReference(_template, _slot, _target, _approval);
+    }
+
+    function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen)external{
+        require(msg.sender == parameter_admin, "Access denied");
+        IUniversalMarket _template = IUniversalMarket(_template_addr);
+
+        IFactory(_factory).approveTemplate(_template, _approval, _isOpen);
+    }
+
+    function set_condition_factory(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{
+        require(msg.sender == parameter_admin, "Access denied");
+        IUniversalMarket _template = IUniversalMarket(_template_addr);
+
+        IFactory(_factory).setCondition(_template, _slot, _target);
+    }
+
+    //createMarket
+
+    //--------------FeeModel-------//
+    //setFee
+    //transferOwnership
+    //applytransferOwnership
+
+
+    //--------Premium model-----//
+    //setPremium
+    //setOptions
+    //transferOwnership
+    //applytransferOwnership
+
+
+    //--------------Universal(Pool/Index/CDS)-----------------//
+    function set_paused(address _pool, bool _state)external nonReentrant{
+        /***
+        *@notice 
+        *@param _pool Pool address to pause
+        */
+        require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied");
+        ITemplate(_pool).setPaused(_state);
+    }
+
+    function change_metadata(address _pool, string calldata _metadata) external {
+        require(msg.sender == parameter_admin, "Access denied");
+        ITemplate(_pool).changeMetadata(_metadata);
+    }
+
+    //-------Pool--------//
+    function apply_cover(
+        address _pool,
+        uint256 _pending,
+        uint256 _payoutNumerator,
+        uint256 _payoutDenominator,
+        uint256 _incidentTimestamp,
+        bytes32[] calldata _targets
+    ) external{
+        require(msg.sender == reporting_admin[_pool], "Access denied");
+
+        ITemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets);
+    }
+    //---------Index-------//
+    //setLeverage
+    //set
 
     //--------------Vault-----------------//
     function commit_transfer_ownership_vault(address _vault, address _future_owner)external{
@@ -342,17 +422,6 @@ contract PoolProxy is ReentrancyGuard{
         require(msg.sender == parameter_admin, "Access denied");
 
         IVault(_vault).setController(_controller);
-    }
-
-    function set_min(address _vault, uint256 _min)external {
-        /***
-        *@notice how much can the vault can lend out to controller
-        *@param _vault Vault address
-        *@param _min minimum
-        */
-        require(msg.sender == parameter_admin, "Access denied");
-
-        IVault(_vault).setMin(_min);
     }
 
 
@@ -462,69 +531,11 @@ contract PoolProxy is ReentrancyGuard{
         IRegistry(_registry).setCDS(_address, _target);
     }
 
-
-    //--------------Factory-----------------//
-    function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
-        require(msg.sender == ownership_admin, "Access denied");
-        IFactory(_factory).commit_transfer_ownership(_future_admin);
-    }
-
-    function apply_transfer_ownership_factory(address _factory)external{
-        /***
-        *@param _factory Factory address
-        */
-        IFactory(_factory).apply_transfer_ownership();
-    }
-
-    function approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{
-        require(msg.sender == parameter_admin, "Access denied");
-        IUniversalMarket _template = IUniversalMarket(_template_addr);
-
-        IFactory(_factory).approveReference(_template, _slot, _target, _approval);
-    }
-
-    function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen)external{
-        require(msg.sender == parameter_admin, "Access denied");
-        IUniversalMarket _template = IUniversalMarket(_template_addr);
-
-        IFactory(_factory).approveTemplate(_template, _approval, _isOpen);
-    }
-
-    function set_condition_factory(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{
-        require(msg.sender == parameter_admin, "Access denied");
-        IUniversalMarket _template = IUniversalMarket(_template_addr);
-
-        IFactory(_factory).setCondition(_template, _slot, _target);
-    }
+    //function set_factory();
 
 
-    //--------------Pool-----------------//
-    function set_paused(address _pool, bool _state)external nonReentrant{
-        /***
-        *@notice 
-        *@param _pool Pool address to pause
-        */
-        require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied");
-        ITemplate(_pool).setPaused(_state);
-    }
+    
 
-    function change_metadata(address _pool, string calldata _metadata) external {
-        require(msg.sender == parameter_admin, "Access denied");
-        ITemplate(_pool).changeMetadata(_metadata);
-    }
-
-    function apply_cover(
-        address _pool,
-        uint256 _pending,
-        uint256 _payoutNumerator,
-        uint256 _payoutDenominator,
-        uint256 _incidentTimestamp,
-        bytes32[] calldata _targets
-    ) external{
-        require(msg.sender == reporting_admin[_pool], "Access denied");
-
-        ITemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets);
-    }
 
     fallback()external payable{
         // required to receive ETH fees

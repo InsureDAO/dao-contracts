@@ -68,7 +68,7 @@ contract InsureToken is IERC20{
         ];
 
     uint256 constant RATE_DENOMINATOR = 10 ** 18;
-    uint256 constant INFLATION_DELAY = 86400; //1day
+    uint256 constant INFLATION_DELAY = 39600;
 
     // Supply variables
     int128 public mining_epoch;

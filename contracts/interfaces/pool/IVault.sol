@@ -7,7 +7,5 @@ interface IVault {
 
     function setController(address)external;
 
-    function setMin(uint256)external;
-
     function withdrawAllAttribution(address _to)external returns(uint256);
 }

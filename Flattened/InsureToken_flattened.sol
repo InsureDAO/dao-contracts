@@ -1,7 +1,3 @@
-// Sources flattened with hardhat v2.3.3 https://hardhat.org
-
-// File contracts/libraries/token/ERC20/IERC20.sol
-
 pragma solidity ^0.6.0;
 
 /***
@@ -242,6 +238,8 @@ library SafeMath {
 
 // File contracts/libraries/math/SignedSafeMath.sol
 
+
+
 pragma solidity ^0.6.0;
 
 /***
@@ -383,7 +381,7 @@ contract InsureToken is IERC20{
     //
     // After 5years:
     // =========
-    // * Liquidity Mining: 40%< (Mint Fixed amount every year)
+    // * Liquidity Mining: 40%~ (Mint fixed amount every year)
     //
     // Mint 2_800_000 INSURE every year.
     // 6th year: 1.32% inflation rate
@@ -406,7 +404,7 @@ contract InsureToken is IERC20{
         ];
 
     uint256 constant RATE_DENOMINATOR = 10 ** 18;
-    uint256 constant INFLATION_DELAY = 86400; //1day
+    uint256 constant INFLATION_DELAY = 39600;
 
     // Supply variables
     int128 public mining_epoch;
@@ -440,6 +438,7 @@ contract InsureToken is IERC20{
         start_epoch_supply = init_supply;
     }
 
+    //delete this
     function get_rate()external view returns(uint256){
         return rate;
     }

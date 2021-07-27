@@ -188,6 +188,7 @@ pragma solidity 0.6.12;
 /***
 *@title Gauge Controller
 *@author InsureDAO
+*
 *@notice Controls liquidity gauges and the issuance of INSURE token through the gauges
 */
 
@@ -239,7 +240,7 @@ contract GaugeController{
     // Needed for enumeration
     address[1000000000] public gauges;
 
-    // zero meaning the gauge has not been set
+    // "0" means that a gauge has not been set
     mapping (address => uint256) gauge_types_;
     mapping (address => mapping(address => VotedSlope))public vote_user_slopes; // user -> gauge_addr -> VotedSlope
     mapping (address => uint256)public vote_user_power; // Total vote power used by user
@@ -267,11 +268,6 @@ contract GaugeController{
     mapping (uint256 => mapping(uint256 => uint256)) public points_type_weight;  // type_id -> time -> type weight
     uint256[1000000000] public time_type_weight; // type_id -> last scheduled time (next week)
 
-    function get_voting_escrow()external view returns(address){
-        return address(voting_escrow);
-    }
-
-
     constructor(address _token, address _voting_escrow)public {
         /***
         *@notice Contract constructor
@@ -285,6 +281,10 @@ contract GaugeController{
         token = IInsureToken(_token);
         voting_escrow = IVotingEscrow(_voting_escrow);
         time_total = block.timestamp.div(WEEK).mul(WEEK);
+    }
+
+    function get_voting_escrow()external view returns(address){
+        return address(voting_escrow);
     }
 
     function commit_transfer_ownership(address addr)external {
@@ -650,7 +650,7 @@ contract GaugeController{
         _change_gauge_weight(addr, weight);
     }
 
-    struct VotingParameter{ //VotingParameter
+    struct VotingParameter{ //to avoid "Stack too deep" issue
         uint256 slope;
         uint256 lock_end;
         uint256 _n_gauges;
@@ -778,7 +778,7 @@ contract GaugeController{
 
 // File contracts/libraries/token/ERC20/IERC20.sol
 
-
+// 
 
 pragma solidity ^0.6.0;
 
@@ -859,7 +859,7 @@ interface IERC20 {
 
 // File contracts/libraries/math/SignedSafeMath.sol
 
-
+// 
 
 pragma solidity ^0.6.0;
 
@@ -961,6 +961,7 @@ pragma solidity 0.6.12;
 /***
 *@title InsureToken
 *@author InsureDAO
+*
 *@notice InsureDAO's governance token
 *
 */
@@ -1001,7 +1002,7 @@ contract InsureToken is IERC20{
     //
     // After 5years:
     // =========
-    // * Liquidity Mining: 40%< (Mint Fixed amount every year)
+    // * Liquidity Mining: 40%~ (Mint fixed amount every year)
     //
     // Mint 2_800_000 INSURE every year.
     // 6th year: 1.32% inflation rate
@@ -1024,7 +1025,7 @@ contract InsureToken is IERC20{
         ];
 
     uint256 constant RATE_DENOMINATOR = 10 ** 18;
-    uint256 constant INFLATION_DELAY = 86400; //1day
+    uint256 constant INFLATION_DELAY = 39600;
 
     // Supply variables
     int128 public mining_epoch;
@@ -1058,6 +1059,7 @@ contract InsureToken is IERC20{
         start_epoch_supply = init_supply;
     }
 
+    //delete this
     function get_rate()external view returns(uint256){
         return rate;
     }
@@ -1366,7 +1368,7 @@ contract InsureToken is IERC20{
 }
 
 
-// File contracts/interfaces/ISmartWalletChecker.sol
+// File contracts/interfaces/dao/ISmartWalletChecker.sol
 
 pragma solidity ^0.6.0;
 
@@ -1377,7 +1379,7 @@ interface ISmartWalletChecker{
 
 // File contracts/libraries/math/Math.sol
 
-
+// 
 
 pragma solidity ^0.6.0;
 
@@ -1412,7 +1414,7 @@ library Math {
 
 // File contracts/libraries/utils/ReentrancyGuard.sol
 
-
+// 
 
 pragma solidity >=0.6.0 <0.8.0;
 
@@ -1485,6 +1487,7 @@ pragma solidity 0.6.12;
 *        committed to the future of (whatever they are voting for)
 *@dev Vote weight decays linearly over time. Lock time cannot be
 *     more than `MAXTIME` (4 years).
+*
 */
 
 // Voting escrow to have time-weighted votes
@@ -1987,6 +1990,31 @@ contract VotingEscrow is ReentrancyGuard{
         }
         return _min;
     }
+
+    //for Metamask
+    function balanceOf(address addr)external view returns (uint256){
+        /***
+        *@notice Get the current voting power for `msg.sender`
+        *@dev Adheres to the ERC20 `balanceOf` interface for Aragon compatibility
+        *@param addr User wallet address
+        *@param _t Epoch time to return voting power at
+        *@return User voting power
+        */
+
+        uint256 _t = block.timestamp;
+
+        uint256 _epoch = user_point_epoch[addr];
+        if (_epoch == 0){
+            return 0;
+        }else{
+            Point memory last_point = user_point_history[addr][_epoch];
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(_t.sub(last_point.ts))));
+            if (last_point.bias < 0){
+                last_point.bias = 0;
+            }
+            return uint256(last_point.bias);
+        }
+    }
     
     function balanceOf(address addr , uint256 _t)external view returns (uint256){
         /***
@@ -2130,6 +2158,19 @@ contract VotingEscrow is ReentrancyGuard{
         
     }
 
+    function totalSupply()external view returns (uint256){
+        /***
+        *@notice Calculate total voting power
+        *@dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
+        *@return Total voting power
+        */
+
+        uint256 _epoch = epoch;
+        Point memory last_point = point_history[_epoch];
+
+        return supply_at(last_point, block.timestamp);
+    }
+
     function totalSupplyAt(uint256 _block)external view returns (uint256){
         /***
         *@notice Calculate total voting power at some point in the past
@@ -2183,7 +2224,7 @@ interface IGaugeController {
 }
 
 
-// File contracts/interfaces/IMinter.sol
+// File contracts/interfaces/dao/IMinter.sol
 
 pragma solidity ^0.6.0;
 
@@ -2196,7 +2237,7 @@ interface IMinter {
 }
 
 
-// File contracts/interfaces/ITemplate.sol
+// File contracts/interfaces/pool/ITemplate.sol
 
 pragma solidity ^0.6.0;
 
@@ -2219,6 +2260,30 @@ interface ITemplate {
         uint256,
         bytes32[] calldata
     ) external;
+
+    function applyCover(uint256 _pending) external;
+
+    function reportIncident(uint256 _pending, uint256 _incidentTimestamp)external;
+
+    function allocateCredit(uint256 _credit)
+        external
+        
+        returns (uint256 _mintAmount);
+
+    function allocatedCredit(address _index)
+        external
+        view
+        returns (uint256);
+
+    function withdrawCredit(uint256 _credit)
+        external
+        returns (uint256 _retVal);
+
+    function pendingPremium(address _index)
+        external
+        view
+        returns (uint256);
+
 }
 
 
@@ -2251,7 +2316,7 @@ contract LiquidityGauge is ReentrancyGuard{
     event ApplyOwnership(address admin); 
 
     uint256 constant TOKENLESS_PRODUCTION = 40;
-    uint256 constant BOOST_WARMUP = 2 * 7 * 86400; //no boost for first 2weeks
+    uint256 constant BOOST_WARMUP = 0;
     uint256 constant WEEK = 604800;
 
     //Contracts
@@ -2346,6 +2411,7 @@ contract LiquidityGauge is ReentrancyGuard{
         emit UpdateLiquidityLimit(addr, l, L, lim, _working_supply, voting_balance, voting_total);
     }
 
+    //to avoid "stack too deep"
     struct CheckPointParameters{
         uint256 _period;
         uint256 _period_time;
