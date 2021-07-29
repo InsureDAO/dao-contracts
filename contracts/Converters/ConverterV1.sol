@@ -25,6 +25,11 @@ contract ConverterV1{
     /// @dev The offset of a single token address and pool fee
     uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
 
+    struct SwapCallbackData {
+        bytes path;
+        address payer;
+    }
+
     constructor(address _insure)public{
         insure_token = InsureToken(_insure);
     }
@@ -39,17 +44,9 @@ contract ConverterV1{
 
         bytes tokenA = abi.encodePacked(address(USDC));
         bytes tokenB = abi.encodePacked(address(insure_token));
-        uint24 feeAmount = _amountIn * 3 / 1000;
-        bytes fee = abi.encodePacked(feeAmount);
+        uint24 fee = _amountIn * 3 / 1000;
 
-        bytes memory path = new bytes(NEXT_OFFSET + ADDR_SIZE);
-        assembly {
-            mstore(add(path, ADDR_SIZE), tokenA);
-            mstore(add(path, NEXT_OFFSET), fee);
-            mstore(add(path, NEXT_OFFSET + ADDR_SIZE), tokenB);
-        }
-
-        bytes data = abi.encode(path, _to);
+        bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
 
         UniswapV3.uniswapV3SwapCallback(_amountIn, 0, data);
 
@@ -71,28 +68,22 @@ contract ConverterV1{
     */
     function getAmountsIn(uint256 _amountOut)external view returns(uint256){
         
-        bytes tokenA = abi.encodePacked(address(insure_token));
-        bytes tokenB = abi.encodePacked(address(USDC));
-        uint24 feeAmount = _amountOut * 3 / 1000;
-        bytes fee = abi.encodePacked(feeAmount);
+        // bytes tokenA = abi.encodePacked(address(insure_token));
+        // bytes tokenB = abi.encodePacked(address(USDC));
+        // uint24 fee = _amountOut * 3 / 1000;
 
-        bytes memory path = new bytes(NEXT_OFFSET + ADDR_SIZE);
-        assembly {
-            mstore(add(path, ADDR_SIZE), tokenA);
-            mstore(add(path, NEXT_OFFSET), fee);
-            mstore(add(path, NEXT_OFFSET + ADDR_SIZE), tokenB);
-        }
+        // address _to = "0x0000000000000000000000000000000000000000";
 
-        address _to = 0;
+        // bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
 
-        bytes data = abi.encode(path, _to);
+        // uint256 amountIn = UniswapV3.exactOutputInternal(_amountOut, msg.sender, 0, data);
 
-        uint256 amountIn = UniswapV3.exactOutputInternal(_amountOut, msg.sender, 0, data);
-
-        return amountIn;
+        // return amountIn;
 
         // uint256[] memory amountsIn = UniswapV2.getAmountsIn(_amountOut, path);
         // return amountsIn[0]; //required Insure Token
+
+        return 0;
     }
 
     /***
@@ -105,17 +96,9 @@ contract ConverterV1{
 
         bytes tokenA = abi.encodePacked(address(insure_token));
         bytes tokenB = abi.encodePacked(address(USDC));
-        uint24 feeAmount = _amountOut * 3 / 1000;
-        bytes fee = abi.encodePacked(feeAmount);
+        uint24 fee = _amountOut * 3 / 1000;
 
-        bytes memory path = new bytes(NEXT_OFFSET + ADDR_SIZE);
-        assembly {
-            mstore(add(path, ADDR_SIZE), tokenA);
-            mstore(add(path, NEXT_OFFSET), fee);
-            mstore(add(path, NEXT_OFFSET + ADDR_SIZE), tokenB);
-        }
-
-        bytes data = abi.encode(path, _to);
+        bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
 
         UniswapV3.uniswapV3SwapCallback(_amountOut, _amountInMax, data);
 
