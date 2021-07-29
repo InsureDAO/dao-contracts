@@ -12,7 +12,8 @@ import "../interfaces/ISwapRouter.sol";
 contract ConverterV1{
     using SafeMath for uint256;
 
-    ISwapRouter public UniswapV3 = ISwapRouter(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
+    ISwapRouter public UniswapV3 = ISwapRouter(0x273Edaa13C845F605b5886Dd66C89AB497A6B17b); //rinkeby
+    IQuoter public Quoter = IQuoter(0x91a64CCaead471caFF912314E466D9CF7C55E0E8); //rinkeby
     InsureToken public insure_token;
     IERC20 public WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2); //rinkeby
     IERC20 public USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby
@@ -42,8 +43,8 @@ contract ConverterV1{
         require(USDC.transferFrom(msg.sender, address(this), _amountIn), 'transferFrom failed.');
         require(USDC.approve(address(UniswapV3), _amountIn), 'approve failed.');
 
-        bytes tokenA = abi.encodePacked(address(USDC));
-        bytes tokenB = abi.encodePacked(address(insure_token));
+        bytes tokenA = address(USDC);
+        bytes tokenB = address(insure_token);
         uint24 fee = _amountIn * 3 / 1000;
 
         bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
@@ -68,22 +69,15 @@ contract ConverterV1{
     */
     function getAmountsIn(uint256 _amountOut)external view returns(uint256){
         
-        // bytes tokenA = abi.encodePacked(address(insure_token));
-        // bytes tokenB = abi.encodePacked(address(USDC));
-        // uint24 fee = _amountOut * 3 / 1000;
+        bytes tokenA = address(insure_token);
+        bytes tokenB = address(USDC);
+        uint24 fee = _amountOut * 3 / 1000;
 
-        // address _to = "0x0000000000000000000000000000000000000000";
+        uint256 amountIn = Quoter.quoteExactOutput(abi.encodePacked(tokenA, fee, tokenB), _amountOut);
 
-        // bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
-
-        // uint256 amountIn = UniswapV3.exactOutputInternal(_amountOut, msg.sender, 0, data);
-
-        // return amountIn;
+        return amountIn;
 
         // uint256[] memory amountsIn = UniswapV2.getAmountsIn(_amountOut, path);
-        // return amountsIn[0]; //required Insure Token
-
-        return 0;
     }
 
     /***
@@ -94,8 +88,8 @@ contract ConverterV1{
         require(insure_token.transferFrom(msg.sender, address(this), _amountInMax), 'transferFrom failed.');
         require(insure_token.approve(address(UniswapV3), _amountInMax), 'approve failed.');
 
-        bytes tokenA = abi.encodePacked(address(insure_token));
-        bytes tokenB = abi.encodePacked(address(USDC));
+        bytes tokenA = address(insure_token);
+        bytes tokenB = address(USDC);
         uint24 fee = _amountOut * 3 / 1000;
 
         bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
