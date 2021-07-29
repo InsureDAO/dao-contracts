@@ -9,7 +9,7 @@ import "../libraries/token/ERC20/IERC20.sol";
 import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
-import "../interfaces/ISwapRouter.sol";
+import "../interfaces/utils/ISwapRouter.sol";
 import "../Converters/ConverterV1.sol";
 
 interface BURN{

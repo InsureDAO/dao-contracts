@@ -6,7 +6,7 @@ import "../InsureToken.sol";
 import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
-import "../interfaces/ISwapRouter.sol";
+import "../interfaces/utils/ISwapRouter.sol";
 
 //InsureDAO util contract using Uniswap V2
 contract ConverterV1{
