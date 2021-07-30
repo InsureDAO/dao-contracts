@@ -4,7 +4,7 @@
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -83,7 +83,7 @@ interface IERC20 {
 
 // File contracts/interfaces/ISmartWalletChecker.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 interface ISmartWalletChecker{
     function check(address addr)external returns(bool);
@@ -94,7 +94,7 @@ interface ISmartWalletChecker{
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Standard math utilities missing in the Solidity language.
@@ -127,7 +127,7 @@ library Math {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -290,7 +290,7 @@ library SafeMath {
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @title SignedSafeMath

@@ -3,26 +3,32 @@ pragma solidity 0.6.12;
 /***
 *@title PoolProxy
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
 *@notice Ownership proxy for Insurance Pools
 */
 
-import "./interfaces/pool/ITemplate.sol";
+//dao-contracts
 import "./interfaces/dao/IDistributor.sol";
-import "./interfaces/pool/IRegistry.sol";
-import "./interfaces/pool/IParameters.sol";
-import "./interfaces/pool/IVault.sol";
+
+//pool-contracts
 import "./interfaces/pool/IFactory.sol";
+import "./interfaces/pool/IFeeModel.sol";
+import "./interfaces/pool/IIndexTemplate.sol";
+import "./interfaces/pool/IParameters.sol";
+import "./interfaces/pool/IPoolTemplate.sol";
+import "./interfaces/pool/IPremiumModel.sol";
+import "./interfaces/pool/IRegistry.sol";
 import "./interfaces/pool/IUniversalMarket.sol";
+import "./interfaces/pool/IVault.sol";
 
-
+//libraries
 import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
-//Proxy and fee management
+
 contract PoolProxy is ReentrancyGuard{
     using SafeMath for uint256;
 
@@ -36,9 +42,9 @@ contract PoolProxy is ReentrancyGuard{
     address public ownership_admin;
     address public parameter_admin;
     address public emergency_admin;
-    mapping(address => address)public reporting_admin;
+    mapping(address => address)public reporting_admin; //Pool => Payout Decision Maker's address. (ex. ReportingDAO)
 
-    address registry;
+    address registry; //pool-contracts Registory.sol
 
     address public future_ownership_admin;
     address public future_parameter_admin;
@@ -52,12 +58,12 @@ contract PoolProxy is ReentrancyGuard{
 
     /***
     USDC
-    id 1 = dev
-    id 2 = buy back and burn
-    id 3 = reporting member
+    id 0 = dev
+    id 1 = buy back and burn
+    id 2 = reporting member
     */
 
-    mapping(address => mapping(uint256 => Distributor))public distributors; // token distibutor contracts. token => ID => Distributor / (ex. USDC => 2 => FeeDistributorV1)
+    mapping(address => mapping(uint256 => Distributor))public distributors; // token distibutor contracts. token => ID => Distributor / (ex. USDC => 1 => FeeDistributorV1)
     mapping(address => uint256) public n_distributors; //distributors# of token
     mapping(address => mapping(uint256 => uint256))public distributor_weight; // token => ID => weight
     mapping(address => mapping(uint256 => uint256))public distributable; //distributor => allocated amount
@@ -75,20 +81,23 @@ contract PoolProxy is ReentrancyGuard{
         emergency_admin = _emergency_admin;
     }
 
-    //-------- distributor ---------//
+
+    //==================================[Fee Distributor]==================================//
     function add_distributor(address _token, string memory _name, address _addr)external returns(bool){
         /***
-        *@notice add new distributor
+        *@notice add new distributor.
+        *@dev distributor weight is 0 at the moment of addition.
+        *@param _token address of fee token
+        *@param _name FeeDistributor name
+        *@param _addr FeeDistributor address
         */
         require(msg.sender == ownership_admin, "only ownership admin");
         require(_token != address(0), "_token cannot be zero address");
-
 
         Distributor memory new_distributor = Distributor({name: _name, addr: _addr});
         uint256 id = n_distributors[_token];
         distributors[_token][id] = new_distributor;
         n_distributors[_token] = n_distributors[_token].add(1);
-        //distributor weight is 0 at this point.
     }
 
     function _set_distributor(address _token, uint256 _id, Distributor memory _distributor)internal {
@@ -96,7 +105,7 @@ contract PoolProxy is ReentrancyGuard{
         *@notice overwrites new distributor to distributor already existed;
         *@dev new distributor takes over the old distributor's weight and distributable state;
         */
-        require(_id < n_distributors[_token], "not added yet");
+        require(_id < n_distributors[_token], "distributor not added yet");
 
         //if Distributor set to ZERO_ADDRESS, set the weight to 0.
         if(_distributor.addr == address(0)){
@@ -108,11 +117,12 @@ contract PoolProxy is ReentrancyGuard{
 
     function set_distributor(address _token, uint256 _id, string memory _name, address _distributor)external {
         /***
-        *@notice Set burner of `_coin` to `_burner` address
-        *@param _token Token address
-        *@param _id Distribution ID
+        *@notice Set new distributor or name or both.
+        *@dev id has to be added already.
+        *@param _token Fee Token address
+        *@param _id Distributor id
         *@param _name Distributor name
-        *@param _distributor Distributor contract address
+        *@param _distributor Distributor address
         */
         require(msg.sender == ownership_admin, "only ownership admin");
 
@@ -122,7 +132,13 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function _set_distributor_weight(address _token, uint256 _id, uint256 _weight)internal{
-        require(_id < n_distributors[_token], "not added yet");
+        /***
+        *@notice set new weight to a distributor
+        *@param _token fee token address
+        *@param _id distributor id
+        *@param _weight new weight of the distributor
+        */
+        require(_id < n_distributors[_token], "distributor not added yet");
         require(distributors[_token][_id].addr != address(0), "distributor not set");
         
         uint256 new_weight = _weight;
@@ -134,6 +150,12 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function set_distributor_weight(address _token, uint256 _id, uint256 _weight)external returns(bool){
+        /***
+        *@notice set new weight to a distributor
+        *@param _token fee token address
+        *@param _id distributor id
+        *@param _weight new weight of the distributor
+        */
         require(msg.sender == parameter_admin, "only parameter admin");
 
         _set_distributor_weight(_token, _id, _weight);
@@ -142,6 +164,13 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function set_distributor_weight_many(address[20] memory _tokens, uint256[20] memory _ids, uint256[20] memory _weights)external{
+        /***
+        *@notice set new weights to distributors[20]
+        *@param _tokens fee token addresses[20]
+        *@param _ids distributor ids[20]
+        *@param _weights new weights of the distributors[20]
+        *@dev [20] 20 is ramdomly decided and has no meaning.
+        */
         require(msg.sender == parameter_admin, "only parameter admin");
 
         for(uint256 i=0; i<20; i++){
@@ -153,20 +182,31 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function get_distributor_name(address _token, uint256 _id)external view returns(string memory){
+        /***
+        *@notice Get Function for distributor's name
+        *@param _token fee token address
+        *@param _id distributor id
+        */
         return distributors[_token][_id].name;
     }
 
     function get_distributor_address(address _token, uint256 _id)external view returns(address){
+        /***
+        *@notice Get Function for distributor's address
+        *@param _token fee token address
+        *@param _id distributor id
+        */
         return distributors[_token][_id].addr;
     }
 
-    //------------- distribution ----------------//
-    function withdraw_admin_fee(address _token) external nonReentrant{//any accounts
+
+    //==================================[Fee Distribution]==================================//
+    function withdraw_admin_fee(address _token) external nonReentrant{
         /***
         *@notice Withdraw admin fees from `_vault`
-        *@param _vault Vault address to withdraw admin fees from
+        *@dev any account can execute this function 
+        *@param _token fee token address to withdraw and allocate to the token's distributors
         */
-        //Do we really need nonReentrant for this?
         require(_token != address(0), "_token cannot be zero address");
 
         address _vault = IRegistry(registry).getVault(_token); //dev: revert when registry not set
@@ -178,16 +218,18 @@ contract PoolProxy is ReentrancyGuard{
                 uint256 aloc_point = distributor_weight[_token][id];
 
                 uint256 aloc_amount = amount.mul(aloc_point).div(total_weights[_token]); //round towards zero.
-                distributable[_token][id] = distributable[_token][id].add(aloc_amount); //count up allocated fee
+                distributable[_token][id] = distributable[_token][id].add(aloc_amount); //count up the allocated fee
             }
         }
     }
 
     /***
-    *@notice Re_allocate _token in this contract with the latest allocation. For token left after rounding down
+    *@notice Re_allocate _token in this contract with the latest allocation. For token left after rounding down or switched to zero_address
     */
     /**
     function re_allocate(address _token)external{
+        //re-allocate the all fee token in this contract with the current allocation.
+
         require(msg.sender == parameter_admin, "only parameter admin");
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
@@ -203,23 +245,30 @@ contract PoolProxy is ReentrancyGuard{
     */
 
     function _distribute(address _token, uint256 _id)internal{
-        require(_id < n_distributors[_token], "not added yet");
+        /***
+        *@notice distribute accrued `_token` via a preset distributor
+        *@param _token fee token to be distributed
+        *@param _id distributor id
+        */
+        require(_id < n_distributors[_token], "distributor not added yet");
 
         address _addr = distributors[_token][_id].addr;
         uint256 amount = distributable[_token][_id];
         distributable[_token][_id] = 0;
+
         IERC20(_token).approve(_addr, amount);
         require(IDistributor(_addr).distribute(_token), "dev: should implement distribute()");
     }
     
-    function distribute(address _token, uint256 _id)external nonReentrant{//any EOA
+    function distribute(address _token, uint256 _id)external nonReentrant{
         /***
         *@notice distribute accrued `_token` via a preset distributor
         *@dev Only callable by an EOA to prevent
+        *@param _token fee token to be distributed
         *@param _id distributor id
         */
-        assert(tx.origin == msg.sender);
-        require(!distributor_kill, "distribution killed");
+        assert(tx.origin == msg.sender); //only EOA
+        require(!distributor_kill, "distributor is killed");
 
         _distribute(_token, _id);
     }
@@ -251,7 +300,7 @@ contract PoolProxy is ReentrancyGuard{
     }
 
 
-    //-------- configuration ---------//
+    //==================================[Configuration]==================================//
     // admins
     function commit_set_admins(address _o_admin, address _p_admin, address _e_admin)external{
         /***
@@ -268,6 +317,7 @@ contract PoolProxy is ReentrancyGuard{
 
         emit CommitAdmins(_o_admin, _p_admin, _e_admin);
     }
+
     function apply_set_admins()external{
         /***
         *@notice Apply the effects of `commit_set_admins`
@@ -313,20 +363,40 @@ contract PoolProxy is ReentrancyGuard{
     }
 
 
-    //--------------Factory-----------------//
+    //==================================[Pool Contracts]==================================//
+
+    //Factory
     function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
+        /***
+        *@notice Set factory's admin to the new admin
+        *@param _future_admin new admin address
+        */
+
         require(msg.sender == ownership_admin, "Access denied");
         IFactory(_factory).commit_transfer_ownership(_future_admin);
     }
 
     function apply_transfer_ownership_factory(address _factory)external{
         /***
+        *@notice apply the commited transfer.
+        *@dev you can execute this after ADMIN_ACTIONS_DELAY(initially 3days) pass from the commit
         *@param _factory Factory address
         */
+
         IFactory(_factory).apply_transfer_ownership();
     }
 
     function approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{
+        /***
+        *@notice A function to preset reference.
+        *@dev 
+        *@param _factory Factory address
+        *@param _template_addr 
+        *@param _slot
+        *@param _target
+        *@param _approval
+        */
+
         require(msg.sender == parameter_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
@@ -347,54 +417,136 @@ contract PoolProxy is ReentrancyGuard{
         IFactory(_factory).setCondition(_template, _slot, _target);
     }
 
-    //createMarket
+    function create_market(
+        address _factory,
+        IUniversalMarket template,
+        string memory _metaData,
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals,
+        uint256[] memory _conditions,
+        address[] memory _references
+    ) external returns (address){
+        require(msg.sender == ownership_admin, "Access denied");
 
-    //--------------FeeModel-------//
-    //setFee
-    //transferOwnership
-    //applytransferOwnership
+        address _market = IFactory(_factory).createMarket(
+                                template,
+                                _metaData,
+                                _name,
+                                _symbol,
+                                _decimals,
+                                _conditions,
+                                _references
+                            );
+        
+        return _market;
+    }
 
 
-    //--------Premium model-----//
-    //setPremium
-    //setOptions
-    //transferOwnership
-    //applytransferOwnership
+    //FeeModel
+    function set_fee(address _fee, uint256 _target)external{
+
+        require(msg.sender == parameter_admin, "Access denied");
+        IFeeModel(_fee).setFee(_target);
+    }
+
+    function commit_transfer_ownership_feemodel(address _fee, address _future_owner)external{
+
+        require(msg.sender == ownership_admin, "Access denied");
+        IFeeModel(_fee).commit_transfer_ownership(_future_owner);
+    }
+
+    function apply_transfer_ownership_feemodel(address _fee)external{
+
+        IFeeModel(_fee).apply_transfer_ownership();
+    }
 
 
-    //--------------Universal(Pool/Index/CDS)-----------------//
+    //Premium model
+    function set_premium(address _premium, uint256 _baseRatePerYear, uint256 _multiplierPerYear)external{
+        
+        require(msg.sender == parameter_admin, "Access denied");
+        IPremiumModel(_premium).setPremium(_baseRatePerYear, _multiplierPerYear);
+    }
+
+    function set_options(address _premium, uint256 _a, uint256 _b, uint256 _c, uint256 _d)external{
+
+        require(msg.sender == parameter_admin, "Access denied");
+        IPremiumModel(_premium).setOptions(_a, _b, _c, _d);
+    }
+
+
+    function commit_transfer_ownership_premiummodel(address _premium, address _future_owner)external{
+        /***
+        *@param _premium address of PremiumModel contract
+        *@param _future_owner address of the future owner
+        */
+        require(msg.sender == ownership_admin, "Access denied");
+        IPremiumModel(_premium).commit_transfer_ownership(_future_owner);
+
+    }
+
+    function apply_transfer_ownership_premiummodel(address _premium)external{
+        /***
+        *@param _premium address of PremiumModel contract
+        */
+        IPremiumModel(_premium).apply_transfer_ownership();
+    }
+
+
+    //Universal(Pool/Index/CDS)
     function set_paused(address _pool, bool _state)external nonReentrant{
         /***
-        *@notice 
+        *@notice pause/unpause the pool
         *@param _pool Pool address to pause
         */
         require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied");
-        ITemplate(_pool).setPaused(_state);
+        IUniversalMarket(_pool).setPaused(_state);
     }
 
     function change_metadata(address _pool, string calldata _metadata) external {
         require(msg.sender == parameter_admin, "Access denied");
-        ITemplate(_pool).changeMetadata(_metadata);
+        IUniversalMarket(_pool).changeMetadata(_metadata);
     }
 
-    //-------Pool--------//
+
+    //Pool
     function apply_cover(
         address _pool,
         uint256 _pending,
         uint256 _payoutNumerator,
         uint256 _payoutDenominator,
         uint256 _incidentTimestamp,
-        bytes32[] calldata _targets
+        bytes32[] calldata _targets,
+        string calldata _memo
     ) external{
+        /***
+        *@notice Lat insurance holder to be able to Claim for their insurance.
+        *@dev 
+        */
+
         require(msg.sender == reporting_admin[_pool], "Access denied");
 
-        ITemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets);
+        IPoolTemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets, _memo);
     }
-    //---------Index-------//
-    //setLeverage
-    //set
 
-    //--------------Vault-----------------//
+
+    //Index
+    function set_leverage(address _index, uint256 _target)external{
+
+        require(msg.sender == parameter_admin, "Access denied");
+
+        IIndexTemplate(_index).setLeverage(_target);
+    }
+
+    function set(address _index, address _pool, uint256 _allocPoint)external{
+        require(msg.sender == parameter_admin, "Access denied");
+
+        IIndexTemplate(_index).set(_pool, _allocPoint);
+    }
+
+
+    //Vault
     function commit_transfer_ownership_vault(address _vault, address _future_owner)external{
         /***
         *@param _vault address of Vault contract of the Vault
@@ -425,7 +577,7 @@ contract PoolProxy is ReentrancyGuard{
     }
 
 
-    //--------------Parameters-----------------//
+    //Parameters
     function commit_transfer_ownership_parameters(address _parameters, address _future_owner)external{
         /***
         *@param _parameters Parameters address
@@ -443,12 +595,14 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function set_vault(address _parameters, address _token, address _vault)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setVault(_token, _vault);
     }
 
     function set_lockup(address _parameters, address _address, uint256 _target)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setLockup(_address, _target);
@@ -467,49 +621,57 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function set_premium2(address _parameters, address _address, uint256 _target)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setPremium2(_address, _target);
     }
 
     function set_fee2(address _parameters, address _address, uint256 _target)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setFee2(_address, _target);
     }
 
     function set_withdrawable(address _parameters, address _address, uint256 _target)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setWithdrawable(_address, _target);
     }
 
     function set_premium_model(address _parameters, address _address, address _target)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setPremiumModel(_address, _target);
     }
 
     function set_fee_model(address _parameters, address _address, address _target)external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setFeeModel(_address, _target);
     }
 
     function set_condition_parameters(address _parameters, bytes32 _reference, bytes32 _target) external{
+
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setCondition(_reference, _target);
     }
 
 
-    //--------------Registry-----------------//
+    //Registry
     function set_registry(address _registry)external {
+
         require(msg.sender == ownership_admin, "Access denied");
         registry = _registry;
     }
 
     function commit_transfer_ownership_registry(address _registry, address _future_admin)external{
+
         require(msg.sender == ownership_admin, "Access denied");
         IRegistry(_registry).commit_transfer_ownership(_future_admin);
     }
@@ -522,23 +684,21 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function support_market(address _registry, address _market) external{
+
         require(msg.sender == parameter_admin, "Access denied");
         IRegistry(_registry).supportMarket(_market);
     }
 
     function set_cds(address _registry, address _address, address _target) external{
+
         require(msg.sender == parameter_admin, "Access denied");
         IRegistry(_registry).setCDS(_address, _target);
     }
 
-    //function set_factory();
+    function set_factory(address _registry, address _factory)external{
 
+        require(msg.sender == ownership_admin, "Access denied");
 
-    
-
-
-    fallback()external payable{
-        // required to receive ETH fees
+        IRegistry(_registry).setFactory(_factory);
     }
-
 }

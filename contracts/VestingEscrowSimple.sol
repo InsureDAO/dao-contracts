@@ -1,31 +1,28 @@
 pragma solidity 0.6.12;
-// @version 0.2.4
+
 /***
 *@title Simple Vesting Escrow
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
 *@notice Vests `InsureToken` tokens for a single address
 *@dev Intended to be deployed many times via `VotingEscrowFactory`
 */
 
-//@shun: //from vyper.interfaces import ERC20
+//libraries
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
+
 contract VestingEscrowSimple is ReentrancyGuard{
     using SafeMath for uint256;
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
-    }
+
 
     event Fund(address indexed recipient, uint256 amount);
-
     event Claim(address indexed recipient, uint256 claimed);
     event ToggleDisable(address recipient, bool disabled);
     event CommitOwnership(address admin);
-
     event ApplyOwnership(address admin);
 
 
@@ -44,6 +41,7 @@ contract VestingEscrowSimple is ReentrancyGuard{
     address public future_admin;
 
     bool public initialized;
+
 
     constructor()public{}
 
@@ -217,5 +215,9 @@ contract VestingEscrowSimple is ReentrancyGuard{
         emit ApplyOwnership(_admin);
 
         return true;
+    }
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 }

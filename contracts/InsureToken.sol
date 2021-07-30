@@ -1,17 +1,18 @@
 pragma solidity 0.6.12;
+
 /***
 *@title InsureToken
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
 *@notice InsureDAO's governance token
-*
 */
 
+//libraries
 import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 
-//The variables will be changed to fit to insureDAO token schedule.
+
 contract InsureToken is IERC20{
     using SafeMath for uint256;
     using SignedSafeMath for int128;
@@ -68,7 +69,7 @@ contract InsureToken is IERC20{
         ];
 
     uint256 constant RATE_DENOMINATOR = 10 ** 18;
-    uint256 constant INFLATION_DELAY = 39600;
+    uint256 constant INFLATION_DELAY = 86400;
 
     // Supply variables
     int128 public mining_epoch;

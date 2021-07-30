@@ -1,14 +1,19 @@
 pragma solidity 0.6.12;
+
 /***
 *@title Gauge Controller
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
 *@notice Controls liquidity gauges and the issuance of INSURE token through the gauges
 */
 
+//dao-contracts
 import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/IVotingEscrow.sol";
+
+//libraires
 import "./libraries/math/SafeMath.sol";
+
 
 contract GaugeController{
     using SafeMath for uint256;

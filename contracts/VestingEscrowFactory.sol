@@ -3,15 +3,18 @@ pragma solidity 0.6.12;
 /***
 *@title Vesting Escrow Factory
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
 *@notice Stores and distributes `InsureToken` tokens by deploying `VestingEscrowSimple` contracts
 */
 
+//dao-contracts
 import "./VestingEscrowSimple.sol";
 
+//libraries
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/token/ERC20/IERC20.sol";
+
 
 contract VestingEscrowFactory{
     uint256 constant MIN_VESTING_DURATION = 86400 * 365; //1year

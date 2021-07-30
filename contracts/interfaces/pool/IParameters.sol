@@ -1,5 +1,5 @@
-pragma solidity ^0.6.0;
-//SPDX-License-Identifier: MIT
+pragma solidity 0.6.12;
+
 interface IParameters {
     function commit_transfer_ownership(address _owner) external ;
 
@@ -17,19 +17,15 @@ interface IParameters {
 
     function setFee2(address _address, uint256 _target) external ;
 
-    function setWithdrawable(address _address, uint256 _target)
-        external
-        ;
+    function setWithdrawable(address _address, uint256 _target)external;
 
-    function setPremiumModel(address _address, address _target)
-        external
-        ;
+    function setPremiumModel(address _address, address _target)external;
 
     function setFeeModel(address _address, address _target) external ;
 
     function setCondition(bytes32 _reference, bytes32 _target) external ;
 
-    function getVault(address _token) external view  returns (address);
+    function getVault(address _token) external view returns (address);
 
     function getPremium(
         uint256 _amount,
@@ -39,43 +35,14 @@ interface IParameters {
         address _target
     ) external view  returns (uint256);
 
-    function getFee(uint256 _amount, address _target)
-        external
-        view
-        
-        returns (uint256);
-
+    function getFee(uint256 _amount, address _target) external view returns (uint256);
     function getLockup(address _target) external view  returns (uint256);
-
-    function getWithdrawable(address _target)
-        external
-        view
-        
-        returns (uint256);
-
+    function getWithdrawable(address _target) external view returns (uint256);
     function getGrace(address _target) external view  returns (uint256);
-
     function get_owner() external view  returns (address);
-
     function isOwner() external view  returns (bool);
-
     function getMin(address _target) external view  returns (uint256);
-
-    function getFee2(uint256 _amoun, address _targett)
-        external
-        view
-        
-        returns (uint256);
-
-    function getPremium2(uint256 _amount, address _target)
-        external
-        view
-        
-        returns (uint256);
-
-    function getCondition(bytes32 _reference)
-        external
-        view
-        
-        returns (bytes32);
+    function getFee2(uint256 _amoun, address _targett)external view returns (uint256);
+    function getPremium2(uint256 _amount, address _target) external view returns (uint256);
+    function getCondition(bytes32 _reference) external view returns (bytes32);
 }

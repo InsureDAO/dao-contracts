@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -77,7 +77,7 @@ interface IERC20 {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -240,7 +240,7 @@ library SafeMath {
 
 
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @title SignedSafeMath

@@ -1,3 +1,5 @@
+// Sources flattened with hardhat v2.3.3 https://hardhat.org
+
 // File contracts/interfaces/dao/IInsureToken.sol
 
 pragma solidity 0.6.12;
@@ -21,7 +23,7 @@ interface IVotingEscrow {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow

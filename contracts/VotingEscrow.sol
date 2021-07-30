@@ -1,11 +1,13 @@
 pragma solidity 0.6.12;
 
 /***
+*@title VotingEscrow
+*@author InsureDAO
+* SPDX-License-Identifier: MIT
 *@notice Votes have a weight depending on time, so that users are
 *        committed to the future of (whatever they are voting for)
 *@dev Vote weight decays linearly over time. Lock time cannot be
 *     more than `MAXTIME` (4 years).
-*SPDX-License-Identifier: MIT
 */
 
 // Voting escrow to have time-weighted votes
@@ -515,14 +517,8 @@ contract VotingEscrow is ReentrancyGuard{
     }
 
     //for Metamask
+    /**
     function balanceOf(address addr)external view returns (uint256){
-        /***
-        *@notice Get the current voting power for `msg.sender`
-        *@dev Adheres to the ERC20 `balanceOf` interface for Aragon compatibility
-        *@param addr User wallet address
-        *@param _t Epoch time to return voting power at
-        *@return User voting power
-        */
 
         uint256 _t = block.timestamp;
 
@@ -538,6 +534,7 @@ contract VotingEscrow is ReentrancyGuard{
             return uint256(last_point.bias);
         }
     }
+    */
     
     function balanceOf(address addr , uint256 _t)external view returns (uint256){
         /***
@@ -681,18 +678,15 @@ contract VotingEscrow is ReentrancyGuard{
         
     }
 
+    /**
     function totalSupply()external view returns (uint256){
-        /***
-        *@notice Calculate total voting power
-        *@dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
-        *@return Total voting power
-        */
 
         uint256 _epoch = epoch;
         Point memory last_point = point_history[_epoch];
 
         return supply_at(last_point, block.timestamp);
     }
+    */
 
     function totalSupplyAt(uint256 _block)external view returns (uint256){
         /***

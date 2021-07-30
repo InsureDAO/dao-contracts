@@ -41,12 +41,13 @@ async function main() {
         ["Liquidity", BigNumber.from("1000000000000000000")], //10**18
     ]
 
-    const REGISTRY_ADDRESS = "0xB7367991F61d84B470BC7d20F048f36F1389DE5C";
+    const REGISTRY_ADDRESS = "0x6eFACff8FDaA653F6D68E3ba31513b244A6ad854";
     const POOL_TOKENS = [
-        ["Pool1", "0xce28BdF947Fb8c93E573B52623CA3E8Dc0144480" , 12],
-        ["Pool2", "0x27dE2e5f19517E549c28C89a2D7Fe414da350cf1" , 24],
-        ["Index1", "0xbd90355987B06b7E2b1d46EF79A85BfA95848eD9", 100],
-        ["CDS", "0x6Ad551a4a1AB80645c475E6257E6fe923864e12F", 200]
+        ["Pool1", "0x91b83350191c074D546C5a08543F43654b158644", 50],
+        ["Pool2", "0x6a22655937421455dd0e5Fd183d682B5aa7929AB", 50],
+        ["Pool3", "0x1BbfA885937c4D487D92eDA8D0f983445E77448e", 50],
+        ["Index1", "0x8124A7036357032eE015bC47bF56CD7CD84DC137", 200],
+        ["CDS", "0xD7C6faE99fEc133fF3412C38D56ec79Ef0E386B3", 100]
     ]
 
     const POOL_PROXY_ADMINS = {
@@ -107,7 +108,7 @@ async function main() {
     };
     console.log((await gauge_controller.gauge_type_names(1))); //Liquidity
 
-    //LiquidityGauge x4
+    //LiquidityGauge x5
     for(let el in POOL_TOKENS){ //LiquidityGauge
         let name = POOL_TOKENS[el][0];
         let lp_token = POOL_TOKENS[el][1];

@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 //SPDX-License-Identifier: MIT
 interface IVault {
     function commit_transfer_ownership(address)external;

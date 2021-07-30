@@ -5,20 +5,23 @@ pragma solidity 0.6.12;
 *@author InsureDAO
 * SPDX-License-Identifier: MIT
 *@notice Used for measuring liquidity and insurance
-*
 */
 
+//dao-contracts
 import "./GaugeController.sol";
 import "./InsureToken.sol";
-import "./VotingEscrow.sol";
-
 import "./interfaces/dao/IMinter.sol";
-import "./interfaces/pool/ITemplate.sol";
+import "./interfaces/dao/IVotingEscrow.sol";
 
+//pool-contracts
+import "./interfaces/pool/IPoolTemplate.sol";
+
+//libraries
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
+
 
 contract LiquidityGauge is ReentrancyGuard{
     using SafeMath for uint256;
@@ -31,15 +34,15 @@ contract LiquidityGauge is ReentrancyGuard{
     event ApplyOwnership(address admin); 
 
     uint256 constant TOKENLESS_PRODUCTION = 40;
-    uint256 constant BOOST_WARMUP = 0;
+    uint256 constant BOOST_WARMUP = 14*86400;
     uint256 constant WEEK = 604800;
 
     //Contracts
     IMinter public minter;
     InsureToken public insure_token;
-    ITemplate public template;
+    IPoolTemplate public template;
     GaugeController public controller;
-    VotingEscrow public voting_escrow;
+    IVotingEscrow public voting_escrow;
 
 
     mapping(address => uint256) public balanceOf;
@@ -87,12 +90,12 @@ contract LiquidityGauge is ReentrancyGuard{
         assert (lp_addr != address(0));
         assert (_minter != address(0));
 
-        template = ITemplate(lp_addr);
+        template = IPoolTemplate(lp_addr);
         minter = IMinter(_minter);
         address insure_addr = minter.insure_token();
         insure_token = InsureToken(insure_addr);
         controller = GaugeController(minter.gauge_controller());
-        voting_escrow = VotingEscrow(controller.get_voting_escrow());
+        voting_escrow = IVotingEscrow(controller.get_voting_escrow());
         period_timestamp[0] = block.timestamp;
         inflation_rate = insure_token.get_rate();
         future_epoch_time = insure_token.future_epoch_time_write();

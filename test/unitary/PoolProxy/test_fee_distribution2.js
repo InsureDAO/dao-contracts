@@ -214,7 +214,7 @@ describe('PoolProxy', () => {
         it("expect revert", async()=>{
             await pool_proxy.connect(bob).set_distributor_kill(true);
 
-            await expect(pool_proxy.distribute(fee_token.address, 0)).to.revertedWith("distribution killed");
+            await expect(pool_proxy.distribute(fee_token.address, 0)).to.revertedWith("distributor is killed");
         });
 
         it("expect revert", async()=>{

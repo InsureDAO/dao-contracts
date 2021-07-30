@@ -23,7 +23,7 @@ interface IVotingEscrow {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -778,9 +778,9 @@ contract GaugeController{
 
 // File contracts/libraries/token/ERC20/IERC20.sol
 
-// 
 
-pragma solidity ^0.6.0;
+
+pragma solidity 0.6.12;
 
 /***
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -859,9 +859,9 @@ interface IERC20 {
 
 // File contracts/libraries/math/SignedSafeMath.sol
 
-// 
 
-pragma solidity ^0.6.0;
+
+pragma solidity 0.6.12;
 
 /***
  * @title SignedSafeMath
@@ -1025,7 +1025,7 @@ contract InsureToken is IERC20{
         ];
 
     uint256 constant RATE_DENOMINATOR = 10 ** 18;
-    uint256 constant INFLATION_DELAY = 39600;
+    uint256 constant INFLATION_DELAY = 43200;
 
     // Supply variables
     int128 public mining_epoch;
@@ -1370,7 +1370,7 @@ contract InsureToken is IERC20{
 
 // File contracts/interfaces/dao/ISmartWalletChecker.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 interface ISmartWalletChecker{
     function check(address addr)external returns(bool);
@@ -1379,9 +1379,9 @@ interface ISmartWalletChecker{
 
 // File contracts/libraries/math/Math.sol
 
-// 
 
-pragma solidity ^0.6.0;
+
+pragma solidity 0.6.12;
 
 /***
  * @dev Standard math utilities missing in the Solidity language.
@@ -1414,7 +1414,7 @@ library Math {
 
 // File contracts/libraries/utils/ReentrancyGuard.sol
 
-// 
+
 
 pragma solidity >=0.6.0 <0.8.0;
 
@@ -2226,7 +2226,7 @@ interface IGaugeController {
 
 // File contracts/interfaces/dao/IMinter.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 
 interface IMinter {
@@ -2239,7 +2239,7 @@ interface IMinter {
 
 // File contracts/interfaces/pool/ITemplate.sol
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 interface ITemplate {
 

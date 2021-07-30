@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 interface IConverter {
     function swap_exact_to_insure(uint256 _amountIn, address _to)external returns(bool);

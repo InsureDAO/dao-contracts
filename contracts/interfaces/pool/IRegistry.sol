@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 //SPDX-License-Identifier: MIT
 interface IRegistry {
     function commit_transfer_ownership(address)external;
@@ -12,4 +12,6 @@ interface IRegistry {
     function isListed(address _market) external view returns (bool);
 
     function getVault(address _token) external view returns(address);
+
+    function setFactory(address _factory) external;
 }

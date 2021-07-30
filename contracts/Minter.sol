@@ -1,25 +1,25 @@
 pragma solidity 0.6.12;
+
 /***
 *@title Token Minter
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
+*@notice Used to mint InsureToken
 */
 
-import "./InsureToken.sol";
-import "./LiquidityGauge.sol";
-import "./GaugeController.sol";
-
+//dao-contracts
 import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/ILiquidityGauge.sol";
 import "./interfaces/dao/IGaugeController.sol";
 import "./interfaces/dao/IConverter.sol";
 
-
+//libraries
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
 import "./interfaces/pool/IRegistry.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
+
 
 contract Minter is ReentrancyGuard{
     using SafeMath for uint256;

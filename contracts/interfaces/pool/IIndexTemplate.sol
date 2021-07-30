@@ -1,4 +1,4 @@
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 //SPDX-License-Identifier: MIT
 interface IIndexTemplate {
     function setLeverage(uint256 _target) external;

@@ -3,14 +3,16 @@ pragma solidity 0.6.12;
 /***
 *@title Vesting Escrow
 *@author InsureDAO
-*SPDX-License-Identifier: MIT
+* SPDX-License-Identifier: MIT
 *@notice Vests `InsureToken` tokens for multiple addresses over multiple vesting periods
 */
 
+//libraries
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
+
 
 contract VestingEscrow is ReentrancyGuard{
     using SafeMath for uint256;

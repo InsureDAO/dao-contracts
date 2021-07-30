@@ -4,7 +4,7 @@
  * @notice This contract manages parameters of markets.
  */
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "../libraries/math/SafeMath.sol";
