@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 //SPDX-License-Identifier: MIT
 /***
 * Buy back and burn Insure Token from USDC/Insure pool on Uniswap.

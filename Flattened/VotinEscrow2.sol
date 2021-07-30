@@ -5,7 +5,7 @@
 
 
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -84,7 +84,7 @@ interface IERC20 {
 
 // File contracts/interfaces/ISmartWalletChecker.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface ISmartWalletChecker{
     function check(address addr)external returns(bool);
@@ -95,7 +95,7 @@ interface ISmartWalletChecker{
 
 
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Standard math utilities missing in the Solidity language.
@@ -128,7 +128,7 @@ library Math {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -289,7 +289,7 @@ library SafeMath {
 
 // File contracts/libraries/math/SignedSafeMath.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @title SignedSafeMath
@@ -451,7 +451,7 @@ abstract contract ReentrancyGuard {
 
 // File contracts/VotingEscrow.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
 *@notice Votes have a weight depending on time, so that users are

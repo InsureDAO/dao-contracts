@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 //SPDX-License-Identifier: MIT
 interface IInsureToken {
     function mint(address _to, uint256 _value)external returns(bool);

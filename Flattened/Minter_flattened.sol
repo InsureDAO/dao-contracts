@@ -4,7 +4,7 @@
 
 
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -83,7 +83,7 @@ interface IERC20 {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -246,7 +246,7 @@ library SafeMath {
 
 
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @title SignedSafeMath
@@ -342,7 +342,7 @@ library SignedSafeMath {
 
 // File contracts/InsureToken.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 /***
 *@title InsureToken
 *@author InsureDAO
@@ -755,7 +755,7 @@ contract InsureToken is IERC20{
 
 // File contracts/interfaces/dao/IInsureToken.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IInsureToken {
     function mint(address _to, uint256 _value)external returns(bool);
@@ -766,7 +766,7 @@ interface IInsureToken {
 
 // File contracts/interfaces/dao/IVotingEscrow.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IVotingEscrow {
     function get_last_user_slope(address addr)external view returns(uint256);
@@ -776,7 +776,7 @@ interface IVotingEscrow {
 
 // File contracts/GaugeController.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 /***
 *@title Gauge Controller
 *@author InsureDAO
@@ -1370,7 +1370,7 @@ contract GaugeController{
 
 // File contracts/interfaces/dao/ISmartWalletChecker.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface ISmartWalletChecker{
     function check(address addr)external returns(bool);
@@ -1381,7 +1381,7 @@ interface ISmartWalletChecker{
 
 
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Standard math utilities missing in the Solidity language.
@@ -1480,7 +1480,7 @@ abstract contract ReentrancyGuard {
 
 // File contracts/VotingEscrow.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
 *@notice Votes have a weight depending on time, so that users are
@@ -2217,7 +2217,7 @@ contract VotingEscrow is ReentrancyGuard{
 
 // File contracts/interfaces/dao/IGaugeController.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IGaugeController {
     function gauge_types(address _addr)external view returns(uint256);
@@ -2226,7 +2226,7 @@ interface IGaugeController {
 
 // File contracts/interfaces/dao/IMinter.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 
 interface IMinter {
@@ -2239,7 +2239,7 @@ interface IMinter {
 
 // File contracts/interfaces/pool/ITemplate.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface ITemplate {
 
@@ -2289,7 +2289,7 @@ interface ITemplate {
 
 // File contracts/LiquidityGauge.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
 *@title Liquidity Gauge
@@ -2640,7 +2640,7 @@ contract LiquidityGauge is ReentrancyGuard{
 
 // File contracts/interfaces/dao/ILiquidityGauge.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface ILiquidityGauge {
     function user_checkpoint(address addr)external returns (bool);
@@ -2650,7 +2650,7 @@ interface ILiquidityGauge {
 
 // File contracts/interfaces/dao/IConverter.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IConverter {
     function swap_exact_to_insure(uint256 _amountIn, address _to)external returns(bool);
@@ -2661,7 +2661,7 @@ interface IConverter {
 
 // File contracts/interfaces/pool/IRegistry.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IRegistry {
     function commit_transfer_ownership(address)external;
@@ -2680,7 +2680,7 @@ interface IRegistry {
 
 // File contracts/Minter.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 /***
 *@title Token Minter
 *@author InsureDAO

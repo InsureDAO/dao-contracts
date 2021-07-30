@@ -2,7 +2,7 @@
 
 // File contracts/interfaces/dao/IInsureToken.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IInsureToken {
     function mint(address _to, uint256 _value)external returns(bool);
@@ -13,7 +13,7 @@ interface IInsureToken {
 
 // File contracts/interfaces/dao/IVotingEscrow.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IVotingEscrow {
     function get_last_user_slope(address addr)external view returns(uint256);
@@ -23,7 +23,7 @@ interface IVotingEscrow {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -184,7 +184,7 @@ library SafeMath {
 
 // File contracts/GaugeController.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 /***
 *@title Gauge Controller
 *@author InsureDAO

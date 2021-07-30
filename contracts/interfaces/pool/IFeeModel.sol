@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 interface IFeeModel {
     function getFee(uint256 _premium) external view returns (uint256);

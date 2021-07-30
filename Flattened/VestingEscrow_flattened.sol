@@ -2,7 +2,7 @@
 
 // File contracts/libraries/math/Math.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Standard math utilities missing in the Solidity language.
@@ -35,7 +35,7 @@ library Math {
 
 // File contracts/libraries/math/SafeMath.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -196,7 +196,7 @@ library SafeMath {
 
 // File contracts/libraries/token/ERC20/IERC20.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -339,7 +339,7 @@ abstract contract ReentrancyGuard {
 
 // File contracts/VestingEscrow.sol
 
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 
 /***
 *@title Vesting Escrow

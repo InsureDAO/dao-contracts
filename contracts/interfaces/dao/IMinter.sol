@@ -1,4 +1,4 @@
-pragma solidity 0.6.12;
+pragma solidity ^0.7.5;
 //SPDX-License-Identifier: MIT
 import "./IGaugeController.sol";
 interface IMinter {
