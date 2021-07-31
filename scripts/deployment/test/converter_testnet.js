@@ -23,6 +23,10 @@ async function main() {
     const TestToken = await hre.ethers.getContractFactory("TestToken");
     const GaugeController = await hre.ethers.getContractFactory("GaugeController");
     const Minter = await hre.ethers.getContractFactory("Minter");
+    const VotingEscrow = await hre.ethers.getContractFactory("VotingEscrow");
+    const ConverterV1 = await hre.ethers.getContractFactory("ConverterV1");
+
+    const ARAGON_AGENT = "0x1000000000000000000000000000000000000000";
 
     //config
     const name = "InsureToken";
@@ -39,6 +43,15 @@ async function main() {
     const token = await TestToken.deploy(name, simbol, decimal);
     await token._mint_for_testing(100);
     console.log("InsureToken deployed to:", token.address);
+    
+    const voting_escrow = await VotingEscrow.deploy(
+        token.address,
+        "Vote-escrowed INSURE",
+        "veINSURE",
+        "veINSURE_1.0.0"
+    );
+    console.log("VotingEscrow deployed to:", voting_escrow.address);
+    await voting_escrow.changeController(ARAGON_AGENT);
 
     //GaugeController
     const gauge_controller = await GaugeController.deploy(
@@ -50,14 +63,10 @@ async function main() {
     //Minter
     const minter = await Minter.deploy(token.address, gauge_controller.address, REGISTRY_ADDRESS);
     console.log("Minter deployed to:", minter.address);
-    let tx = await token.set_minter(minter.address);
-    await tx.wait();
-    console.log("InsureToken minter is:", await token.minter());
 
-    const ConverterV1 = await hre.ethers.getContractFactory("ConverterV1");
+    //ConverterV1
     const converter = await ConverterV1.deploy(token.address);
-
-    await minter.emergency_mint(100);
+    console.log("ConverterV1 deployed to:", converter.address);
 
     console.log("========== Basic Deployment END ==========");
 

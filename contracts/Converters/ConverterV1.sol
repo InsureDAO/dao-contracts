@@ -7,6 +7,7 @@ import "../libraries/math/Math.sol";
 import "../libraries/math/SafeMath.sol";
 import "../libraries/utils/ReentrancyGuard.sol";
 import "../interfaces/utils/ISwapRouter.sol";
+import "../interfaces/utils/IQuoter.sol";
 
 //InsureDAO util contract using Uniswap V2
 contract ConverterV1{
@@ -14,22 +15,17 @@ contract ConverterV1{
 
     ISwapRouter public UniswapV3 = ISwapRouter(0x273Edaa13C845F605b5886Dd66C89AB497A6B17b); //rinkeby
     IQuoter public Quoter = IQuoter(0x91a64CCaead471caFF912314E466D9CF7C55E0E8); //rinkeby
-    InsureToken public insure_token;
     IERC20 public WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2); //rinkeby
     IERC20 public USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby
+    
+    InsureToken public insure_token;
 
     /// @dev The length of the bytes encoded address
     uint256 private constant ADDR_SIZE = 20;
     /// @dev The length of the bytes encoded fee
     uint256 private constant FEE_SIZE = 3;
-
     /// @dev The offset of a single token address and pool fee
     uint256 private constant NEXT_OFFSET = ADDR_SIZE + FEE_SIZE;
-
-    struct SwapCallbackData {
-        bytes path;
-        address payer;
-    }
 
     constructor(address _insure)public{
         insure_token = InsureToken(_insure);
@@ -43,22 +39,20 @@ contract ConverterV1{
         require(USDC.transferFrom(msg.sender, address(this), _amountIn), 'transferFrom failed.');
         require(USDC.approve(address(UniswapV3), _amountIn), 'approve failed.');
 
-        bytes tokenA = address(USDC);
-        bytes tokenB = address(insure_token);
-        uint24 fee = _amountIn * 3 / 1000;
+        bytes memory tokenA = abi.encode(address(USDC));
+        bytes memory tokenB = abi.encode(address(insure_token));
+        bytes memory fee = abi.encode(_amountIn * 3 / 1000);
 
-        bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
+        bytes memory path = new bytes(NEXT_OFFSET + ADDR_SIZE);
+        assembly {
+            mstore(add(path, 20), tokenA)
+            mstore(add(path, 23), fee)
+            mstore(add(path, 43), tokenB)
+        }
 
-        UniswapV3.uniswapV3SwapCallback(_amountIn, 0, data);
+        bytes memory data = abi.encode(path, _to);
 
-
-        // address[] memory path = new address[](3);
-        // path[0] = address(USDC);
-        // path[1] = address(WETH);
-        // path[2] = address(insure_token); //insure token
-
-        //swap
-        // UniswapV2.swapExactTokensForTokens(_amountIn, 0, path, _to, block.timestamp.add(25));
+        UniswapV3.uniswapV3SwapCallback(int256(_amountIn), 0, data);
 
         return true;
     }
@@ -69,15 +63,20 @@ contract ConverterV1{
     */
     function getAmountsIn(uint256 _amountOut)external view returns(uint256){
         
-        bytes tokenA = address(insure_token);
-        bytes tokenB = address(USDC);
-        uint24 fee = _amountOut * 3 / 1000;
+        bytes memory tokenA = abi.encode(address(insure_token));
+        bytes memory tokenB = abi.encode(address(USDC));
+        bytes memory fee = abi.encode(_amountOut * 3 / 1000);
 
-        uint256 amountIn = Quoter.quoteExactOutput(abi.encodePacked(tokenA, fee, tokenB), _amountOut);
+        bytes memory path = new bytes(NEXT_OFFSET + ADDR_SIZE);
+        assembly {
+            mstore(add(path, 20), tokenA)
+            mstore(add(path, 23), fee)
+            mstore(add(path, 43), tokenB)
+        }
+
+        uint256 amountIn = Quoter.quoteExactOutput(path, _amountOut);
 
         return amountIn;
-
-        // uint256[] memory amountsIn = UniswapV2.getAmountsIn(_amountOut, path);
     }
 
     /***
@@ -88,20 +87,20 @@ contract ConverterV1{
         require(insure_token.transferFrom(msg.sender, address(this), _amountInMax), 'transferFrom failed.');
         require(insure_token.approve(address(UniswapV3), _amountInMax), 'approve failed.');
 
-        bytes tokenA = address(insure_token);
-        bytes tokenB = address(USDC);
-        uint24 fee = _amountOut * 3 / 1000;
+        bytes memory tokenA = abi.encode(address(insure_token));
+        bytes memory tokenB = abi.encode(address(USDC));
+        bytes memory fee = abi.encode(_amountOut * 3 / 1000);
 
-        bytes data = SwapCallbackData({path: abi.encodePacked(tokenA, fee, tokenB), payer: _to});
+        bytes memory path = new bytes(NEXT_OFFSET + ADDR_SIZE);
+        assembly {
+            mstore(add(path, 20), tokenA)
+            mstore(add(path, 23), fee)
+            mstore(add(path, 43), tokenB)
+        }
 
-        UniswapV3.uniswapV3SwapCallback(_amountOut, _amountInMax, data);
+        bytes memory data = abi.encode(path, _to);
 
-        // address[] memory path = new address[](3);
-        // path[0] = address(insure_token); //insure token
-        // path[1] = address(WETH);
-        // path[2] = address(USDC);
-        
-        // UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp.add(25));
+        UniswapV3.uniswapV3SwapCallback(int256(_amountOut), int256(_amountInMax), data);
         
         return true;
     }

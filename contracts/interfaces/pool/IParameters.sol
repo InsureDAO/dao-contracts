@@ -55,10 +55,6 @@ interface IParameters {
 
     function getGrace(address _target) external view virtual returns (uint256);
 
-    function get_owner() public view virtual returns (address);
-
-    function isOwner() public view virtual returns (bool);
-
     function getMin(address _target) external view virtual returns (uint256);
 
     function getFee2(uint256 _amoun, address _targett)
@@ -78,5 +74,4 @@ interface IParameters {
         view
         virtual
         returns (bytes32);
-}
 }
