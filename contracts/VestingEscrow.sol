@@ -50,7 +50,7 @@ contract VestingEscrow is ReentrancyGuard{
         uint256 _end_time,
         bool _can_disable, 
         address[4] memory _fund_admins
-    )public {
+    ){
         /***
         *@param _token Address of the ERC20 token being distributed
         *@param _start_time Timestamp at which the distribution starts. Should be in

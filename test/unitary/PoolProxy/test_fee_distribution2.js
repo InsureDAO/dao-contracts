@@ -40,7 +40,7 @@ describe('PoolProxy', () => {
 
         //registry deploy
         registry = await Registry.deploy();
-        await pool_proxy.set_registry(registry.address);
+        await pool_proxy.set_parameters(registry.address); // function get_vault() was moved from Registry.sol to Parameters.sol. Still uses TestRegistry.sol since the function is totally same.
         
         //vault deploy
         vault = await Vault.deploy(fee_token.address);

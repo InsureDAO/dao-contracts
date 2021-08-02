@@ -23,7 +23,6 @@ pragma solidity ^0.7.5;
 // 0 +--------+------> time
 //       maxtime (4 years?)
 
-import "./libraries/token/ERC20/IERC20.sol";
 
 // Interface for checking whether address belongs to a whitelisted
 // type of a smart wallet.
@@ -32,6 +31,8 @@ import "./libraries/token/ERC20/IERC20.sol";
 // for individual wallet addresses
 import "./interfaces/dao/ISmartWalletChecker.sol";
 
+//libraries
+import "./libraries/token/ERC20/IERC20.sol";
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
@@ -105,7 +106,7 @@ contract VotingEscrow is ReentrancyGuard{
     address public admin;  // Can and will be a smart contract
     address public future_admin;
 
-    constructor(address token_addr, string memory _name, string memory _symbol, string memory _version)public {
+    constructor(address token_addr, string memory _name, string memory _symbol, string memory _version){
         /***
         *@notice Contract constructor
         *@param token_addr `InsureToken` token address

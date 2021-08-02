@@ -44,7 +44,7 @@ contract PoolProxy is ReentrancyGuard{
     address public emergency_admin;
     mapping(address => address)public reporting_admin; //Pool => Payout Decision Maker's address. (ex. ReportingDAO)
 
-    address registry; //pool-contracts Registory.sol
+    address parameters; //pool-contracts Parameters.sol
 
     address public future_ownership_admin;
     address public future_parameter_admin;
@@ -64,7 +64,7 @@ contract PoolProxy is ReentrancyGuard{
     */
 
     mapping(address => mapping(uint256 => Distributor))public distributors; // token distibutor contracts. token => ID => Distributor / (ex. USDC => 1 => FeeDistributorV1)
-    mapping(address => uint256) public n_distributors; //distributors# of token
+    mapping(address => uint256) public n_distributors; //token => distrobutor#
     mapping(address => mapping(uint256 => uint256))public distributor_weight; // token => ID => weight
     mapping(address => mapping(uint256 => uint256))public distributable; //distributor => allocated amount
     mapping(address => uint256)public total_weights; //token => total allocation point
@@ -75,7 +75,7 @@ contract PoolProxy is ReentrancyGuard{
         address _ownership_admin,
         address _parameter_admin,
         address _emergency_admin
-    )public{
+    ){
         ownership_admin = _ownership_admin;
         parameter_admin = _parameter_admin;
         emergency_admin = _emergency_admin;
@@ -209,7 +209,7 @@ contract PoolProxy is ReentrancyGuard{
         */
         require(_token != address(0), "_token cannot be zero address");
 
-        address _vault = IRegistry(registry).getVault(_token); //dev: revert when registry not set
+        address _vault = IParameters(parameters).getVault(_token); //dev: revert when parameters not set
         uint256 amount = IVault(_vault).withdrawAllAttribution(address(this));
 
         if(amount != 0){
@@ -578,6 +578,12 @@ contract PoolProxy is ReentrancyGuard{
 
 
     //Parameters
+    function set_parameters(address _parameters)external {
+
+        require(msg.sender == ownership_admin, "Access denied");
+        parameters = _parameters;
+    }
+
     function commit_transfer_ownership_parameters(address _parameters, address _future_owner)external{
         /***
         *@param _parameters Parameters address
@@ -664,12 +670,6 @@ contract PoolProxy is ReentrancyGuard{
 
 
     //Registry
-    function set_registry(address _registry)external {
-
-        require(msg.sender == ownership_admin, "Access denied");
-        registry = _registry;
-    }
-
     function commit_transfer_ownership_registry(address _registry, address _future_admin)external{
 
         require(msg.sender == ownership_admin, "Access denied");

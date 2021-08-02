@@ -80,7 +80,7 @@ contract InsureToken is IERC20{
 
     uint256 public emergency_minted;
 
-    constructor(string memory _name, string memory _symbol, uint256 _decimal) public {
+    constructor(string memory _name, string memory _symbol, uint256 _decimal){
         /***
         * @notice Contract constructor
         * @param _name Token full name
@@ -103,10 +103,9 @@ contract InsureToken is IERC20{
         start_epoch_supply = init_supply;
     }
 
-    //delete this
-    function get_rate()external view returns(uint256){
-        return rate;
-    }
+    //function get_rate()external view returns(uint256){
+    //    return rate;
+    //}
 
     function decimals() public view returns (uint256) {
         return _decimals;

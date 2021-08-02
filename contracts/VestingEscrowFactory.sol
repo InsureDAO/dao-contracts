@@ -8,7 +8,7 @@ pragma solidity ^0.7.5;
 */
 
 //dao-contracts
-import "./VestingEscrowSimple.sol";
+import "./VestingEscrowSimple.sol"; //For the flatten file readability, import the contract directly.
 
 //libraries
 import "./libraries/math/SafeMath.sol";
@@ -27,7 +27,7 @@ contract VestingEscrowFactory{
     address public target;
     address public latest_deployed_address; //For test
 
-    constructor(address _target ,address _admin)public {
+    constructor(address _target ,address _admin){
         /***
         *@notice Contract constructor
         *@dev Prior to deployment you must deploy one copy of `VestingEscrowSimple` which

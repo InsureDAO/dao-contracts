@@ -8,8 +8,8 @@ pragma solidity ^0.7.5;
 */
 
 //dao-contracts
-import "./GaugeController.sol";
-import "./InsureToken.sol";
+import "./interfaces/dao/IGaugeController.sol";
+import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/IMinter.sol";
 import "./interfaces/dao/IVotingEscrow.sol";
 
@@ -39,9 +39,9 @@ contract LiquidityGauge is ReentrancyGuard{
 
     //Contracts
     IMinter public minter;
-    InsureToken public insure_token;
+    IInsureToken public insure_token;
     IPoolTemplate public template;
-    GaugeController public controller;
+    IGaugeController public controller;
     IVotingEscrow public voting_escrow;
 
 
@@ -79,7 +79,7 @@ contract LiquidityGauge is ReentrancyGuard{
     address public future_admin; // Can and will be a smart contract
     bool public is_killed;
 
-    constructor(address lp_addr, address _minter, address _admin)public{
+    constructor(address lp_addr, address _minter, address _admin){
         /***
         *@notice Contract constructor
         *@param lp_addr Liquidity Pool contract address
@@ -93,11 +93,11 @@ contract LiquidityGauge is ReentrancyGuard{
         template = IPoolTemplate(lp_addr);
         minter = IMinter(_minter);
         address insure_addr = minter.insure_token();
-        insure_token = InsureToken(insure_addr);
-        controller = GaugeController(minter.gauge_controller());
+        insure_token = IInsureToken(insure_addr);
+        controller = IGaugeController(minter.gauge_controller());
         voting_escrow = IVotingEscrow(controller.get_voting_escrow());
         period_timestamp[0] = block.timestamp;
-        inflation_rate = insure_token.get_rate();
+        inflation_rate = insure_token.rate();
         future_epoch_time = insure_token.future_epoch_time_write();
         admin = _admin;
     }
@@ -163,7 +163,7 @@ contract LiquidityGauge is ReentrancyGuard{
         _.prev_future_epoch = future_epoch_time;
         if (_.prev_future_epoch >= _._period_time){//update future_epoch_time & inflation_rate
             future_epoch_time = insure_token.future_epoch_time_write();
-            _.new_rate = insure_token.get_rate();
+            _.new_rate = insure_token.rate();
             inflation_rate = _.new_rate;
         }
         controller.checkpoint_gauge(address(this));

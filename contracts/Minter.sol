@@ -13,11 +13,13 @@ import "./interfaces/dao/ILiquidityGauge.sol";
 import "./interfaces/dao/IGaugeController.sol";
 import "./interfaces/dao/IConverter.sol";
 
+//pool-contracts
+import "./interfaces/pool/IRegistry.sol";
+
 //libraries
 import "./libraries/math/Math.sol";
 import "./libraries/math/SafeMath.sol";
 import "./libraries/math/SignedSafeMath.sol";
-import "./interfaces/pool/IRegistry.sol";
 import "./libraries/utils/ReentrancyGuard.sol";
 
 
@@ -44,7 +46,7 @@ contract Minter is ReentrancyGuard{
     mapping(address => mapping(address => bool))public allowed_to_mint_for; // A can mint for B if [A => B => true].
 
 
-    constructor(address _token, address _controller, address _registry)public{
+    constructor(address _token, address _controller, address _registry){
         insure_token = IInsureToken(_token);
         gauge_controller = IGaugeController(_controller);
         registry = IRegistry(_registry);

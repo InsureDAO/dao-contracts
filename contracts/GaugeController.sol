@@ -89,7 +89,7 @@ contract GaugeController{
     mapping (uint256 => mapping(uint256 => uint256)) public points_type_weight;  // type_id -> time -> type weight
     uint256[1000000000] public time_type_weight; // type_id -> last scheduled time (next week)
 
-    constructor(address _token, address _voting_escrow)public {
+    constructor(address _token, address _voting_escrow){
         /***
         *@notice Contract constructor
         *@param _token `InsureToken` contract address

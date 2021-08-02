@@ -11,7 +11,5 @@ interface IRegistry {
 
     function isListed(address _market) external view returns (bool);
 
-    function getVault(address _token) external view returns(address);
-
     function setFactory(address _factory) external;
 }
