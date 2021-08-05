@@ -11,10 +11,6 @@ import "../libraries/utils/ReentrancyGuard.sol";
 import "../interfaces/utils/ISwapRouter.sol";
 import "../interfaces/utils/IQuoter.sol";
 
-interface IUniswapRouter is ISwapRouter {
-    function refundETH() external payable;
-}
-
 //InsureDAO util contract using Uniswap V3
 contract ConverterV1{
     using SafeMath for uint256;
@@ -22,8 +18,8 @@ contract ConverterV1{
     IUniswapRouter public constant UniswapV3 = IUniswapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564); //rinkeby
     IQuoter public constant Quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6); //rinkeby
 
-    IERC20 public USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby    
-    InsureToken public insure_token;
+    IERC20 public constant USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby    
+    InsureToken public immutable insure_token;
 
     constructor(address _insure)public{
         insure_token = InsureToken(_insure);
@@ -65,7 +61,7 @@ contract ConverterV1{
     /***
     *@dev only be used in case of emergency_mint(). To know how many INSURE is required.
     */
-    function getAmountsIn(uint256 _amountOut)external view returns(uint256){
+    function getAmountsIn(uint256 _amountOut)external returns(uint256){
         address tokenIn = address(insure_token);
         address tokenOut = address(USDC);
         uint24 fee = 3000;
@@ -87,7 +83,7 @@ contract ConverterV1{
     *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
     */
     function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external returns (bool){
-        uint256 deadline = block.timestamp + 60; // using 'now' for convenience, for mainnet pass deadline from frontend!
+        uint256 deadline = block.timestamp + 60;
         address tokenIn = address(insure_token);
         address tokenOut = address(USDC);
         uint24 fee = 3000;
