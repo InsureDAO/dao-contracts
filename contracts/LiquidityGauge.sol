@@ -34,7 +34,7 @@ contract LiquidityGauge is ReentrancyGuard{
     event ApplyOwnership(address admin); 
 
     uint256 constant TOKENLESS_PRODUCTION = 40;
-    uint256 constant BOOST_WARMUP = 14*86400;
+    uint256 constant BOOST_WARMUP = 86400*14;
     uint256 constant WEEK = 604800;
 
     //Contracts

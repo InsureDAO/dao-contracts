@@ -364,6 +364,10 @@ contract PoolProxy is ReentrancyGuard{
 
 
     //==================================[Pool Contracts]==================================//
+    /***
+    * pool-contracts' owner is this contract. 
+    * All the admins will be smartcontract address (Aragon agent)
+    */
 
     //Factory
     function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
@@ -397,21 +401,21 @@ contract PoolProxy is ReentrancyGuard{
         *@param _approval
         */
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         IFactory(_factory).approveReference(_template, _slot, _target, _approval);
     }
 
     function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen)external{
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         IFactory(_factory).approveTemplate(_template, _approval, _isOpen);
     }
 
     function set_condition_factory(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         IFactory(_factory).setCondition(_template, _slot, _target);
@@ -419,7 +423,7 @@ contract PoolProxy is ReentrancyGuard{
 
     function create_market(
         address _factory,
-        IUniversalMarket template,
+        address _template_addr,
         string memory _metaData,
         string memory _name,
         string memory _symbol,
@@ -428,9 +432,10 @@ contract PoolProxy is ReentrancyGuard{
         address[] memory _references
     ) external returns (address){
         require(msg.sender == ownership_admin, "Access denied");
+        IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         address _market = IFactory(_factory).createMarket(
-                                template,
+                                _template,
                                 _metaData,
                                 _name,
                                 _symbol,
@@ -571,7 +576,7 @@ contract PoolProxy is ReentrancyGuard{
         *@param _vault Vault address
         *@param _controller new controller address
         */
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IVault(_vault).setController(_controller);
     }
@@ -602,7 +607,7 @@ contract PoolProxy is ReentrancyGuard{
 
     function set_vault(address _parameters, address _token, address _vault)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setVault(_token, _vault);
     }
@@ -685,13 +690,13 @@ contract PoolProxy is ReentrancyGuard{
 
     function support_market(address _registry, address _market) external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IRegistry(_registry).supportMarket(_market);
     }
 
     function set_cds(address _registry, address _address, address _target) external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IRegistry(_registry).setCDS(_address, _target);
     }
 
