@@ -149,5 +149,5 @@ contract Minter is ReentrancyGuard{
         //convert
         insure_token.approve(address(converter), _amountIn);
         converter.swap_insure_to_exact(_amountIn, _amountOut, msg.sender);
-    } 
+    }
 }

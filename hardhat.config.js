@@ -14,6 +14,7 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
+      initialBaseFeePerGas: 0
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,

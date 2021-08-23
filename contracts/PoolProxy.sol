@@ -279,6 +279,7 @@ contract PoolProxy is ReentrancyGuard{
         *@dev Only callable by an EOA to prevent flashloan exploits
         *@param _id List of distributor id
         */
+        
         assert(tx.origin == msg.sender);
         require(!distributor_kill, "distribution killed");
 
