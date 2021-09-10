@@ -530,7 +530,6 @@ contract PoolProxy is ReentrancyGuard{
         *@notice Lat insurance holder to be able to Claim for their insurance.
         *@dev 
         */
-
         require(msg.sender == reporting_admin[_pool], "Access denied");
 
         IPoolTemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets, _memo);
