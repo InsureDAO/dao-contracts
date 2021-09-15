@@ -112,12 +112,16 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     }
 
     function update_reporter(address _addr)external returns(bool){
+        /***
+        * @param _addr reporting member's address that is going to be updated
+        * @return True if he is reporting member. False if he has kicked.
+        */
         require(!is_killed, "dev: contract is killed");
 
-        _update_reporter(_addr);
+        return _update_reporter(_addr);
     }
 
-    function update_reporter_many(address[20] memory _addrs)external {
+    function update_reporter_many(address[20] memory _addrs)external{
         require(!is_killed, "dev: contract is killed");
 
         for(uint256 i = 0; i<20; i++){
@@ -282,6 +286,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         recovery = _recovery;
 
         emit ChangeRecovery(recovery);
+        return true;
     }
     
     function commit_transfer_ownership(address _future_admin)external returns(bool){
@@ -295,6 +300,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         future_admin = _future_admin;
 
         emit CommitAdmin(future_admin);
+        return true;
     }
 
     function accept_transfer_ownership()external returns(bool){
@@ -307,6 +313,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         admin = future_admin;
 
         emit AcceptAdmin(admin);
+        return true;
     }
 
 }

@@ -27,6 +27,8 @@ contract DevFeeForwarder is ReentrancyGuard{
         //transfer to insureDAO multisig wallet. *only this part can be excuted if msg.sender approve 0
         uint256 amount = IERC20(_token).balanceOf(msg.sender);
         require(IERC20(_token).transferFrom(address(this), wallet, amount), 'transfer failed.');
+
+        return true;
     }
 
 }
