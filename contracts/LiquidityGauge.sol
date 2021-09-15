@@ -31,7 +31,7 @@ contract LiquidityGauge is ReentrancyGuard{
     event Withdraw(address indexed provider, uint256 value);
     event UpdateLiquidityLimit(address user, uint256 original_balance, uint256 original_supply, uint256 working_balance, uint256 working_supply, uint256 voting_balance, uint256 voting_total);
     event CommitOwnership(address admin);
-    event ApplyOwnership(address admin); 
+    event AcceptOwnership(address admin); 
 
     uint256 constant TOKENLESS_PRODUCTION = 40;
     uint256 constant BOOST_WARMUP = 86400*14;
@@ -339,15 +339,16 @@ contract LiquidityGauge is ReentrancyGuard{
         emit CommitOwnership(addr);
     }
 
-    function apply_transfer_ownership()external{
+    function accept_transfer_ownership()external {
         /***
-        *@notice Apply pending ownership transfer
+        *@notice Accept a transfer of ownership
+        *@return bool success
         */
-        require (msg.sender == admin, "dev: admin only");
-        address _admin = future_admin;
-        require (_admin != address(0), "dev: admin not set");
-        admin = _admin;
-        emit ApplyOwnership(_admin);
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
+
+        admin = future_admin;
+
+        emit AcceptOwnership(admin);
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {

@@ -22,10 +22,10 @@ describe('VestingEscrowFactory', function() {
             );
         });
 
-        it("test_apply_admin_only", async()=> {
+        it("test_accept_admin_only", async()=> {
             await expect(
-                vesting_factory.connect(alice).apply_transfer_ownership()).to.revertedWith(
-                "dev: admin only"
+                vesting_factory.connect(alice).accept_transfer_ownership()).to.revertedWith(
+                "dev: future_admin only"
             );
         });
 
@@ -36,26 +36,13 @@ describe('VestingEscrowFactory', function() {
             expect(await vesting_factory.future_admin()).to.equal(alice.address);
         });
 
-        it("test_apply_transfer_ownership", async()=> {
+        it("test_accept_transfer_ownership", async()=> {
             await vesting_factory.commit_transfer_ownership(alice.address);
-            await vesting_factory.apply_transfer_ownership();
+            await vesting_factory.connect(alice).accept_transfer_ownership();
             
             expect(await vesting_factory.admin()).to.equal(alice.address);
             expect(await vesting_factory.future_admin()).to.equal(alice.address);
         });
-
-        it("test_apply_without_commit", async()=> {
-            await expect(
-                vesting_factory.apply_transfer_ownership()).to.revertedWith(
-                "dev: admin not set"
-            );
-            
-            expect(await vesting_factory.admin()).to.equal(creator.address);
-            expect(await vesting_factory.future_admin()).to.not.equal(creator.address);
-            expect(await vesting_factory.future_admin()).to.not.equal(alice.address);
-        });
-
-
     });
 
     

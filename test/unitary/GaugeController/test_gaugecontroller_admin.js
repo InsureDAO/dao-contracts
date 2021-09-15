@@ -81,7 +81,7 @@ describe('GaugeController', function() {
         });
 
         it("test_apply_admin_only", async()=>{
-            await expect(gauge_controller.connect(alice).apply_transfer_ownership()).to.revertedWith("dev: admin only");
+            await expect(gauge_controller.connect(alice).accept_transfer_ownership()).to.revertedWith("dev: future_admin only");
         });
 
         //test
@@ -94,14 +94,10 @@ describe('GaugeController', function() {
 
         it("test_apply_transfer_ownership", async()=>{
             await gauge_controller.commit_transfer_ownership(alice.address);
-            await gauge_controller.apply_transfer_ownership();
+            await gauge_controller.connect(alice).accept_transfer_ownership();
 
             expect(await gauge_controller.admin()).to.equal(alice.address);
             expect(await gauge_controller.future_admin()).to.equal(alice.address);
-        });
-
-        it("test_apply_without_commit", async()=>{
-            await expect(gauge_controller.apply_transfer_ownership()).to.revertedWith("dev: admin not set");
         });
     });
 });

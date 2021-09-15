@@ -64,7 +64,7 @@ contract VotingEscrow is ReentrancyGuard{
     int128 constant INCREASE_UNLOCK_TIME = 3;
 
     event CommitOwnership(address admin);
-    event ApplyOwnership(address admin);
+    event AcceptOwnership(address admin);
 
     event Deposit(address indexed provider, uint256 value, uint256 indexed locktime, int128 _type, uint256 ts);
     event Withdraw(address indexed provider, uint256 value, uint256 ts);
@@ -140,15 +140,17 @@ contract VotingEscrow is ReentrancyGuard{
         emit CommitOwnership(addr);
     }
 
-    function apply_transfer_ownership()external{
+    function accept_transfer_ownership()external{
         /***
-        *@notice Apply ownership transfer
+        *@notice Accept a transfer of ownership
+        *@return bool success
         */
-        require (msg.sender == admin, "dev: admin only");
-        address _admin = future_admin;
-        require (_admin != address(0), "dev: admin not set");
-        admin = _admin;
-        emit ApplyOwnership(_admin);
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
+
+        admin = future_admin;
+
+        emit AcceptOwnership(admin);
+
     }
 
     function commit_smart_wallet_checker(address addr)external{

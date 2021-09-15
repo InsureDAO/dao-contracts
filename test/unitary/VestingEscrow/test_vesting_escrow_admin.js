@@ -36,10 +36,10 @@ describe('VestingEscrow', function() {
             );
         });
 
-        it("test_apply_admin_only", async()=> {
+        it("test_accept_admin_only", async()=> {
             await expect(
-                vesting.connect(alice).apply_transfer_ownership()).to.revertedWith(
-                "dev: admin only"
+                vesting.connect(alice).accept_transfer_ownership()).to.revertedWith(
+                "dev: future_admin only"
             );
         });
 
@@ -50,21 +50,13 @@ describe('VestingEscrow', function() {
             expect(await vesting.future_admin()).to.equal(alice.address);
         });
 
-        it("test_apply_transfer_ownership", async()=> {
+        it("test_accept_transfer_ownership", async()=> {
             await vesting.commit_transfer_ownership(alice.address);
-            await vesting.apply_transfer_ownership();
+            await vesting.connect(alice).accept_transfer_ownership();
 
             expect(await vesting.admin()).to.equal(alice.address);
             expect(await vesting.future_admin()).to.equal(alice.address);//after first commit&apply, future_admin keep being set as is
         });
-
-        it("test_apply_without_commit", async()=> {
-            await expect(
-                vesting.apply_transfer_ownership()).to.revertedWith(
-                "dev: admin not set"
-            );
-        });
-
     });
 
     
