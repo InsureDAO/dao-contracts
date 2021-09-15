@@ -320,23 +320,40 @@ contract InsureToken is IERC20{
         return true;
     }
 
+    function _approve(address owner, address spender, uint256 amount)internal{
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
 
-    //question: should we keep like this? I have not modify anything from the original yet.
+        allowances[owner][spender] = amount;
+        emit Approval(owner, spender, amount);
+    }
+
     function approve(address _spender, uint256 _value)external override returns(bool){
         /**
         *@notice Approve `_spender` to transfer `_value` tokens on behalf of `msg.sender`
-        *@dev Approval may only be from zero -> nonzero or from nonzero -> zero in order
-        *    to mitigate the potential race condition described here:
-        *    https://github.com/ethereum/EIPs/issues/20//issuecomment-263524729
         *@param _spender The address which will spend the funds
         *@param _value The amount of tokens to be spent
         *@return bool success
         */
-        assert(_value == 0 || allowances[msg.sender][_spender] == 0);
-        allowances[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        _approve(msg.sender, _spender, _value);
         return true;
     }
+
+    function increaseAllowance(address _spender, uint256 addedValue)external returns (bool) {
+        _approve(msg.sender, _spender, allowances[msg.sender][_spender].add(addedValue));
+        
+        return true;
+    }
+
+    function decreaseAllowance(address _spender, uint256 subtractedValue)external returns (bool) {
+        uint256 currentAllowance = allowances[msg.sender][_spender];
+        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+        _approve(msg.sender, _spender, currentAllowance.sub(subtractedValue));
+
+        return true;
+    }
+
+
 
     function mint(address _to, uint256 _value)external returns(bool){
         /***
