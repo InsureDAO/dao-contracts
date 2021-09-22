@@ -11,6 +11,7 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
+import "hardhat/console.sol";
 
 
 contract InsureToken is IERC20{
@@ -206,7 +207,7 @@ contract InsureToken is IERC20{
         if (end > current_epoch_time.add(RATE_REDUCTION_TIME)){
             current_epoch_time = current_epoch_time.add(RATE_REDUCTION_TIME);
             if(current_epoch < 5){
-                current_rate = RATES[uint256(mining_epoch) + 1];
+                current_rate = RATES[uint256(mining_epoch.add(int256(1)))];
             }else{
                 current_rate = RATES[5];
             }
@@ -235,7 +236,7 @@ contract InsureToken is IERC20{
             }
             current_epoch_time = current_epoch_time.sub(RATE_REDUCTION_TIME);
             if(current_epoch < 5){
-                current_rate = RATES[uint256(current_epoch) + 1];
+                current_rate = RATES[uint256(current_epoch.add(int256(1)))];
                 current_epoch = current_epoch.add(1);
             }else{
                 current_rate = RATES[5];

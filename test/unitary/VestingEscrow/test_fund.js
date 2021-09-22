@@ -251,10 +251,7 @@ describe('VestingEscrow', function() {
                 if(t<1){allocation.push(allocation[t-1].add(ten_to_the_20));}else{allocation.push(BigNumber.from('0'));}
             }
 
-            await expect(
-                vesting.fund(recipients, allocation)).to.revertedWith(
-                "SafeMath: subtraction overflow"
-            );
+            await expect(vesting.fund(recipients, allocation)).to.reverted;
         });
 
         it("test_fund_admin", async()=>{
