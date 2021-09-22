@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 /***
 *@title Gauge Controller
@@ -12,7 +12,7 @@ import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/IVotingEscrow.sol";
 
 //libraires
-import "./libraries/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 contract GaugeController{

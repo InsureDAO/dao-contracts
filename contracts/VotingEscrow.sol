@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 /***
 *@title VotingEscrow
@@ -32,19 +32,19 @@ pragma solidity ^0.7.5;
 import "./interfaces/dao/ISmartWalletChecker.sol";
 
 //libraries
-import "./libraries/token/ERC20/IERC20.sol";
-import "./libraries/math/Math.sol";
-import "./libraries/math/SafeMath.sol";
-import "./libraries/math/SignedSafeMath.sol";
-import "./libraries/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract VotingEscrow is ReentrancyGuard{
     using SafeMath for uint256;
-    using SignedSafeMath for int128;
+    using SignedSafeMath for int256;
 
     struct Point{
-        int128 bias;
-        int128 slope; // - dweight / dt
+        int256 bias;
+        int256 slope; // - dweight / dt
         uint256 ts; //timestamp
         uint256 blk;  // block
     }
@@ -53,20 +53,20 @@ contract VotingEscrow is ReentrancyGuard{
     // What we can do is to extrapolate ***At functions
 
     struct LockedBalance{
-        int128 amount;
+        int256 amount;
         uint256 end;
     }
 
 
-    int128 constant DEPOSIT_FOR_TYPE = 0;
-    int128 constant CREATE_LOCK_TYPE = 1;
-    int128 constant INCREASE_LOCK_AMOUNT = 2;
-    int128 constant INCREASE_UNLOCK_TIME = 3;
+    int256 constant DEPOSIT_FOR_TYPE = 0;
+    int256 constant CREATE_LOCK_TYPE = 1;
+    int256 constant INCREASE_LOCK_AMOUNT = 2;
+    int256 constant INCREASE_UNLOCK_TIME = 3;
 
     event CommitOwnership(address admin);
     event ApplyOwnership(address admin);
 
-    event Deposit(address indexed provider, uint256 value, uint256 indexed locktime, int128 _type, uint256 ts);
+    event Deposit(address indexed provider, uint256 value, uint256 indexed locktime, int256 _type, uint256 ts);
     event Withdraw(address indexed provider, uint256 value, uint256 ts);
 
     event Supply(uint256 prevSupply, uint256 supply);
@@ -87,7 +87,7 @@ contract VotingEscrow is ReentrancyGuard{
     Point[100000000000000000000000000000] public point_history;  // epoch -> unsigned point. 
     mapping(address => Point[1000000000]) public user_point_history; // user -> Point[user_epoch]
     mapping(address => uint256) public user_point_epoch;
-    mapping(uint256 => int128) public slope_changes;  // time -> signed slope change
+    mapping(uint256 => int256) public slope_changes;  // time -> signed slope change
 
     // Aragon's view methods for compatibility
     address public controller;
@@ -222,20 +222,20 @@ contract VotingEscrow is ReentrancyGuard{
         */
         Point memory u_old;
         Point memory u_new;
-        int128 old_dslope = 0;
-        int128 new_dslope = 0;
+        int256 old_dslope = 0;
+        int256 new_dslope = 0;
         uint256 _epoch = epoch;
 
         if (addr != address(0)){
             // Calculate slopes and biases
             // Kept at zero when they have to
             if (old_locked.end > block.timestamp && old_locked.amount > 0){
-                u_old.slope = old_locked.amount.div(int128(MAXTIME));
-                u_old.bias = u_old.slope.mul(int128(old_locked.end.sub(block.timestamp)));
+                u_old.slope = old_locked.amount.div(int256(MAXTIME));
+                u_old.bias = u_old.slope.mul(int256(old_locked.end.sub(block.timestamp)));
             }
             if (new_locked.end > block.timestamp && new_locked.amount > 0){
-                u_new.slope = new_locked.amount.div(int128(MAXTIME));
-                u_new.bias = u_new.slope.mul(int128(new_locked.end.sub(block.timestamp)));
+                u_new.slope = new_locked.amount.div(int256(MAXTIME));
+                u_new.bias = u_new.slope.mul(int256(new_locked.end.sub(block.timestamp)));
             }
 
             // Read values of scheduled changes in the slope
@@ -272,13 +272,13 @@ contract VotingEscrow is ReentrancyGuard{
             // Hopefully it won't happen that this won't get used in 5 years!
             // If it does, users will be able to withdraw but vote weight will be broken
             t_i = t_i.add(WEEK);
-            int128 d_slope = 0;
+            int256 d_slope = 0;
             if(t_i > block.timestamp){
                 t_i = block.timestamp;
             }else{
                 d_slope = slope_changes[t_i];
             }
-            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(t_i.sub(last_checkpoint))));
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int256(t_i.sub(last_checkpoint))));
             last_point.slope = last_point.slope.add(d_slope);
             if (last_point.bias < 0){  // This can happen
                 last_point.bias = 0;
@@ -347,7 +347,7 @@ contract VotingEscrow is ReentrancyGuard{
         }
     }
 
-    function _deposit_for(address _addr, uint256 _value, uint256 unlock_time, LockedBalance memory locked_balance, int128 _type)internal{
+    function _deposit_for(address _addr, uint256 _value, uint256 unlock_time, LockedBalance memory locked_balance, int256 _type)internal{
         /***
         *@notice Deposit and lock tokens for a user
         *@param _addr User's wallet address
@@ -361,7 +361,7 @@ contract VotingEscrow is ReentrancyGuard{
         uint256 supply_before = supply;
         supply = supply_before.add(_value);
         //Adding to existing lock, or if a lock is expired - creating a new one
-        _locked.amount = _locked.amount.add(int128(_value));
+        _locked.amount = _locked.amount.add(int256(_value));
         if(unlock_time != 0){
             _locked.end = unlock_time;
         }
@@ -528,7 +528,7 @@ contract VotingEscrow is ReentrancyGuard{
             return 0;
         }else{
             Point memory last_point = user_point_history[addr][_epoch];
-            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(_t.sub(last_point.ts))));
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int256(_t.sub(last_point.ts))));
             if (last_point.bias < 0){
                 last_point.bias = 0;
             }
@@ -554,7 +554,7 @@ contract VotingEscrow is ReentrancyGuard{
             return 0;
         }else{
             Point memory last_point = user_point_history[addr][_epoch];
-            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(_t.sub(last_point.ts))));
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int256(_t.sub(last_point.ts))));
             if (last_point.bias < 0){
                 last_point.bias = 0;
             }
@@ -583,44 +583,44 @@ contract VotingEscrow is ReentrancyGuard{
         // reference yet
         assert(_block <= block.number);
 
-        Parameters memory _;
+        Parameters memory st;
 
         // Binary search
-        _._min = 0;
-        _._max = user_point_epoch[addr];
+        st._min = 0;
+        st._max = user_point_epoch[addr];
         for(uint i; i <= 128; i++){  // Will be always enough for 128-bit numbers
-            if (_._min >= _._max){
+            if (st._min >= st._max){
                 break;
             }
-            uint256 _mid = (_._min.add(_._max).add(1)).div(2);
+            uint256 _mid = (st._min.add(st._max).add(1)).div(2);
             if (user_point_history[addr][_mid].blk <= _block){
-                _._min = _mid;
+                st._min = _mid;
             }else{
-                _._max = _mid.sub(1);
+                st._max = _mid.sub(1);
             }
         }
 
-        Point memory upoint = user_point_history[addr][_._min];
+        Point memory upoint = user_point_history[addr][st._min];
 
-        _.max_epoch = epoch;
-        uint256 _epoch = find_block_epoch(_block, _.max_epoch);
+        st.max_epoch = epoch;
+        uint256 _epoch = find_block_epoch(_block, st.max_epoch);
         Point memory point_0 = point_history[_epoch];
-        _.d_block = 0;
-        _.d_t = 0;
-        if (_epoch < _.max_epoch){
+        st.d_block = 0;
+        st.d_t = 0;
+        if (_epoch < st.max_epoch){
             Point memory point_1 = point_history[_epoch.add(1)];
-            _.d_block = point_1.blk.sub(point_0.blk);
-            _.d_t = point_1.ts.sub(point_0.ts);
+            st.d_block = point_1.blk.sub(point_0.blk);
+            st.d_t = point_1.ts.sub(point_0.ts);
         }else{
-            _.d_block = block.number.sub(point_0.blk);
-            _.d_t = block.timestamp.sub(point_0.ts);
+            st.d_block = block.number.sub(point_0.blk);
+            st.d_t = block.timestamp.sub(point_0.ts);
         }
         uint256 block_time = point_0.ts;
-        if (_.d_block != 0){
-            block_time = block_time.add(_.d_t.mul(_block.sub(point_0.blk)).div(_.d_block));
+        if (st.d_block != 0){
+            block_time = block_time.add(st.d_t.mul(_block.sub(point_0.blk)).div(st.d_block));
         }
 
-        upoint.bias = upoint.bias.sub(upoint.slope.mul(int128(block_time.sub(upoint.ts))));
+        upoint.bias = upoint.bias.sub(upoint.slope.mul(int256(block_time.sub(upoint.ts))));
         if (upoint.bias >= 0){
             return uint256(upoint.bias);
         }else{
@@ -639,14 +639,14 @@ contract VotingEscrow is ReentrancyGuard{
         uint256 t_i = last_point.ts.div(WEEK).mul(WEEK);
         for(uint256 i; i< 255; i++){
             t_i = t_i.add(WEEK);
-            int128 d_slope = 0;
+            int256 d_slope = 0;
 
             if (t_i > t){
                 t_i = t;
             }else{
                 d_slope = slope_changes[t_i];
             }
-            last_point.bias = last_point.bias.sub(last_point.slope.mul(int128(t_i.sub(last_point.ts))));
+            last_point.bias = last_point.bias.sub(last_point.slope.mul(int256(t_i.sub(last_point.ts))));
 
             if (t_i == t){
                 break;

@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 /***
 *@title Vesting Escrow Factory
@@ -11,9 +11,9 @@ pragma solidity ^0.7.5;
 import "./VestingEscrowSimple.sol"; //For the flatten file readability, import the contract directly.
 
 //libraries
-import "./libraries/math/SafeMath.sol";
-import "./libraries/math/SignedSafeMath.sol";
-import "./libraries/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 contract VestingEscrowFactory{

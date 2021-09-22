@@ -1,7 +1,7 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
-import "../libraries/math/Math.sol";
-import "../libraries/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract TestToken{
     using SafeMath for uint256;

@@ -1,6 +1,6 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
-import "../libraries/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract TestVault{
 

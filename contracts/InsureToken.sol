@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 /***
 *@title InsureToken
@@ -8,16 +8,16 @@ pragma solidity ^0.7.5;
 */
 
 //libraries
-import "./libraries/token/ERC20/IERC20.sol";
-import "./libraries/math/SafeMath.sol";
-import "./libraries/math/SignedSafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 
 
 contract InsureToken is IERC20{
     using SafeMath for uint256;
-    using SignedSafeMath for int128;
+    using SignedSafeMath for int256;
     
-    event UpdateMiningParameters(uint256 time, uint256 rate, uint256 supply, int128 miningepoch);
+    event UpdateMiningParameters(uint256 time, uint256 rate, uint256 supply, int256 miningepoch);
     event SetMinter(address minter);
     event SetAdmin(address admin);
 
@@ -72,7 +72,7 @@ contract InsureToken is IERC20{
     uint256 constant INFLATION_DELAY = 86400;
 
     // Supply variables
-    int128 public mining_epoch;
+    int256 public mining_epoch;
     uint256 public start_epoch_time;
     uint256 public rate;
 
@@ -124,7 +124,7 @@ contract InsureToken is IERC20{
 
         if (mining_epoch == 0){
             _rate = RATES[uint256(mining_epoch)];
-        }else if(mining_epoch < int128(6)){
+        }else if(mining_epoch < int256(6)){
             _start_epoch_supply = _start_epoch_supply.add(RATES[uint256(mining_epoch) - 1].mul(YEAR));
             start_epoch_supply = _start_epoch_supply;
             _rate = RATES[uint256(mining_epoch)];
@@ -200,7 +200,7 @@ contract InsureToken is IERC20{
         uint256 to_mint = 0;
         uint256 current_epoch_time = start_epoch_time;
         uint256 current_rate = rate;
-        int128 current_epoch = mining_epoch;
+        int256 current_epoch = mining_epoch;
 
         // Special case if end is in future (not yet minted) epoch
         if (end > current_epoch_time.add(RATE_REDUCTION_TIME)){
