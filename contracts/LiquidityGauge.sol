@@ -117,7 +117,7 @@ contract LiquidityGauge is ReentrancyGuard{
 
         uint256 lim = l.mul(TOKENLESS_PRODUCTION).div(100);
         if ((voting_total > 0) && (block.timestamp > period_timestamp[0].add(BOOST_WARMUP))){
-            lim = lim.add(L.mul(voting_balance).div(voting_total).mul(100 - TOKENLESS_PRODUCTION).div(100));
+            lim = lim.add(L.mul(voting_balance).mul(100 - TOKENLESS_PRODUCTION).div(voting_total).div(100));
         }
 
         lim = min(l, lim);
