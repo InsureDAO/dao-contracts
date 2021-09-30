@@ -20,6 +20,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     event ChangeRecovery(address recovery);
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
+    event AllegationFeePaid(address sender);
 
     address public insure_reporting; //SURERPT address
     address public token; //token to be distributed;
@@ -40,6 +41,8 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     uint256 public bonus_total;
     uint256 public bonus_ratio; //ratio of fee goes to bonus. 100 = 100%. initially 0%;
     uint256 public constant bonus_ratio_divider = 100;
+
+    uint256 public allegation_fee; //amount of token for allegation fee. 
 
     mapping(address => uint256) public claimable_fee;
 
@@ -307,6 +310,21 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         admin = future_admin;
 
         emit AcceptAdmin(admin);
+    }
+
+    function pay_allegation_fee()external{
+        /***
+        *@notice payment function for allegation fee. Paid value goes to bonus fee directly.
+        */
+
+        require(IERC20(token).allowance(msg.sender, address(this)) >= allegation_fee, "allowance insufficient");
+
+        //transfer allegation_fee
+        require(IERC20(token).transferFrom(msg.sender, address(this), allegation_fee));
+
+        bonus_total = bonus_total.add(allegation_fee);
+
+        emit AllegationFeePaid(msg.sender);
     }
 
 }
