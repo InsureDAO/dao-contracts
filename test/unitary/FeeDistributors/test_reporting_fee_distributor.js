@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
-describe('ReportingFeeDistributorV1', () => {
+describe.skip('ReportingFeeDistributorV1', () => {
     const name = "Fee Token";
     const simbol = "FT";
     const decimal = 18;

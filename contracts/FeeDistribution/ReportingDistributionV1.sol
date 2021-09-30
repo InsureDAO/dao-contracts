@@ -21,6 +21,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
     event AllegationFeePaid(address sender);
+    event SetAllegationFee(uint256 new_allegation_fee);
 
     address public insure_reporting; //SURERPT address
     address public token; //token to be distributed;
@@ -314,7 +315,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
     function pay_allegation_fee()external{
         /***
-        *@notice payment function for allegation fee. Paid value goes to bonus fee directly.
+        *@notice payment function for allegation fee. Paid value goes to bonus fee directly. Must be USDC.
         */
 
         require(IERC20(token).allowance(msg.sender, address(this)) >= allegation_fee, "allowance insufficient");
@@ -325,6 +326,15 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         bonus_total = bonus_total.add(allegation_fee);
 
         emit AllegationFeePaid(msg.sender);
+    }
+
+    function set_allegation_fee(uint256 _allegation_fee)external returns(bool){
+        require(address(msg.sender) == admin, "dev: admin only");
+
+        allegation_fee = _allegation_fee;
+
+        emit SetAllegationFee(allegation_fee);
+        return true;
     }
 
 }
