@@ -16,6 +16,10 @@ contract DevFeeForwarder is ReentrancyGuard{
 
     address public wallet; //gnosis multisig wallet
 
+    constructor(address _wallet){
+        wallet = _wallet;
+    }
+
     function distribute(address _token)external returns(bool){
         //anyone can call this contract
         //collect _token.
