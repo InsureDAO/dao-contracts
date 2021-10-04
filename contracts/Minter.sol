@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 /***
 *@title Token Minter
@@ -17,10 +17,10 @@ import "./interfaces/dao/IConverter.sol";
 import "./interfaces/pool/IRegistry.sol";
 
 //libraries
-import "./libraries/math/Math.sol";
-import "./libraries/math/SafeMath.sol";
-import "./libraries/math/SignedSafeMath.sol";
-import "./libraries/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract Minter is ReentrancyGuard{

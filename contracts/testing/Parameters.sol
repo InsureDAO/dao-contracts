@@ -4,18 +4,16 @@
  * @notice This contract manages parameters of markets.
  */
 
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 pragma experimental ABIEncoderV2;
 
-import "../libraries/math/SafeMath.sol";
-import "../libraries/utils/Address.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "../interfaces/pool/IPremiumModel.sol";
 import "../interfaces/pool/IFeeModel.sol";
 
 contract Parameters {
     using SafeMath for uint256;
-    using Address for address;
 
     event CommitNewAdmin(uint256 deadline, address future_admin);
     event NewAdmin(address admin);

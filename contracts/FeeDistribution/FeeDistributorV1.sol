@@ -1,14 +1,14 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 //SPDX-License-Identifier: MIT
 /***
 * Buy back and burn Insure Token from USDC/Insure pool on Uniswap.
 */
 
-import "../libraries/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../libraries/math/Math.sol";
-import "../libraries/math/SafeMath.sol";
-import "../libraries/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../Converters/ConverterV1.sol";
 
 interface BURN{

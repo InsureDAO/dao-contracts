@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 /***
 *@title Simple Vesting Escrow
@@ -9,10 +9,10 @@ pragma solidity ^0.7.5;
 */
 
 //libraries
-import "./libraries/math/Math.sol";
-import "./libraries/math/SafeMath.sol";
-import "./libraries/token/ERC20/IERC20.sol";
-import "./libraries/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract VestingEscrowSimple is ReentrancyGuard{

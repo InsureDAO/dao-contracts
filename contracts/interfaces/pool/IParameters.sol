@@ -1,4 +1,4 @@
-pragma solidity ^0.7.5;
+pragma solidity 0.8.7;
 
 interface IParameters {
     function commit_transfer_ownership(address _owner) external ;
