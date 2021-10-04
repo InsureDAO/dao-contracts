@@ -140,7 +140,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         require(!is_killed, "dev: contract is killed");
         uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
-            IERC20(_coin).transferFrom(address(msg.sender), address(this), total_amount); //allowance will be 0
+            require(IERC20(_coin).transferFrom(address(msg.sender), address(this), total_amount)); //allowance will be 0
 
             uint256 bonus = total_amount.mul(bonus_ratio).div(bonus_ratio_divider);
             bonus_total = bonus_total.add(bonus);
@@ -150,7 +150,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
                 //update all reporters & active_member#
                 for(uint256 i=1; i <= reporters_length; i++){
                     address _addr = reporters[i];
-                    _update_reporter(_addr);
+                    _update_reporter(_addr); //this intentionaly returns both true or false
                 }
 
                 uint256 distributed;
@@ -265,7 +265,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 amount = IERC20(_coin).balanceOf(address(this));
         if(amount != 0){
-            IERC20(_coin).transfer(recovery, amount);
+            require(IERC20(_coin).transfer(recovery, amount));
         }
 
         return true;
