@@ -32,11 +32,11 @@ describe('VestingEscrowFactory', function() {
 
     describe("test_admin_simple", function(){
         it("test_commit_admin_only", async()=> {
-            await expect(vesting_simple.connect(alice).commit_transfer_ownership(alice.address)).to.reverted;
+            await expect(vesting_simple.connect(alice).commit_transfer_ownership(alice.address)).to.revertedWith("dev: admin only");
         });
 
-        it("test_apply_admin_only", async()=> {
-            await expect(vesting_simple.connect(alice).apply_transfer_ownership()).to.reverted;
+        it("test_accept_admin_only", async()=> {
+            await expect(vesting_simple.connect(alice).accept_transfer_ownership()).to.revertedWith("dev: future_admin only");
         });
 
         it("test_commit_transfer_ownership", async()=> {
@@ -46,19 +46,13 @@ describe('VestingEscrowFactory', function() {
             expect(await vesting_simple.future_admin()).to.equal(alice.address);
         });
 
-        it("test_apply_transfer_ownership", async()=> {
+        it("test_accept_transfer_ownership", async()=> {
             await vesting_simple.commit_transfer_ownership(alice.address);
-            await vesting_simple.apply_transfer_ownership();
+            await vesting_simple.connect(alice).accept_transfer_ownership();
 
             expect(await vesting_simple.admin()).to.equal(alice.address);
             expect(await vesting_simple.future_admin()).to.equal(alice.address);
         });
-
-        it("test_apply_without_commit", async()=> {
-            await expect(vesting_simple.apply_transfer_ownership()).to.reverted;
-        });
-
-
 
     });
 

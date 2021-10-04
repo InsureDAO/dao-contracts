@@ -36,16 +36,16 @@ contract InsureToken is IERC20{
     uint256 constant YEAR = 86400 * 365;
 
     // Allocation within 5years:
-    // =========
+    // ==========
     // * Team & Development: 24%
     // * Liquidity Mining: 40%
     // * Investors: 10%
     // * Foundation Treasury: 14%
     // * Community Treasury: 10%
-    // =========
+    // ==========
     //
     // After 5years:
-    // =========
+    // ==========
     // * Liquidity Mining: 40%~ (Mint fixed amount every year)
     //
     // Mint 2_800_000 INSURE every year.
@@ -53,7 +53,7 @@ contract InsureToken is IERC20{
     // 7th year: 1.30% inflation rate
     // 8th year: 1.28% infration rate
     // so on
-    // =========
+    // ==========
 
     // Supply parameters
     uint256 constant INITIAL_SUPPLY = 126_000_000; //will be vested

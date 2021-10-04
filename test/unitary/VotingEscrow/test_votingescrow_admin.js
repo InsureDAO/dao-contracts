@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
-describe('LiquidityGauge', function() {
+describe('VotingEscrow', function() {
 
     const name = "InsureToken";
     const simbol = "Insure";
@@ -26,10 +26,10 @@ describe('LiquidityGauge', function() {
             );
         });
 
-        it("test_apply_admin_only", async()=> {
+        it("test_accept_admin_only", async()=> {
             await expect(
-                ve.connect(alice).apply_transfer_ownership()).to.revertedWith(
-                "dev: admin only"
+                ve.connect(alice).accept_transfer_ownership()).to.revertedWith(
+                "dev: future_admin only"
             );
         });
 
@@ -40,22 +40,15 @@ describe('LiquidityGauge', function() {
             expect(await ve.future_admin()).to.equal(alice.address);
         });
 
-        it("test_apply_transfer_ownership", async()=> {
+        it("test_accept_transfer_ownership", async()=> {
             await ve.commit_transfer_ownership(alice.address);
             expect(await ve.admin()).to.equal(creator.address);
             expect(await ve.future_admin()).to.equal(alice.address);
 
-            await ve.apply_transfer_ownership();
+            await ve.connect(alice).accept_transfer_ownership();
 
             expect(await ve.admin()).to.equal(alice.address);
             expect(await ve.future_admin()).to.equal(alice.address);
-        });
-
-        it("test_apply_without_commit", async()=> {
-            await expect(
-                ve.apply_transfer_ownership()).to.revertedWith(
-                "dev: admin not set"
-            );
         });
     });
 });

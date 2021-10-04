@@ -21,7 +21,7 @@ contract VestingEscrow is ReentrancyGuard{
     event Claim(address indexed recipient, uint256 claimed);
     event ToggleDisable(address recipient, bool disabled);
     event CommitOwnership(address admin);
-    event ApplyOwnership(address admin);
+    event AcceptOwnership(address admin);
 
 
     address public token; //address of $Insure
@@ -259,19 +259,16 @@ contract VestingEscrow is ReentrancyGuard{
         return true;
     }
 
-
-    
-    function apply_transfer_ownership()external returns (bool){
+    function accept_transfer_ownership()external {
         /***
-        *@notice Apply pending ownership transfer
+        *@notice Accept a transfer of ownership
+        *@return bool success
         */
-        require (msg.sender == admin, "dev: admin only");
-        address _admin = future_admin;
-        require (_admin != address(0), "dev: admin not set");
-        admin = _admin;
-        emit ApplyOwnership(_admin);
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
 
-        return true;
+        admin = future_admin;
+
+        emit AcceptOwnership(admin);
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {

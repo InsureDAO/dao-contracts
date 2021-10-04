@@ -36,7 +36,7 @@ contract GaugeController{
     }
 
     event CommitOwnership(address admin);
-    event ApplyOwnership(address admin);
+    event AcceptOwnership(address admin);
     event AddType(string name, uint256 type_id);
     event NewTypeWeight(uint256 type_id, uint256 time, uint256 weight, uint256 total_weight);
 
@@ -118,15 +118,16 @@ contract GaugeController{
         emit CommitOwnership(addr);
     }
 
-    function apply_transfer_ownership()external{
+    function accept_transfer_ownership()external {
         /***
-        * @notice Apply pending ownership transfer
+        *@notice Accept a transfer of ownership
+        *@return bool success
         */
-        require (msg.sender == admin, "dev: admin only");
-        address _admin = future_admin;
-        require (_admin != address(0), "dev: admin not set");
-        admin = _admin;
-        emit ApplyOwnership(_admin);
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
+
+        admin = future_admin;
+
+        emit AcceptOwnership(admin);
     }
 
     function gauge_types(address _addr)external view returns(uint256){

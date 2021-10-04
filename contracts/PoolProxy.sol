@@ -319,21 +319,17 @@ contract PoolProxy is ReentrancyGuard{
         emit CommitAdmins(_o_admin, _p_admin, _e_admin);
     }
 
-    function apply_set_admins()external{
+    function accept_set_admins()external{
         /***
-        *@notice Apply the effects of `commit_set_admins`
+        *@notice Accept the effects of `commit_set_admins`
         */
-        require( msg.sender == ownership_admin, "Access denied");
+        require(msg.sender == future_ownership_admin, "Access denied");
 
-        address _o_admin = future_ownership_admin;
-        address _p_admin = future_parameter_admin;
-        address _e_admin = future_emergency_admin;
+        ownership_admin = future_ownership_admin;
+        parameter_admin = future_parameter_admin;
+        emergency_admin = future_emergency_admin;
 
-        ownership_admin = _o_admin;
-        parameter_admin = _p_admin;
-        emergency_admin = _e_admin;
-
-        emit ApplyAdmins(_o_admin, _p_admin, _e_admin);
+        emit ApplyAdmins(ownership_admin, parameter_admin, emergency_admin);
     }
 
     // reporting admins

@@ -23,7 +23,7 @@ contract VestingEscrowSimple is ReentrancyGuard{
     event Claim(address indexed recipient, uint256 claimed);
     event ToggleDisable(address recipient, bool disabled);
     event CommitOwnership(address admin);
-    event ApplyOwnership(address admin);
+    event AcceptOwnership(address admin);
 
 
     address public token;
@@ -197,22 +197,23 @@ contract VestingEscrowSimple is ReentrancyGuard{
         *@notice Transfer ownership of GaugeController to `addr`
         *@param addr Address to have ownership transferred to
         */
-        assert (msg.sender == admin);
+        require (msg.sender == admin, "dev: admin only");
         future_admin = addr;
         emit CommitOwnership(addr);
 
         return true;
     }
 
-    function apply_transfer_ownership()external returns (bool){
+    function accept_transfer_ownership()external returns (bool){
         /***
-        *@notice Apply pending ownership transfer
+        *@notice Accept a transfer of ownership
+        *@return bool success
         */
-        require (msg.sender == admin, "dev: admin only");
-        address _admin = future_admin;
-        require (_admin != address(0), "dev: admin not set");
-        admin = _admin;
-        emit ApplyOwnership(_admin);
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
+
+        admin = future_admin;
+
+        emit AcceptOwnership(admin);
 
         return true;
     }
