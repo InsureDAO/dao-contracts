@@ -48,13 +48,57 @@ describe('ReportingFeeDistributorV1', () => {
             expect(await dstr.allegation_fee()).to.equal(new_allegation_fee);
         });
 
-        it("reverted", async()=>{
+        it("test_admin_only", async()=>{
             //set allegation fee
             let new_allegation_fee = BigNumber.from("1000000");
             await expect(dstr.connect(bob).set_allegation_fee(new_allegation_fee)).to.revertedWith("dev: admin only");
 
-
         })
+    })
+
+    describe("test_pay_allegation_fee", function(){
+        it("successfully done", async()=>{
+            //set allegation fee
+            let new_allegation_fee = BigNumber.from("1000000");
+            await dstr.set_allegation_fee(new_allegation_fee);
+            
+            //mint => approve
+            await fee._mint_for_testing(new_allegation_fee);
+            await fee.approve(dstr.address, new_allegation_fee);
+
+            expect(await dstr.bonus_total()).to.equal(0);
+
+            await dstr.pay_allegation_fee();
+        });
+
+        it("successfully done 2", async()=>{
+            //set allegation fee
+            let new_allegation_fee = BigNumber.from("1000000");
+            await dstr.set_allegation_fee(new_allegation_fee);
+            
+            //mint => approve
+            await fee.connect(alice)._mint_for_testing(new_allegation_fee);
+            await fee.connect(alice).approve(dstr.address, new_allegation_fee);
+
+            expect(await dstr.bonus_total()).to.equal(0);
+
+            await dstr.connect(alice).pay_allegation_fee();
+        })
+        
+        /**
+        it("transfer fail", async()=>{
+            //set allegation fee
+            let new_allegation_fee = BigNumber.from("1000000");
+            await dstr.set_allegation_fee(new_allegation_fee);
+            
+            //mint => approve
+            await fee._mint_for_testing(new_allegation_fee.sub(1));
+            await fee.approve(dstr.address, new_allegation_fee);
+
+            expect(await dstr.pay_allegation_fee()).to.reverted;
+        })
+        */
+
     })
 
 

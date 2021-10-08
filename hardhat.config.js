@@ -32,7 +32,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    tests: "./test/unitary/FeeDistributors",
+    tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
   },
