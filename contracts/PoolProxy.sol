@@ -339,7 +339,7 @@ contract PoolProxy is ReentrancyGuard{
         emit ApplyAdmins(_o_admin, _p_admin, _e_admin);
     }
 
-    // reporting admins
+    //==================================[Reporting Module]==================================//
     function commit_set_default_reporting_admin(address _r_admin)external{
         /***
         *@notice Set default_reporting_admin to `_r_admin`
