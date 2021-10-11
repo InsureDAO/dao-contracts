@@ -1,6 +1,4 @@
 pragma solidity >=0.7.5;
-pragma abicoder v2;
-
 
 /***
 *@title Token Converter V1-2
@@ -33,10 +31,13 @@ contract ConverterV1{
         insure_token = InsureToken(_insure);
     }
     
-    /***
-    *@dev For FeeDistributorV1. Buy back insure and burn
-    */
+
     function swap_exact_to_insure(uint256 _amountIn, address _to)external returns(bool){
+        /***
+        *@notice token exchange from USDC to INSURE.
+        *@param _amountIn amount of USDC for exchange of INSURE
+        *@param _to address of INSURE token recipient
+        */
         uint256 deadline = block.timestamp + 60; // using 'now' for convenience, for mainnet pass deadline from frontend!
         address tokenIn = address(USDC);
         address tokenOut = address(insure_token);
@@ -66,10 +67,11 @@ contract ConverterV1{
     }
 
 
-    /***
-    *@dev only be used in case of emergency_mint(). To know how many INSURE is required.
-    */
     function getAmountsIn(uint256 _amountOut)external returns(uint256){
+        /***
+        *@notice get INSURE amount required to get specific amount of USDC from exchange of INSURE.
+        *@param _amountOut amount of USDC
+        */
         address tokenIn = address(insure_token);
         address tokenOut = address(USDC);
         uint24 fee = 3000;
@@ -87,10 +89,11 @@ contract ConverterV1{
         return amountIn;
     }
 
-    /***
-    *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
-    */
+    
     function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external returns (bool){
+        /***
+        *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
+        */
         uint256 deadline = block.timestamp + 60;
         address tokenIn = address(insure_token);
         address tokenOut = address(USDC);

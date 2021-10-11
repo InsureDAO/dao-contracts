@@ -23,7 +23,7 @@ contract ConverterV1{
     IERC20 public WETH = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2); //rinkeby
     IERC20 public USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby
 
-    constructor(address _insure)public{
+    constructor(address _insure){
         insure_token = InsureToken(_insure);
     }
     
