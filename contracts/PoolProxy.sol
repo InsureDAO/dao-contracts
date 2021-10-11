@@ -94,6 +94,8 @@ contract PoolProxy is ReentrancyGuard{
         uint256 id = n_distributors[_token];
         distributors[_token][id] = new_distributor;
         n_distributors[_token] = n_distributors[_token].add(1);
+
+        return true;
     }
 
     function _set_distributor(address _token, uint256 _id, Distributor memory _distributor)internal {
