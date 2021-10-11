@@ -1,5 +1,12 @@
 pragma solidity 0.8.7;
 
+/***
+*@title Token Converter V1-2
+*@author InsureDAO
+* SPDX-License-Identifier: MIT
+*@notice InsureDAO util contract using UniswapV2
+*/
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../InsureToken.sol";
 
@@ -8,7 +15,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/utils/IUniswapV2Router02.sol";
 
-//InsureDAO util contract using Uniswap V2
 contract ConverterV1{
     using SafeMath for uint256;
 
