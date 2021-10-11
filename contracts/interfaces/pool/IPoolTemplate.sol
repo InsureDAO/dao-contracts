@@ -1,5 +1,7 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.7;
-//SPDX-License-Identifier: MIT
+
 interface IPoolTemplate {
     function applyCover(
         uint256 _pending,
