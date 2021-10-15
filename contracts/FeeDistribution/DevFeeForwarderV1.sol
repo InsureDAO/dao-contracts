@@ -1,8 +1,10 @@
 pragma solidity 0.8.7;
-//SPDX-License-Identifier: MIT
+
 /***
-* DevFee Forwarder to gnosis multisig wallet of insureDAO;
-* 
+*@title DevFeeForwarder
+*@author InsureDAO
+* SPDX-License-Identifier: MIT
+*@notice DevFee Forwarder to gnosis multisig wallet of insureDAO;
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
