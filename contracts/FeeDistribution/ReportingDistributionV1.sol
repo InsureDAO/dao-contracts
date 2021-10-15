@@ -56,11 +56,6 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         *@param _admin Admin address
         */
 
-        require(_insure_reporting != address(0), "zero-address");
-        require(_token != address(0), "zero-address");
-        require(_recovery != address(0), "zero-address");
-        require(_admin != address(0), "zero-address");
-
         insure_reporting = _insure_reporting;
         token = _token;
         recovery = _recovery;

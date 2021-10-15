@@ -34,17 +34,14 @@ contract PoolProxy is ReentrancyGuard{
 
     event CommitAdmins(address ownership_admin, address parameter_admin, address emergency_admin);
     event ApplyAdmins(address ownership_admin, address parameter_admin, address emergency_admin); 
-    event CommitDefaultReportingAdmin(address default_reporting_admin);
-    event AcceptDefaultReportingAdmin(address default_reporting_admin);
-    event SetReportingAdmin(address pool, address reporter);
+    event CommitReportingAdmins(address pool_address, address reporting_admin);
+    event ApplyReportingAdmins(address pool_address, address reporting_admin);
     event AddDistributor(address distributor);
 
 
     address public ownership_admin;
     address public parameter_admin;
     address public emergency_admin;
-
-    address public default_reporting_admin; //default reporting module address when arbitrary reporting module is not set.
     mapping(address => address)public reporting_admin; //Pool => Payout Decision Maker's address. (ex. ReportingDAO)
 
     address parameters; //pool-contracts Parameters.sol
@@ -52,7 +49,7 @@ contract PoolProxy is ReentrancyGuard{
     address public future_ownership_admin;
     address public future_parameter_admin;
     address public future_emergency_admin;
-    address public future_default_reporting_admin;
+    mapping(address => address)public future_reporting_admin;
 
     struct Distributor{
         string name;
@@ -336,53 +333,31 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     // reporting admins
-    function commit_set_default_reporting_admin(address _r_admin)external{
+    function commit_set_reporting_admin(address _pool, address _r_admin)external{
         /***
-        *@notice Set default_reporting_admin to `_r_admin`
+        *@notice Set reporting admin to `_r_admin`
+        *@param _pool Target address
         *@param _r_admin Reporting admin
         */
         require(msg.sender == ownership_admin, "Access denied");
 
-        future_default_reporting_admin = _r_admin;
+        future_reporting_admin[_pool] = _r_admin;
 
-        emit CommitDefaultReportingAdmin(future_default_reporting_admin);
+        emit CommitReportingAdmins(_pool, _r_admin);
     }
 
-    function accept_set_default_reporting_admin()external{
+    function apply_set_reporting_admin(address _pool)external{
         /***
-        *@notice Accept the effects of `commit_set_default_reporting_admin`
+        *@notice Apply the effects of `commit_set_reporting_admin`
         */
-        require(msg.sender == future_default_reporting_admin, "Access denied");
-        
-        default_reporting_admin = future_default_reporting_admin;
+        require(msg.sender == ownership_admin, "Access denied");
+        require(future_reporting_admin[_pool] != address(0), "future admin not set");
+        address _r_admin = future_reporting_admin[_pool];
 
-        emit AcceptDefaultReportingAdmin(default_reporting_admin);
+        reporting_admin[_pool] = _r_admin;
+
+        emit ApplyReportingAdmins(_pool, _r_admin);
     }
-
-    function set_reporting_admin(address _pool, address _reporter)external returns(bool){
-        /***
-        *@notice set arbitrary reporting module for specific _pool.
-        *@notice "ownership_admin" or "default_reporting_admin" can execute this function.
-        */
-        require(address(msg.sender) == ownership_admin || address(msg.sender) == default_reporting_admin, "Access denied");
-
-        reporting_admin[_pool] = _reporter;
-
-        emit SetReportingAdmin(_pool, _reporter);
-        
-        return true;
-    }
-
-    function get_reporter(address _pool)public view returns(address){
-        /***
-        *@notice get reporting module set for the _pool. If none is set, default_reporting_admin will be returned.
-        *@dev public function
-        */
-
-        address reporter = reporting_admin[_pool] != address(0) ? reporting_admin[_pool] : default_reporting_admin;
-
-        return reporter;
-    }   
 
 
     //==================================[Pool Contracts]==================================//
@@ -548,11 +523,10 @@ contract PoolProxy is ReentrancyGuard{
         string calldata _memo
     ) external{
         /***
-        *@notice Let insurance holder to be able to Claim for their insurance.
+        *@notice Lat insurance holder to be able to Claim for their insurance.
         *@dev 
         */
-        address reporter = get_reporter(_pool);
-        require(msg.sender == reporter, "Access denied");
+        require(msg.sender == reporting_admin[_pool], "Access denied");
 
         IPoolTemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets, _memo);
     }
