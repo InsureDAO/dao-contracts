@@ -47,7 +47,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         address _token,
         address _recovery,
         address _admin
-    )public{
+    ){
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
@@ -62,7 +62,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         admin = _admin;
     }
 
-//Reporter management
+    //Reporter management
     function register_reporter(address _addr)external{
         /***
         * @notice register reporter
@@ -132,7 +132,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         }
     }
 
-//Distribute
+    //Distribute
     function distribute(address _coin)external returns(bool){
         /***
         * @notice Recieve USDC into the contract and trigger a token checkpoint
