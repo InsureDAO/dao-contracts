@@ -8,6 +8,7 @@ pragma solidity 0.8.7;
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -20,6 +21,7 @@ interface BURN{
 
 contract FeeDistributionV1{
      using SafeMath for uint256;
+     using SafeERC20 for IERC20;
 
      address insure_token;
      ConverterV1 public converter;
@@ -43,11 +45,11 @@ contract FeeDistributionV1{
           //collect _token.
           uint256 claimable = IERC20(_token).allowance(msg.sender, address(this));
           require(claimable > 0);
-          require(IERC20(_token).transferFrom(msg.sender, address(this), claimable), 'transfer failed.');
+          IERC20(_token).safeTransferFrom(msg.sender, address(this), claimable);
 
           //exchange _token to INSURE using Converter contract.
           uint256 amount = IERC20(_token).balanceOf(address(this));
-          require(IERC20(_token).approve(address(converter), amount), 'approve failed.');
+          IERC20(_token).safeApprove(address(converter), amount);
 
           require(converter.swap_exact_to_insure(_token, amount, address(this)), 'swap failed');
 

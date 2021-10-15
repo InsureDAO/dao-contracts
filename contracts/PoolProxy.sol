@@ -23,6 +23,7 @@ import "./interfaces/pool/IVault.sol";
 
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
@@ -31,6 +32,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract PoolProxy is ReentrancyGuard{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+
 
     event CommitAdmins(address ownership_admin, address parameter_admin, address emergency_admin);
     event ApplyAdmins(address ownership_admin, address parameter_admin, address emergency_admin); 
@@ -256,7 +259,7 @@ contract PoolProxy is ReentrancyGuard{
         uint256 amount = distributable[_token][_id];
         distributable[_token][_id] = 0;
 
-        IERC20(_token).approve(_addr, amount);
+        IERC20(_token).safeApprove(_addr, amount);
         require(IDistributor(_addr).distribute(_token), "dev: should implement distribute()");
     }
     
