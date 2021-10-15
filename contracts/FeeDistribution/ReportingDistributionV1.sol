@@ -5,13 +5,16 @@ pragma solidity 0.8.7;
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+
 contract ReportingDistributionV1 is ReentrancyGuard{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     event Distribution(uint256 amount, uint256 blocktime);
     event UpdateReportingMember(address _address, bool is_rpt);
@@ -148,7 +151,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         require(!is_killed, "dev: contract is killed");
         uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
-            require(IERC20(_coin).transferFrom(address(msg.sender), address(this), total_amount)); //allowance will be 0
+            IERC20(_coin).safeTransferFrom(address(msg.sender), address(this), total_amount); //allowance will be 0
 
             uint256 bonus = total_amount.mul(bonus_ratio).div(bonus_ratio_divider);
             bonus_total = bonus_total.add(bonus);
@@ -223,7 +226,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 _amount = claimable_fee[_addr];
         claimable_fee[_addr] = 0;
-        require(IERC20(token).transfer(_addr, _amount));
+        IERC20(token).safeTransfer(_addr, _amount);
 
         emit Claim(_addr, _amount);
         return _amount;
@@ -273,7 +276,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 amount = IERC20(_coin).balanceOf(address(this));
         if(amount != 0){
-            require(IERC20(_coin).transfer(recovery, amount));
+            IERC20(_coin).safeTransfer(recovery, amount);
         }
 
         return true;

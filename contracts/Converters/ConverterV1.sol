@@ -8,6 +8,7 @@ pragma solidity 0.8.7;
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -17,6 +18,7 @@ import "../interfaces/utils/IUniswapV2Router02.sol";
 
 contract ConverterV1{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     IUniswapV2Router02 public UniswapV2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
     InsureToken public insure_token;
@@ -36,8 +38,8 @@ contract ConverterV1{
         */
 
         //setup for swap
-        require(IERC20(_token).transferFrom(msg.sender, address(this), _amountIn), 'transferFrom failed.');
-        require(IERC20(_token).approve(address(UniswapV2), _amountIn), 'approve failed.');
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amountIn);
+        IERC20(_token).safeApprove(address(UniswapV2), _amountIn);
 
         address[] memory path = new address[](3);
         path[0] = address(_token);
