@@ -187,8 +187,10 @@ describe('LiquidityGauge', function() {
             await liquidity_gauge.deposit(ten_to_the_21, alice.address);
             await liquidity_gauge.connect(bob).deposit(ten_to_the_21, bob.address);
             let now = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
-            expect(await voting_escrow.balanceOf(alice.address, now)).to.not.equal(zero);
-            expect(await voting_escrow.balanceOf(bob.address, now)).to.equal(zero);
+            //expect(await voting_escrow.balanceOf(alice.address, now)).to.not.equal(zero);
+            //expect(await voting_escrow.balanceOf(bob.address, now)).to.equal(zero);
+            expect(await voting_escrow['balanceOf(address,uint256)'](alice.address, now)).to.not.equal(zero);
+            expect(await voting_escrow['balanceOf(address,uint256)'](bob.address, now)).to.equal(zero);
 
             // Time travel and checkpoint
             now = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
@@ -203,8 +205,8 @@ describe('LiquidityGauge', function() {
 
             // 4 weeks down the road, balanceOf must be 0
             now = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
-            expect(await voting_escrow.balanceOf(alice.address, now)).to.equal(zero);
-            expect(await voting_escrow.balanceOf(bob.address, now)).to.equal(zero);
+            expect(await voting_escrow['balanceOf(address,uint256)'](alice.address, now)).to.equal(zero);
+            expect(await voting_escrow['balanceOf(address,uint256)'](bob.address, now)).to.equal(zero);
 
             // Alice earned 2.5 times more INSURE because she vote-locked her INSURE
             let rewards_alice = await liquidity_gauge.integrate_fraction(alice.address);
