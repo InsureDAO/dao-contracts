@@ -1,5 +1,7 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.7;
-//SPDX-License-Identifier: MIT
+
 import "./IGaugeController.sol";
 interface IMinter {
     function insure_token()external view returns(address);
