@@ -129,15 +129,7 @@ describe('VestingEscrowFactory', function() {
             expect(await vesting_simple.initial_locked(alice.address)).to.equal(ten_to_the_20);
         });
 
-        it("test_cannot_call_init", async()=> {
-            let now = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
-            const start_time = now.add(BigNumber.from('100'));
-            const end_time = start_time.add(ten_to_the_8);
-
-            await vesting_factory.deploy_vesting_contract(coin_a.address, alice.address, ten_to_the_20, true, ten_to_the_8, start_time);
-            const vesting_simple_address = await vesting_factory.latest_deployed_address();
-            vesting_simple = await VestingEscrowSimple.attach(vesting_simple_address);
-
+        it("test_cannot_call_init_factory_target", async()=> {
             await expect(
                 vesting_target.initialize(
                     creator.address,
@@ -148,7 +140,7 @@ describe('VestingEscrowFactory', function() {
                     end_time,
                     true
                 )).to.revertedWith(
-                "dev: allowance not enough"
+                "dev: can only initialize once"
             );
         });
 
