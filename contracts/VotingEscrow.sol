@@ -519,9 +519,13 @@ contract VotingEscrow is ReentrancyGuard{
         return _min;
     }
 
-    //for Metamask
-    /**
     function balanceOf(address addr)external view returns (uint256){
+        /***
+        *@notice Get the current voting power for `msg.sender`
+        *@dev Adheres to the ERC20 `balanceOf` interface for Metamask & Snapshot compatibility
+        *@param addr User wallet address
+        *@return User's present voting power
+        */
 
         uint256 _t = block.timestamp;
 
@@ -537,7 +541,7 @@ contract VotingEscrow is ReentrancyGuard{
             return uint256(last_point.bias);
         }
     }
-    */
+
     function balanceOf(address addr , uint256 _t)external view returns (uint256){
         /***
         *@notice Get the current voting power for `msg.sender`
@@ -545,6 +549,7 @@ contract VotingEscrow is ReentrancyGuard{
         *@param addr User wallet address
         *@param _t Epoch time to return voting power at
         *@return User voting power
+        *@dev return the present voting power if _t is 0
         */
 
         if(_t == 0){

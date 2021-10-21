@@ -13,7 +13,7 @@ interface IPremiumModel {
     function commit_transfer_ownership(address _owner) external;
     function apply_transfer_ownership() external;
     function setPremium(uint256 _baseRatePerYear, uint256 _multiplierPerYear)external;
-    function setOptions(
+    function setPremium2(
         uint256 _a,
         uint256 _b,
         uint256 _c,

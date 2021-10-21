@@ -468,7 +468,7 @@ contract PoolProxy is ReentrancyGuard{
     }
 
     function set_options(address _premium, uint256 _a, uint256 _b, uint256 _c, uint256 _d)external{
-
+    
         require(msg.sender == ownership_admin, "Access denied");
         IPremiumModel(_premium).setOptions(_a, _b, _c, _d);
     }
