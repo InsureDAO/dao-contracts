@@ -23,8 +23,9 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
 
+    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //mainnet USDC
+
     address public insure_reporting; //SURERPT address
-    address public token; //token to be distributed;
 
     address public admin; //upgradable
     address public future_admin; 
@@ -47,25 +48,21 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
     constructor(
         address _insure_reporting,
-        address _token,
         address _recovery,
         address _admin
     ){
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
-        *@param _token Fee token address (USDC)
         *@param _recovery Address to transfer `_token` balance to if this contract is killed
         *@param _admin Admin address
         */
 
         require(_insure_reporting != address(0), "zero-address");
-        require(_token != address(0), "zero-address");
         require(_recovery != address(0), "zero-address");
         require(_admin != address(0), "zero-address");
 
         insure_reporting = _insure_reporting;
-        token = _token;
         recovery = _recovery;
         admin = _admin;
     }
@@ -147,7 +144,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         * @param _coin address of the coin being received (must be USDC)
         * @return bool success
         */
-        require(_coin == token, "cannnot distribute this token");
+        require(_coin == USDC, "cannnot distribute this token");
         require(!is_killed, "dev: contract is killed");
         uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
@@ -226,7 +223,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 _amount = claimable_fee[_addr];
         claimable_fee[_addr] = 0;
-        IERC20(token).safeTransfer(_addr, _amount);
+        IERC20(USDC).safeTransfer(_addr, _amount);
 
         emit Claim(_addr, _amount);
         return _amount;
