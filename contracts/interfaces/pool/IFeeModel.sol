@@ -5,6 +5,6 @@ interface IFeeModel {
 
     function setFee(uint256 _target) external;
 
-    function commit_transfer_ownership(address _owner) external;
-    function apply_transfer_ownership() external;
+    function commitTransferOwnership(address _owner) external;
+    function applyTransferOwnership() external;
 }

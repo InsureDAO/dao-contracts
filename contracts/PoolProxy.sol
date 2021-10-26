@@ -368,52 +368,23 @@ contract PoolProxy is ReentrancyGuard{
     //==================================[Pool Contracts]==================================//
     /***
     * pool-contracts' owner is this contract. 
-    * All the admins will be smartcontract address (Aragon agent)
+    * For the detail of each function, see the pool-contracts repository.
     */
 
     //Factory
-    function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
-        /***
-        *@notice Set factory's admin to the new admin
-        *@param _future_admin new admin address
-        */
-
+    function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen, bool _duplicate)external{
         require(msg.sender == ownership_admin, "Access denied");
-        IFactory(_factory).commit_transfer_ownership(_future_admin);
-    }
+        IUniversalMarket _template = IUniversalMarket(_template_addr);
 
-    function apply_transfer_ownership_factory(address _factory)external{
-        /***
-        *@notice apply the commited transfer.
-        *@dev you can execute this after ADMIN_ACTIONS_DELAY(initially 3days) pass from the commit
-        *@param _factory Factory address
-        */
-
-        IFactory(_factory).apply_transfer_ownership();
+        IFactory(_factory).approveTemplate(_template, _approval, _isOpen, _duplicate);
     }
 
     function approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{
-        /***
-        *@notice A function to preset reference.
-        *@dev 
-        *@param _factory Factory address
-        *@param _template_addr 
-        *@param _slot
-        *@param _target
-        *@param _approval
-        */
 
         require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         IFactory(_factory).approveReference(_template, _slot, _target, _approval);
-    }
-
-    function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen)external{
-        require(msg.sender == ownership_admin, "Access denied");
-        IUniversalMarket _template = IUniversalMarket(_template_addr);
-
-        IFactory(_factory).approveTemplate(_template, _approval, _isOpen);
     }
 
     function set_condition_factory(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{
@@ -427,9 +398,6 @@ contract PoolProxy is ReentrancyGuard{
         address _factory,
         address _template_addr,
         string memory _metaData,
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals,
         uint256[] memory _conditions,
         address[] memory _references
     ) external returns (address){
@@ -439,15 +407,24 @@ contract PoolProxy is ReentrancyGuard{
         address _market = IFactory(_factory).createMarket(
                                 _template,
                                 _metaData,
-                                _name,
-                                _symbol,
-                                _decimals,
                                 _conditions,
                                 _references
                             );
         
         return _market;
     }
+
+    function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
+
+        require(msg.sender == ownership_admin, "Access denied");
+        IFactory(_factory).commitTransferOwnership(_future_admin);
+    }
+
+    function apply_transfer_ownership_factory(address _factory)external{
+
+        IFactory(_factory).applyTransferOwnership();
+    }
+
 
 
     //FeeModel
@@ -460,12 +437,12 @@ contract PoolProxy is ReentrancyGuard{
     function commit_transfer_ownership_feemodel(address _fee, address _future_owner)external{
 
         require(msg.sender == ownership_admin, "Access denied");
-        IFeeModel(_fee).commit_transfer_ownership(_future_owner);
+        IFeeModel(_fee).commitTransferOwnership(_future_owner);
     }
 
     function apply_transfer_ownership_feemodel(address _fee)external{
 
-        IFeeModel(_fee).apply_transfer_ownership();
+        IFeeModel(_fee).applyTransferOwnership();
     }
 
 
@@ -484,34 +461,27 @@ contract PoolProxy is ReentrancyGuard{
 
 
     function commit_transfer_ownership_premiummodel(address _premium, address _future_owner)external{
-        /***
-        *@param _premium address of PremiumModel contract
-        *@param _future_owner address of the future owner
-        */
+
         require(msg.sender == ownership_admin, "Access denied");
-        IPremiumModel(_premium).commit_transfer_ownership(_future_owner);
+        IPremiumModel(_premium).commitTransferOwnership(_future_owner);
 
     }
 
     function apply_transfer_ownership_premiummodel(address _premium)external{
-        /***
-        *@param _premium address of PremiumModel contract
-        */
-        IPremiumModel(_premium).apply_transfer_ownership();
+
+        IPremiumModel(_premium).applyTransferOwnership();
     }
 
 
     //Universal(Pool/Index/CDS)
     function set_paused(address _pool, bool _state)external nonReentrant{
-        /***
-        *@notice pause/unpause the pool
-        *@param _pool Pool address to pause
-        */
+
         require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied");
         IUniversalMarket(_pool).setPaused(_state);
     }
 
     function change_metadata(address _pool, string calldata _metadata) external {
+
         require(msg.sender == parameter_admin, "Access denied");
         IUniversalMarket(_pool).changeMetadata(_metadata);
     }
@@ -524,16 +494,13 @@ contract PoolProxy is ReentrancyGuard{
         uint256 _payoutNumerator,
         uint256 _payoutDenominator,
         uint256 _incidentTimestamp,
-        bytes32[] calldata _targets,
+        bytes32 _merkleRoot,
+        bytes32[] calldata _rawdata,
         string calldata _memo
     ) external{
-        /***
-        *@notice Lat insurance holder to be able to Claim for their insurance.
-        *@dev 
-        */
         require(msg.sender == reporting_admin[_pool], "Access denied");
 
-        IPoolTemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _targets, _memo);
+        IPoolTemplate(_pool).applyCover(_pending, _payoutNumerator, _payoutDenominator, _incidentTimestamp, _merkleRoot, _rawdata, _memo);
     }
 
 
@@ -545,65 +512,57 @@ contract PoolProxy is ReentrancyGuard{
         IIndexTemplate(_index).setLeverage(_target);
     }
 
-    function set(address _index, address _pool, uint256 _allocPoint)external{
+    function set(address _index_address, uint256 _index, address _pool, uint256 _allocPoint)external{
         require(msg.sender == parameter_admin, "Access denied");
 
-        IIndexTemplate(_index).set(_pool, _allocPoint);
+        IIndexTemplate(_index_address).set(_index, _pool, _allocPoint);
     }
 
 
     //Vault
-    function commit_transfer_ownership_vault(address _vault, address _future_owner)external{
-        /***
-        *@param _vault address of Vault contract of the Vault
-        *@param _future_owner address of the future owner
-        */
+    function set_keeper(address _vault, address _keeper)external{
+
         require(msg.sender == ownership_admin, "Access denied");
-        IVault(_vault).commit_transfer_ownership(_future_owner);
-
-    }
-
-    function apply_transfer_ownership_vault(address _vault)external{
-        /***
-        *@notice 
-        *@param _vault Vault address
-        */
-        
-        IVault(_vault).apply_transfer_ownership();
+        IVault(_vault).setKeeper(_keeper);
     }
 
     function set_controller(address _vault, address _controller)external{
-        /***
-        *@param _vault Vault address
-        *@param _controller new controller address
-        */
+        
         require(msg.sender == ownership_admin, "Access denied");
-
         IVault(_vault).setController(_controller);
+    }
+
+    function commit_transfer_ownership_vault(address _vault, address _future_owner)external{
+
+        require(msg.sender == ownership_admin, "Access denied");
+        IVault(_vault).commitTransferOwnership(_future_owner);
+    }
+
+    function apply_transfer_ownership_vault(address _vault)external{
+        
+        IVault(_vault).applyTransferOwnership();
     }
 
 
     //Parameters
     function set_parameters(address _parameters)external {
+        /***
+        * @notice set parameter contract
+        */
 
         require(msg.sender == ownership_admin, "Access denied");
         parameters = _parameters;
     }
 
     function commit_transfer_ownership_parameters(address _parameters, address _future_owner)external{
-        /***
-        *@param _parameters Parameters address
-        *@param _future_owner address of the future owner
-        */
+        
         require(msg.sender == ownership_admin, "Access denied");
-        IParameters(_parameters).commit_transfer_ownership(_future_owner);
+        IParameters(_parameters).commitTransferOwnership(_future_owner);
     }
 
     function apply_transfer_ownership_parameters(address _parameters)external{
-        /***
-        *@param _parameters Parameters address
-        */
-        IParameters(_parameters).apply_transfer_ownership();
+        
+        IParameters(_parameters).applyTransferOwnership();
     }
 
     function set_vault(address _parameters, address _token, address _vault)external{
@@ -632,18 +591,18 @@ contract PoolProxy is ReentrancyGuard{
         IParameters(_parameters).setMindate(_address, _target);
     }
 
-    function set_premium2(address _parameters, address _address, uint256 _target)external{
+    function set_cds_premium(address _parameters, address _address, uint256 _target)external{
 
         require(msg.sender == parameter_admin, "Access denied");
 
-        IParameters(_parameters).setPremium2(_address, _target);
+        IParameters(_parameters).setCDSPremium(_address, _target);
     }
 
-    function set_fee2(address _parameters, address _address, uint256 _target)external{
+    function set_depositFee(address _parameters, address _address, uint256 _target)external{
 
         require(msg.sender == parameter_admin, "Access denied");
 
-        IParameters(_parameters).setFee2(_address, _target);
+        IParameters(_parameters).setDepositFee(_address, _target);
     }
 
     function set_withdrawable(address _parameters, address _address, uint256 _target)external{
@@ -667,6 +626,12 @@ contract PoolProxy is ReentrancyGuard{
         IParameters(_parameters).setFeeModel(_address, _target);
     }
 
+    function set_max_list(address _parameters, address _address, uint256 _target)external{
+
+        require(msg.sender == parameter_admin, "Access denied");
+        IParameters(_parameters).setMaxList(_address, _target);
+    }
+
     function set_condition_parameters(address _parameters, bytes32 _reference, bytes32 _target) external{
 
         require(msg.sender == parameter_admin, "Access denied");
@@ -676,17 +641,11 @@ contract PoolProxy is ReentrancyGuard{
 
 
     //Registry
-    function commit_transfer_ownership_registry(address _registry, address _future_admin)external{
+    function set_factory(address _registry, address _factory)external{
 
         require(msg.sender == ownership_admin, "Access denied");
-        IRegistry(_registry).commit_transfer_ownership(_future_admin);
-    }
 
-    function apply_transfer_ownership_registry(address _registry)external{
-        /***
-        *@param _registry Registry address
-        */
-        IRegistry(_registry).apply_transfer_ownership();
+        IRegistry(_registry).setFactory(_factory);
     }
 
     function support_market(address _registry, address _market) external{
@@ -695,16 +654,26 @@ contract PoolProxy is ReentrancyGuard{
         IRegistry(_registry).supportMarket(_market);
     }
 
+    function set_existence(address _registry, address _target, uint256 _typeId)external{
+
+        require(msg.sender == ownership_admin, "Access denied");
+        IRegistry(_registry).setExistence(_target, _typeId);
+    }
+
     function set_cds(address _registry, address _address, address _target) external{
 
         require(msg.sender == ownership_admin, "Access denied");
         IRegistry(_registry).setCDS(_address, _target);
     }
 
-    function set_factory(address _registry, address _factory)external{
+    function commit_transfer_ownership_registry(address _registry, address _future_admin)external{
 
         require(msg.sender == ownership_admin, "Access denied");
+        IRegistry(_registry).commitTransferOwnership(_future_admin);
+    }
 
-        IRegistry(_registry).setFactory(_factory);
+    function apply_transfer_ownership_registry(address _registry)external{
+        
+        IRegistry(_registry).applyTransferOwnership();
     }
 }
