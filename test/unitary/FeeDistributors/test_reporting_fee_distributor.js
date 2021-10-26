@@ -19,7 +19,7 @@ describe('ReportingFeeDistributorV1', () => {
 
       fee = await Token.deploy(name, simbol, decimal);
       rpt_token = await Token.deploy(name, simbol, rpt_decimal);
-      dstr = await Distributor.deploy(rpt_token.address, fee.address, alice.address, creator.address);
+      dstr = await Distributor.deploy(rpt_token.address, alice.address, creator.address, fee.address);
     });
 
     describe("Condition", function () {

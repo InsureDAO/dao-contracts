@@ -2,6 +2,7 @@ pragma solidity 0.8.7;
 //SPDX-License-Identifier: MIT
 /***
 * Distribute part of admin fee to Reporting members;
+* @dev assumes not more than one kind of token to be distributed.
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -23,9 +24,10 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
 
-    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //mainnet USDC
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //mainnet USDC
+    address public token;
 
-    address public insure_reporting; //SURERPT address
+    address public insure_reporting; //RPTINSURE address
 
     address public admin; //upgradable
     address public future_admin; 
@@ -49,18 +51,26 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     constructor(
         address _insure_reporting,
         address _recovery,
-        address _admin
+        address _admin,
+        address _token
     ){
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
         *@param _recovery Address to transfer `_token` balance to if this contract is killed
         *@param _admin Admin address
+        *@param _token set for test. leave this address(0) when deploying in production.
         */
 
         require(_insure_reporting != address(0), "zero-address");
         require(_recovery != address(0), "zero-address");
         require(_admin != address(0), "zero-address");
+        
+        if(_token != address(0)){
+            token = _token;
+        }else{
+            token = USDC;
+        }
 
         insure_reporting = _insure_reporting;
         recovery = _recovery;
@@ -144,7 +154,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         * @param _coin address of the coin being received (must be USDC)
         * @return bool success
         */
-        require(_coin == USDC, "cannnot distribute this token");
+        require(_coin == token, "cannnot distribute this token");
         require(!is_killed, "dev: contract is killed");
         uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
@@ -223,7 +233,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 _amount = claimable_fee[_addr];
         claimable_fee[_addr] = 0;
-        IERC20(USDC).safeTransfer(_addr, _amount);
+        IERC20(token).safeTransfer(_addr, _amount);
 
         emit Claim(_addr, _amount);
         return _amount;
