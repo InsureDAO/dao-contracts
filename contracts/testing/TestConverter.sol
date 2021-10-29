@@ -1,4 +1,5 @@
 pragma solidity 0.8.7;
+//SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../InsureToken.sol";
@@ -14,7 +15,7 @@ contract TestConverter{
     using SafeMath for uint256;
     InsureToken public insure_token;
 
-    constructor(address _insure)public{
+    constructor(address _insure){
         insure_token = InsureToken(_insure);
     }
     

@@ -22,7 +22,7 @@ contract FeeDistributionV1{
      ConverterV1 public converter;
      
 
-     constructor(address _insure_token, address _converter)public{
+     constructor(address _insure_token, address _converter){
           require(_insure_token != address(0), "zero-address");
           require(_converter != address(0), "zero-address");
           

@@ -1,11 +1,6 @@
-/**
- * @title Parameters
- * @author @kohshiba
- * @notice This contract manages parameters of markets.
- */
-
 pragma solidity 0.8.7;
 pragma experimental ABIEncoderV2;
+//SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -34,7 +29,7 @@ contract Parameters {
     mapping(address => uint256) private _withdawable;
     mapping(bytes32 => bytes32) private _conditions;
 
-    constructor(address _target) public {
+    constructor(address _target){
         owner = _target;
     }
 

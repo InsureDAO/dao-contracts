@@ -1,4 +1,5 @@
 pragma solidity 0.8.7;
+//SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -6,7 +7,7 @@ contract TestVault{
 
     address token;
 
-    constructor(address _token)public{
+    constructor(address _token){
         token = _token;
     }
 

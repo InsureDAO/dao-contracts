@@ -1,4 +1,5 @@
 pragma solidity 0.8.7;
+//SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -17,7 +18,7 @@ contract TestLP{
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    constructor(string memory _name, string memory _symbol, uint256 _decimal, uint256 _supply) public {
+    constructor(string memory _name, string memory _symbol, uint256 _decimal, uint256 _supply){
         uint256 init_supply = _supply.mul(10**_decimals);
         name = _name;
         symbol = _symbol;

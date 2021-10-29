@@ -47,7 +47,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         address _token,
         address _recovery,
         address _admin
-    )public{
+    ){
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
