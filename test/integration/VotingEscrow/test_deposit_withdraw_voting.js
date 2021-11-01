@@ -248,7 +248,7 @@ describe('LiquidityGauge', function() {
         for(acct = 0; acct < accounts.length; acct++){
             let data = voting_balances[acct];
 
-            let balance = await voting_escrow.balanceOf(accounts[acct].address, 0);
+            let balance = await voting_escrow.contract.balanceOf['address,uint256'](accounts[acct].address, 0);
             total_supply = total_supply.add(balance);
 
             if(data["unlock_time"].gt(timestamp) && data["value"].div(YEAR).gt("0")){

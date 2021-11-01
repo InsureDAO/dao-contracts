@@ -40,11 +40,11 @@ contract PoolProxy is ReentrancyGuard{
     event CommitDefaultReportingAdmin(address default_reporting_admin);
     event AcceptDefaultReportingAdmin(address default_reporting_admin);
     event SetReportingAdmin(address pool, address reporter);
+
     event AddDistributor(address distributor);
 
 
     address public ownership_admin;
-    address public parameter_admin;
     address public emergency_admin;
     address public default_reporting_admin; //default reporting module address when arbitrary reporting module is not set.
     mapping(address => address)public reporting_admin; //Pool => Payout Decision Maker's address. (ex. ReportingDAO)
@@ -52,7 +52,6 @@ contract PoolProxy is ReentrancyGuard{
     address parameters; //pool-contracts Parameters.sol
 
     address public future_ownership_admin;
-    address public future_parameter_admin;
     address public future_emergency_admin;
     address public future_default_reporting_admin;
 
@@ -78,11 +77,9 @@ contract PoolProxy is ReentrancyGuard{
 
     constructor(
         address _ownership_admin,
-        address _parameter_admin,
         address _emergency_admin
     ){
         ownership_admin = _ownership_admin;
-        parameter_admin = _parameter_admin;
         emergency_admin = _emergency_admin;
     }
 
@@ -163,7 +160,7 @@ contract PoolProxy is ReentrancyGuard{
         *@param _id distributor id
         *@param _weight new weight of the distributor
         */
-        require(msg.sender == parameter_admin, "only parameter admin");
+        require(msg.sender == ownership_admin, "Access denied");
 
         _set_distributor_weight(_token, _id, _weight);
 
@@ -178,7 +175,7 @@ contract PoolProxy is ReentrancyGuard{
         *@param _weights new weights of the distributors[20]
         *@dev [20] 20 is ramdomly decided and has no meaning.
         */
-        require(msg.sender == parameter_admin, "only parameter admin");
+        require(msg.sender == ownership_admin, "Access denied");
 
         for(uint256 i=0; i<20; i++){
             if(_tokens[i] == address(0)){
@@ -237,7 +234,7 @@ contract PoolProxy is ReentrancyGuard{
     function re_allocate(address _token)external{
         //re-allocate the all fee token in this contract with the current allocation.
 
-        require(msg.sender == parameter_admin, "only parameter admin");
+        require(msg.sender == ownership_admin, "Access denied");
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
 
@@ -310,7 +307,7 @@ contract PoolProxy is ReentrancyGuard{
 
     //==================================[Configuration]==================================//
     // admins
-    function commit_set_admins(address _o_admin, address _p_admin, address _e_admin)external{
+    function commit_set_admins(address _o_admin, address _e_admin)external{
         /***
         *@notice Set ownership admin to `_o_admin`, parameter admin to `_p_admin` and emergency admin to `_e_admin`
         *@param _o_admin Ownership admin
@@ -320,10 +317,9 @@ contract PoolProxy is ReentrancyGuard{
         require(msg.sender == ownership_admin, "Access denied");
 
         future_ownership_admin = _o_admin;
-        future_parameter_admin = _p_admin;
         future_emergency_admin = _e_admin;
 
-        emit CommitAdmins(_o_admin, _p_admin, _e_admin);
+        emit CommitAdmins(_o_admin, _e_admin);
     }
 
     function accept_set_admins()external{
@@ -333,16 +329,16 @@ contract PoolProxy is ReentrancyGuard{
         require(msg.sender == future_ownership_admin, "Access denied");
 
         ownership_admin = future_ownership_admin;
-        parameter_admin = future_parameter_admin;
         emergency_admin = future_emergency_admin;
 
-        emit ApplyAdmins(ownership_admin, parameter_admin, emergency_admin);
+        emit ApplyAdmins(ownership_admin, emergency_admin);
     }
 
-    // reporting admins
+    //==================================[Reporting Module]==================================//
     function commit_set_default_reporting_admin(address _r_admin)external{
         /***
-        *@notice Set default_reporting_admin to `_r_admin`
+        *@notice Set reporting admin to `_r_admin`
+        *@param _pool Target address
         *@param _r_admin Reporting admin
         */
         require(msg.sender == ownership_admin, "Access denied");
@@ -369,6 +365,7 @@ contract PoolProxy is ReentrancyGuard{
         *@notice "ownership_admin" or "default_reporting_admin" can execute this function.
         */
         require(address(msg.sender) == ownership_admin || address(msg.sender) == default_reporting_admin, "Access denied");
+
 
         reporting_admin[_pool] = _reporter;
 
@@ -454,7 +451,7 @@ contract PoolProxy is ReentrancyGuard{
     //FeeModel
     function set_fee(address _fee, uint256 _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IFeeModel(_fee).setFee(_target);
     }
 
@@ -473,13 +470,13 @@ contract PoolProxy is ReentrancyGuard{
     //Premium model
     function set_premium(address _premium, uint256 _baseRatePerYear, uint256 _multiplierPerYear)external{
         
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
         IPremiumModel(_premium).setPremium(_baseRatePerYear, _multiplierPerYear);
     }
 
     function set_options(address _premium, uint256 _a, uint256 _b, uint256 _c, uint256 _d)external{
-
-        require(msg.sender == parameter_admin, "Access denied");
+    
+        require(msg.sender == ownership_admin, "Access denied");
         IPremiumModel(_premium).setOptions(_a, _b, _c, _d);
     }
 
@@ -531,10 +528,11 @@ contract PoolProxy is ReentrancyGuard{
     //Index
     function set_leverage(address _index, uint256 _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IIndexTemplate(_index).setLeverage(_target);
     }
+
 
     function set(address _index_address, uint256 _index, address _pool, uint256 _allocPoint)external{
         require(msg.sender == parameter_admin, "Access denied");
@@ -598,54 +596,54 @@ contract PoolProxy is ReentrancyGuard{
 
     function set_lockup(address _parameters, address _address, uint256 _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setLockup(_address, _target);
     }
 
     function set_grace(address _parameters, address _address, uint256 _target)external{
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setGrace(_address, _target);
     }
 
     function set_mindate(address _parameters, address _address, uint256 _target)external{
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setMindate(_address, _target);
     }
 
     function set_cds_premium(address _parameters, address _address, uint256 _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setCDSPremium(_address, _target);
     }
 
     function set_depositFee(address _parameters, address _address, uint256 _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setDepositFee(_address, _target);
     }
 
     function set_withdrawable(address _parameters, address _address, uint256 _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setWithdrawable(_address, _target);
     }
 
     function set_premium_model(address _parameters, address _address, address _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setPremiumModel(_address, _target);
     }
 
     function set_fee_model(address _parameters, address _address, address _target)external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setFeeModel(_address, _target);
     }
@@ -658,7 +656,7 @@ contract PoolProxy is ReentrancyGuard{
 
     function set_condition_parameters(address _parameters, bytes32 _reference, bytes32 _target) external{
 
-        require(msg.sender == parameter_admin, "Access denied");
+        require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setCondition(_reference, _target);
     }

@@ -71,7 +71,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         }else{
             token = USDC;
         }
-
+        
         insure_reporting = _insure_reporting;
         recovery = _recovery;
         admin = _admin;
