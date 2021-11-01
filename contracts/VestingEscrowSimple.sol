@@ -43,7 +43,9 @@ contract VestingEscrowSimple is ReentrancyGuard{
     bool public initialized;
 
 
-    constructor(){}
+    constructor(){
+        initialized = true;
+    }
 
     function initialize(
         address _admin,

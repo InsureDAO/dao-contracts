@@ -3,11 +3,13 @@
 pragma solidity 0.8.7;
 
 interface IVault {
-    function commit_transfer_ownership(address)external;
+    function setKeeper(address _keeper)external;
 
-    function apply_transfer_ownership()external;
+    function setController(address _controller)external;
 
-    function setController(address)external;
+    function commitTransferOwnership(address)external;
+
+    function applyTransferOwnership()external;
 
     function withdrawAllAttribution(address _to)external returns(uint256);
 }
