@@ -3,6 +3,8 @@
 pragma solidity 0.8.7;
 
 interface IIndexTemplate {
-    function setLeverage(uint256 _target) external;
-    function set(address _pool, uint256 _allocPoint) external;
+    function setPaused(bool) external; //Universal
+    function changeMetadata(string calldata) external; //Universal
+    function setLeverage(uint256) external;
+    function set(uint256, address, uint256) external;
 }

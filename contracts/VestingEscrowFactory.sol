@@ -68,10 +68,13 @@ contract VestingEscrowFactory{
         require (_vesting_duration >= MIN_VESTING_DURATION, "dev: duration too short");
         require (_token != address(0), "dev: zero address");
 
+        //contract deployment
         VestingEscrowSimple _contract = VestingEscrowSimple(_createClone(address(target)));
 
         require (IERC20(_token).approve(address(_contract), _amount), "dev: approve failed");
-        _contract.initialize(
+
+        //call initialize immediatelly after deployment
+        require(_contract.initialize(
             admin,
             _token,
             _recipient,
@@ -79,10 +82,10 @@ contract VestingEscrowFactory{
             _vesting_start,
             _vesting_start + _vesting_duration,
             _can_disable
-        );
-        latest_deployed_address = address(_contract);
-        return address(_contract);
+        ), "dev: initialize failed");
 
+        latest_deployed_address = address(_contract); //for test
+        return address(_contract);
     }
 
     function _createClone(address _target) internal returns (address result) {

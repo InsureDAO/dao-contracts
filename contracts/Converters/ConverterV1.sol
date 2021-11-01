@@ -1,13 +1,14 @@
 pragma solidity 0.8.7;
 
 /***
-*@title Token Converter V1-2
+*@title ConverterV1
 *@author InsureDAO
 * SPDX-License-Identifier: MIT
-*@notice InsureDAO util contract using UniswapV2
+*@notice utility contract for token exchange using UniswapV2
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -17,6 +18,7 @@ import "../interfaces/utils/IUniswapV2Router02.sol";
 
 contract ConverterV1{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     IUniswapV2Router02 public UniswapV2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
     InsureToken public insure_token;
@@ -27,16 +29,20 @@ contract ConverterV1{
         insure_token = InsureToken(_insure);
     }
     
-    /***
-    *@dev For FeeDistributorV1. Buy back insure and burn
-    */
-    function swap_exact_to_insure(uint256 _amountIn, address _to)external returns(bool){
+    function swap_exact_to_insure(address _token, uint256 _amountIn, address _to)external returns(bool){
+        /***
+        *@notice Buy back insure by ARBITRARY token.
+        *@param _token address of token to be used for exchange
+        *@param _amountIn amount of _token to be used for exchange
+        *@param _to address where exchanged INSURE goes
+        */
+
         //setup for swap
-        require(USDC.transferFrom(msg.sender, address(this), _amountIn), 'transferFrom failed.');
-        require(USDC.approve(address(UniswapV2), _amountIn), 'approve failed.');
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amountIn);
+        IERC20(_token).safeApprove(address(UniswapV2), _amountIn);
 
         address[] memory path = new address[](3);
-        path[0] = address(USDC);
+        path[0] = address(_token);
         path[1] = address(WETH);
         path[2] = address(insure_token); //insure token
 
@@ -47,10 +53,12 @@ contract ConverterV1{
     }
 
 
-    /***
-    *@dev only be used in case of emergency_mint(). To know how many INSURE is required.
-    */
     function getAmountsIn(uint256 _amountOut)external view returns(uint256){
+        /***
+        *@notice get INSURE token required to get _amountOut of USDC
+        *@param _amountOut amount of USDC needed
+        *@dev only be used for emergency_mint() to know how many INSURE is required.
+        */
         address[] memory path = new address[](3);
         path[0] = address(insure_token);
         path[1] = address(WETH);
@@ -60,10 +68,13 @@ contract ConverterV1{
         return amountsIn[0]; //required Insure Token
     }
 
-    /***
-    *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
-    */
+
     function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external{
+        /***
+        *@notice swap INSURE token to exact amount of USDC.
+        *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
+        */
+
         //setup for swap
         require(insure_token.transferFrom(msg.sender, address(this), _amountInMax), 'transferFrom failed.');
         require(insure_token.approve(address(UniswapV2), _amountInMax), 'approve failed.');

@@ -2,16 +2,20 @@ pragma solidity 0.8.7;
 //SPDX-License-Identifier: MIT
 /***
 * Distribute part of admin fee to Reporting members;
+* @dev assumes not more than one kind of token to be distributed.
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+
 contract ReportingDistributionV1 is ReentrancyGuard{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     event Distribution(uint256 amount, uint256 blocktime);
     event UpdateReportingMember(address _address, bool is_rpt);
@@ -20,8 +24,10 @@ contract ReportingDistributionV1 is ReentrancyGuard{
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
 
-    address public insure_reporting; //SURERPT address
-    address public token; //token to be distributed;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //mainnet USDC
+    address public token;
+
+    address public insure_reporting; //RPTINSURE address
 
     address public admin; //upgradable
     address public future_admin; 
@@ -44,25 +50,34 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
     constructor(
         address _insure_reporting,
-        address _token,
         address _recovery,
-        address _admin
+        address _admin,
+        address _token
     ){
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
-        *@param _token Fee token address (USDC)
         *@param _recovery Address to transfer `_token` balance to if this contract is killed
         *@param _admin Admin address
+        *@param _token set for test. leave this address(0) when deploying in production.
         */
 
+        require(_insure_reporting != address(0), "zero-address");
+        require(_recovery != address(0), "zero-address");
+        require(_admin != address(0), "zero-address");
+        
+        if(_token != address(0)){
+            token = _token;
+        }else{
+            token = USDC;
+        }
+        
         insure_reporting = _insure_reporting;
-        token = _token;
         recovery = _recovery;
         admin = _admin;
     }
 
-//Reporter management
+    //Reporter management
     function register_reporter(address _addr)external{
         /***
         * @notice register reporter
@@ -132,7 +147,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         }
     }
 
-//Distribute
+    //Distribute
     function distribute(address _coin)external returns(bool){
         /***
         * @notice Recieve USDC into the contract and trigger a token checkpoint
@@ -143,7 +158,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         require(!is_killed, "dev: contract is killed");
         uint256 total_amount = IERC20(_coin).allowance(address(msg.sender), address(this)); //Amount of token PoolProxy allows me
         if(total_amount != 0){
-            require(IERC20(_coin).transferFrom(address(msg.sender), address(this), total_amount)); //allowance will be 0
+            IERC20(_coin).safeTransferFrom(address(msg.sender), address(this), total_amount); //allowance will be 0
 
             uint256 bonus = total_amount.mul(bonus_ratio).div(bonus_ratio_divider);
             bonus_total = bonus_total.add(bonus);
@@ -218,7 +233,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 _amount = claimable_fee[_addr];
         claimable_fee[_addr] = 0;
-        require(IERC20(token).transfer(_addr, _amount));
+        IERC20(token).safeTransfer(_addr, _amount);
 
         emit Claim(_addr, _amount);
         return _amount;
@@ -268,7 +283,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
 
         uint256 amount = IERC20(_coin).balanceOf(address(this));
         if(amount != 0){
-            require(IERC20(_coin).transfer(recovery, amount));
+            IERC20(_coin).safeTransfer(recovery, amount);
         }
 
         return true;
