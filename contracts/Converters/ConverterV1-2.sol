@@ -8,6 +8,7 @@ pragma solidity >=0.7.5;
 */
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -20,6 +21,7 @@ import "../interfaces/utils/IQuoter.sol";
 
 contract ConverterV1{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     ISwapRouter public constant UniswapV3 = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564); //rinkeby
     IQuoter public constant Quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6); //rinkeby
@@ -32,14 +34,15 @@ contract ConverterV1{
     }
     
 
-    function swap_exact_to_insure(uint256 _amountIn, address _to)external returns(bool){
+    function swap_exact_to_insure(address _token, uint256 _amountIn, address _to)external returns(bool){
         /***
         *@notice token exchange from USDC to INSURE.
+        *@param _token address of token to be used for exchange
         *@param _amountIn amount of USDC for exchange of INSURE
         *@param _to address of INSURE token recipient
         */
         uint256 deadline = block.timestamp + 60; // using 'now' for convenience, for mainnet pass deadline from frontend!
-        address tokenIn = address(USDC);
+        address tokenIn = address(_token);
         address tokenOut = address(insure_token);
         uint24 fee = 3000;
         address recipient = _to;
@@ -48,8 +51,8 @@ contract ConverterV1{
         uint160 sqrtPriceLimitX96 = 0;
                 
         //setup for swap
-        require(USDC.transferFrom(msg.sender, address(this), _amountIn), 'transferFrom failed.');
-        require(USDC.approve(address(UniswapV3), _amountIn), 'approve failed.');
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
+        IERC20(tokenIn).safeApprove(address(UniswapV3), _amountIn);
         
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams(
             tokenIn,
