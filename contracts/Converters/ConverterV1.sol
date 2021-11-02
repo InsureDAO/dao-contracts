@@ -69,7 +69,7 @@ contract ConverterV1{
     }
 
 
-    function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external{
+    function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external returns(bool){
         /***
         *@notice swap INSURE token to exact amount of USDC.
         *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
@@ -85,6 +85,8 @@ contract ConverterV1{
         path[2] = address(USDC);
         
         UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp.add(25));
+
+        return true;
     }
 
 }
