@@ -95,7 +95,8 @@ contract TestToken{
         emit Transfer(_to, address(0), _value);
     }
 
-    function burn(uint256 _value)external{
+    function burn(uint256 _value)external returns(bool){
         _burn(msg.sender, _value);
+        return true;
     }
 }

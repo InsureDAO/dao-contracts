@@ -26,6 +26,12 @@ contract TestConverter{
         //setup for swap
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amountIn);
 
+        //simulate this function send INSURE token to _to
+        uint256 insure_amount = insure_token.balanceOf(address(this));
+        if(insure_amount>0){
+            insure_token.transfer(_to, insure_amount);
+        }
+
         return true;
     }
     
@@ -34,8 +40,10 @@ contract TestConverter{
         return 55;
     }
 
-    function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external{
+    function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external returns(bool){
         require(insure_token.transferFrom(msg.sender, address(this), _amountInMax), 'transferFrom failed.');
+
+        return true;
     }
 
 }

@@ -44,13 +44,16 @@ contract FeeDistributorV1{
 
           //collect _token.
           uint256 claimable = IERC20(_token).allowance(msg.sender, address(this));
-          require(claimable > 0);
-          IERC20(_token).safeTransferFrom(msg.sender, address(this), claimable);
+          if(claimable > 0){
+               IERC20(_token).safeTransferFrom(msg.sender, address(this), claimable);
+          }
 
-          //exchange _token to INSURE using Converter contract.
+          //get token amount
           uint256 amount = IERC20(_token).balanceOf(address(this));
-          IERC20(_token).safeApprove(address(converter), amount);
+          require(amount>0, "no distributable amount");
 
+          //convert
+          IERC20(_token).safeApprove(address(converter), amount);
           require(converter.swap_exact_to_insure(_token, amount, address(this)), 'swap failed');
 
           //burn INSURE if >0
@@ -60,7 +63,7 @@ contract FeeDistributorV1{
           }
 
           return true;
-     } 
+     }
 
     
 }
