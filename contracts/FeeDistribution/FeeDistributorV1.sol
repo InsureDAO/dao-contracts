@@ -1,7 +1,7 @@
 pragma solidity 0.8.7;
 
 /***
-*@title ConverterV1
+*@title FeeDistributorV1
 *@author InsureDAO
 * SPDX-License-Identifier: MIT
 *@notice Buy back INSURE by arbitrary token and burn.
@@ -13,18 +13,18 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "../Converters/ConverterV1.sol";
+import "../Converters/ConverterV1-2.sol";
 
 interface BURN{
      function burn(uint256 _value)external returns(bool);
 }
 
-contract FeeDistributionV1{
+contract FeeDistributorV1{
      using SafeMath for uint256;
      using SafeERC20 for IERC20;
 
      address insure_token;
-     ConverterV1 public converter;
+     ConverterV1_2 public converter;
      
 
      constructor(address _insure_token, address _converter){
@@ -33,7 +33,7 @@ contract FeeDistributionV1{
           require(_converter != address(0), "zero-address");
           
           insure_token = _insure_token;
-          converter = ConverterV1(_converter);
+          converter = ConverterV1_2(_converter);
      }
 
      function distribute(address _token)external returns(bool){

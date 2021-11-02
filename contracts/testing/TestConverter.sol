@@ -2,6 +2,7 @@ pragma solidity 0.8.7;
 //SPDX-License-Identifier: MIT
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -13,10 +14,19 @@ import "../interfaces/utils/IUniswapV2Router02.sol";
 //All token's are 18 decimals.
 contract TestConverter{
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+
     InsureToken public insure_token;
 
     constructor(address _insure){
         insure_token = InsureToken(_insure);
+    }
+
+    function swap_exact_to_insure(address _token, uint256 _amountIn, address _to)external returns(bool){
+        //setup for swap
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amountIn);
+
+        return true;
     }
     
 
