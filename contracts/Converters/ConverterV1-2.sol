@@ -23,10 +23,10 @@ contract ConverterV1_2{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    ISwapRouter public constant UniswapV3 = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564); //rinkeby
-    IQuoter public constant Quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6); //rinkeby
+    ISwapRouter public constant UniswapV3 = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564); //mainnet
+    IQuoter public constant Quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6); //mainnet
 
-    IERC20 public constant USDC = IERC20(0xeb8f08a975Ab53E34D8a0330E0D34de942C95926); //rinkyby    
+    IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); //mainnet    
     InsureToken public immutable insure_token;
 
     constructor(address _insure){

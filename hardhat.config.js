@@ -14,7 +14,10 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      initialBaseFeePerGas: 0
+      initialBaseFeePerGas: 0,
+      //forking: {
+      //  url: "https://eth-mainnet.alchemyapi.io/v2/-vmufhhPyGeTxZH6ep9q2PuHjaPp4l0u",
+      //}
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,

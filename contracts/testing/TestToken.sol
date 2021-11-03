@@ -1,21 +1,19 @@
 pragma solidity 0.8.7;
 //SPDX-License-Identifier: MIT
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract TestToken{
+contract TestToken is IERC20{
     using SafeMath for uint256;
 
     string public name;
     string public symbol;
     uint256 public _decimals;
-    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public override balanceOf;
     mapping (address => mapping(address => uint256))public allowances;
     uint256 public total_supply;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     constructor(string memory _name, string memory _symbol, uint256 _decimal){
         name = _name;
@@ -23,11 +21,11 @@ contract TestToken{
         _decimals = _decimal;
     }
 
-    function totalSupply() external view  returns(uint256){
+    function totalSupply() external view override returns(uint256){
         return total_supply;
     }
 
-    function allowance(address _owner, address _spender)external view  returns(uint256){
+    function allowance(address _owner, address _spender)external view override returns(uint256){
         /***
         *@notice Check the amount of tokens that an owner allowed to a spender
         *@param _owner The address which owns the funds
@@ -37,7 +35,7 @@ contract TestToken{
         return allowances[_owner][_spender];
     }
 
-    function transfer(address _to, uint256 _value) external  returns(bool){
+    function transfer(address _to, uint256 _value) external override returns(bool){
         /***
         *@notice Transfer `_value` tokens from `msg.sender` to `_to`
         *@dev Vyper does not allow underflows, so the subtraction in
@@ -53,7 +51,7 @@ contract TestToken{
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value)external  returns(bool){
+    function transferFrom(address _from, address _to, uint256 _value)external override returns(bool){
         /***
         * @notice Transfer `_value` tokens from `_from` to `_to`
         * @param _from address The address which you want to send tokens from
@@ -73,7 +71,7 @@ contract TestToken{
         return true;
     }
     
-    function approve(address _spender, uint256 _value)external returns(bool){
+    function approve(address _spender, uint256 _value)external override returns(bool){
         allowances[msg.sender][_spender] = _value;
 
         emit Approval(msg.sender, _spender, _value);
