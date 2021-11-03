@@ -24,6 +24,10 @@ contract TestToken is IERC20{
     function totalSupply() external view override returns(uint256){
         return total_supply;
     }
+    
+    function decimals() public view returns (uint256) {
+        return _decimals;
+    }
 
     function allowance(address _owner, address _spender)external view override returns(uint256){
         /***

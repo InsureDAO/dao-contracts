@@ -15,9 +15,9 @@ module.exports = {
   networks: {
     hardhat: {
       initialBaseFeePerGas: 0,
-      //forking: {
-      //  url: "https://eth-mainnet.alchemyapi.io/v2/-vmufhhPyGeTxZH6ep9q2PuHjaPp4l0u",
-      //}
+      forking: {
+        url: "https://eth-mainnet.alchemyapi.io/v2/-vmufhhPyGeTxZH6ep9q2PuHjaPp4l0u",
+      }
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
@@ -35,11 +35,11 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    tests: "./test",
+    tests: "./test/mainnet_fork",
     cache: "./cache",
     artifacts: "./artifacts"
   },
   mocha: {
     timeout: 20000000
-  }
+  },
 };
