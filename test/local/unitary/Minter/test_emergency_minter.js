@@ -14,6 +14,8 @@ describe('Minter', function(){
     const decimal = 18;
 
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+    const FAKE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 
     const MAX_UINT256 = BigNumber.from('115792089237316195423570985008687907853269984665640564039457584007913129639935');
     const two_to_the_256_minus_1 = (BigNumber.from('2')).pow(BigNumber.from('256')).sub(BigNumber.from('1'));
@@ -58,7 +60,7 @@ describe('Minter', function(){
             let amount = BigNumber.from("1000");
 
             await minter.set_converter(converter.address);
-            await minter.connect(alice).emergency_mint(amount);
+            await minter.connect(alice).emergency_mint(FAKE_TOKEN_ADDRESS,amount);
 
             expect(await Insure.balanceOf(converter.address)).to.equal(55);//55 defined at TestConverter.sol
         });

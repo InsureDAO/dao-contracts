@@ -10,6 +10,7 @@ pragma solidity >=0.7.5;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
+import "../interfaces/dao/IConverter.sol";
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -17,16 +18,18 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
+import "hardhat/console.sol";
 
 
-contract ConverterV1_2{
+contract ConverterV1_2 is IConverter{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    event getAmountIn(address tokenOut, uint256 amountOut, address tokenIn, uint256 amountIn);
+
     ISwapRouter public constant UniswapV3 = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564); //mainnet
     IQuoter public constant Quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6); //mainnet
-
-    IERC20 public constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); //mainnet    
+ 
     InsureToken public immutable insure_token;
 
     constructor(address _insure){
@@ -34,7 +37,7 @@ contract ConverterV1_2{
     }
     
 
-    function swap_exact_to_insure(address _token, uint256 _amountIn, address _to)external returns(bool){
+    function swap_exact_to_insure(address _token, uint256 _amountIn, address _to)external override returns(bool){
         /***
         *@notice token exchange from USDC to INSURE.
         *@param _token address of token to be used for exchange
@@ -49,10 +52,14 @@ contract ConverterV1_2{
         uint256 amountIn = _amountIn;
         uint256 amountOutMinimum = 1;
         uint160 sqrtPriceLimitX96 = 0;
+
+        console.log("swap start");
                 
         //setup for swap
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
+        console.log("transfer done");
         IERC20(tokenIn).safeApprove(address(UniswapV3), _amountIn);
+        console.log("approval done");
         
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams(
             tokenIn,
@@ -65,18 +72,19 @@ contract ConverterV1_2{
             sqrtPriceLimitX96
         );               
         
-        UniswapV3.exactInputSingle(params);
+        require(UniswapV3.exactInputSingle(params)>0, "return 0 token");
+        console.log("swap done");
         return true;
     }
 
 
-    function getAmountsIn(uint256 _amountOut)external returns(uint256){
+    function getAmountsIn(address _tokenOut, uint256 _amountOut)external override returns(uint256){
         /***
-        *@notice get INSURE amount required to get specific amount of USDC from exchange of INSURE.
-        *@param _amountOut amount of USDC
+        *@notice get INSURE amount required to get specific amount of _tokenOut from exchange of INSURE.
+        *@param _amountOut amount of _tokenOut
         */
         address tokenIn = address(insure_token);
-        address tokenOut = address(USDC);
+        address tokenOut = address(_tokenOut);
         uint24 fee = 3000;
         uint256 amountOut = _amountOut;
         uint160 sqrtPriceLimitX96 = 0;
@@ -89,17 +97,18 @@ contract ConverterV1_2{
             sqrtPriceLimitX96
         );
 
+        emit getAmountIn(_tokenOut, _amountOut, address(insure_token), amountIn);
         return amountIn;
     }
 
     
-    function swap_insure_to_exact(uint256 _amountInMax, uint256 _amountOut, address _to)external returns (bool){
+    function swap_insure_to_exact(address _tokenOut, uint256 _amountOut, uint256 _amountInMax, address _to)external override returns (bool){
         /***
         *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
         */
         uint256 deadline = block.timestamp + 60;
         address tokenIn = address(insure_token);
-        address tokenOut = address(USDC);
+        address tokenOut = address(_tokenOut);
         uint24 fee = 3000;
         address recipient = _to;
         uint256 amountOut = _amountOut;
@@ -107,8 +116,8 @@ contract ConverterV1_2{
         uint160 sqrtPriceLimitX96 = 0;
                 
         //setup for swap
-        require(insure_token.transferFrom(msg.sender, address(this), _amountInMax), 'transferFrom failed.');
-        require(insure_token.approve(address(UniswapV3), _amountInMax), 'approve failed.');
+        IERC20(insure_token).safeTransferFrom(msg.sender, address(this), _amountInMax);
+        IERC20(insure_token).safeApprove(address(UniswapV3), _amountInMax);
         
         ISwapRouter.ExactOutputSingleParams  memory params = ISwapRouter.ExactOutputSingleParams (
             tokenIn,
@@ -121,7 +130,9 @@ contract ConverterV1_2{
             sqrtPriceLimitX96
         );
         
+        //swap
         UniswapV3.exactOutputSingle(params);
+
         return true;
     }
 

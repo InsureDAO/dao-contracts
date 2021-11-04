@@ -134,20 +134,21 @@ contract Minter is ReentrancyGuard{
         emit SetConverter(_converter);
     }
 
-    function emergency_mint(uint256 _amountOut)external{
+    function emergency_mint(address _tokenOut, uint256 _amountOut)external{
         /**
+        *@param _tokenOut
         *@param _amountOut
         */
         require(registry.isListed(msg.sender)); //only from Official Pool.
 
         //get amountIn
-        uint256 _amountIn = converter.getAmountsIn(_amountOut);
+        uint256 _amountInMax = converter.getAmountsIn(_tokenOut, _amountOut);
 
         //mint
-        insure_token.emergency_mint(_amountIn, address(this));
+        insure_token.emergency_mint(_amountInMax, address(this));
 
         //convert
-        insure_token.approve(address(converter), _amountIn);
-        converter.swap_insure_to_exact(_amountIn, _amountOut, msg.sender);
+        insure_token.approve(address(converter), _amountInMax);
+        converter.swap_insure_to_exact(_tokenOut, _amountOut, _amountInMax, msg.sender);
     }
 }

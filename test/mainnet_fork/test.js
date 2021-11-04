@@ -6,16 +6,6 @@ const { formatEther, parseEther } = ethers.utils;
 
 bn.config({ EXPONENTIAL_AT: 999999, DECIMAL_PLACES: 40 })
 
-const QuoterArtifact = require('@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json');
-const QuoterAddress = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
-
-const FactoryArtifact = require('@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json');
-const FactoryAddress = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
-
-const INonfungiblePositionManager = require('@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json');
-const IPoolInitializer = require('@uniswap/v3-periphery/artifacts/contracts/interfaces/IPoolInitializer.sol/IPoolInitializer.json');
-const nonFungiblePositionManagerAddress = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
-
 
 async function encodePriceSqrt(reserve1, reserve0) {
     return BigNumber.from(
@@ -44,16 +34,6 @@ const getMinTick = (tickSpacing) => Math.ceil(-887272 / tickSpacing) * tickSpaci
 const getMaxTick = (tickSpacing) => Math.floor(887272 / tickSpacing) * tickSpacing;
 
 
-/***
- * insure deploy
- * converter deploy
- * 
- * swap ETH to USDC
- * put INSURE/ETH liquidity on UniswapV3
- * swap_exact_to_insure() USDC => INSURE
- * 
- */
-
 describe('TEST', () => {
     const name = "Fee Token";
     const simbol = "FT";
@@ -62,12 +42,30 @@ describe('TEST', () => {
 
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
     const FEE = BigNumber.from("1000000")
+
+    const FactoryArtifact = require('@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json');
+    const FactoryAddress = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
+
+    const INonfungiblePositionManager = require('@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json');
+    const IPoolInitializer = require('@uniswap/v3-periphery/artifacts/contracts/interfaces/IPoolInitializer.sol/IPoolInitializer.json');
+    const nonFungiblePositionManagerAddress = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
+
+    const SwapRouterArtifact = require('@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json')
+    const SwapRouterAddress = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
+
+    const QuoterArtifact = require('@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json');
+    const QuoterAddress = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6';
   
     beforeEach(async () => {
         [creator, alice, bob, chad, dad] = await ethers.getSigners();
         addresses = [creator.address, alice.address, bob.address, chad.address, dad.address]
         const Token = await ethers.getContractFactory('TestToken');
         const Converter = await ethers.getContractFactory('ConverterV1_2');
+
+        /*** Prepare
+        * 1. create pool of tokenA/tokenB on UniswapV3
+        * 2. put liquidity on the pool
+        */
 
         tokenA = await Token.deploy(name, simbol, decimal);
         tokenB = await Token.deploy(name, simbol, decimal);
@@ -94,7 +92,7 @@ describe('TEST', () => {
             encodePriceSqrt(amount, amount)
         );
         const receipt = await tx.wait();
-        const poolAddress = receipt.events[0].data.slice(-40);
+        poolAddress = receipt.events[0].data.slice(-40);
 
         const nft = await ethers.getContractAt(INonfungiblePositionManager.abi, nonFungiblePositionManagerAddress);
 
@@ -122,9 +120,11 @@ describe('TEST', () => {
         const mintTx = await nft.mint(mintParams);
         const mintReceipt = await mintTx.wait();
         const evt = mintReceipt.events.find(x => x.event === "Transfer");
-        const {tokenId} = evt.args;
+        tokenId = evt.args.tokenId;
 
-        return { poolAddress, tokenId }
+        
+        swap = await ethers.getContractAt(SwapRouterArtifact.abi, SwapRouterAddress);
+
     });
 
     describe("Condition", function () {
@@ -138,7 +138,58 @@ describe('TEST', () => {
     });
 
     describe("swap_exact_to_insure()", function () {
-        it("", async () => {
-        }); 
+        /***
+         * swap tokenB to tokenA
+         */
+        it("success", async () => {
+            console.log(poolAddress);
+            console.log(tokenId);
+
+            expect(await tokenA.balanceOf(alice.address)).to.equal(0);
+
+            await tokenB._mint_for_testing(100);
+            await tokenB.approve(converter.address, 100);
+            await converter.swap_exact_to_insure(tokenB.address, 100, alice.address);
+
+            expect(await tokenA.balanceOf(alice.address)).to.not.equal(0);
+            console.log(await tokenA.balanceOf(alice.address));
+        });
+    });
+
+    describe("getAmountsIn()", function () {
+        /***
+         * 
+         */
+        it("success", async () => {
+            let tx = await converter.getAmountsIn(tokenB.address, 90);
+            let receipt = await tx.wait();
+            console.log(receipt.events[0].args[3]);
+            
+        });
+    });
+
+    describe("swap_insure_to_exact()", function () {
+        /***
+         * 
+         */
+        it("success", async () => {
+            let tx = await converter.getAmountsIn(tokenB.address, 90);
+            let receipt = await tx.wait();
+            let amountIn = receipt.events[0].args[3];
+
+            await tokenA._mint_for_testing(amountIn);
+            await tokenA.approve(converter.address, amountIn);
+
+            //alice has nothing before swap
+            expect(await tokenB.balanceOf(alice.address)).to.equal(0);
+
+            //swap
+            await converter.swap_insure_to_exact(tokenB.address, 90, amountIn, alice.address);
+
+            //swap 90 successfully
+            expect(await tokenB.balanceOf(alice.address)).to.equal(90);
+
+            
+        });
     });
 });
