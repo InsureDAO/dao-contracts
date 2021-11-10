@@ -1,4 +1,5 @@
 node_modules/
+package-lock.json
 bin/
 contracts/interfaces/.DS_Store
 contracts/.DS_Store
