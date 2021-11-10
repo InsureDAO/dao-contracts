@@ -19,7 +19,8 @@
         "solidity-coverage": "^0.7.17"
     },
     "devDependencies": {
-        "solidity-coverage": "",
-        "chai": ""
+        "chai": "",
+        "hardhat-gas-reporter": "^1.0.4",
+        "solidity-coverage": ""
     }
 }

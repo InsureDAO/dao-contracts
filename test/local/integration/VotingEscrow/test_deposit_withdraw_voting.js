@@ -36,15 +36,24 @@ describe('LiquidityGauge', function() {
         accounts = [creator, alice, bob, chad, dad, elephant, fei, god, hecta, iloveyou];
         const Token = await ethers.getContractFactory('TestToken');
         const VotingEscrow = await ethers.getContractFactory('VotingEscrow');
+        const CollateralManager = await ethers.getContractFactory('TestCollateralManager');
 
         token = await Token.deploy(name, simbol, decimal);
         voting_escrow = await VotingEscrow.deploy(token.address, "Voting-escrowed Insure", "veInsure", 'veInsure');
+        manager = await CollateralManager.deploy(voting_escrow.address);
 
         //init
         for(i=0;i<10;i++){
             await token.connect(accounts[i])._mint_for_testing(ten_to_the_40);
             await token.connect(accounts[i]).approve(voting_escrow.address, two_to_the_256_minus_1);
         }
+
+        tx = await voting_escrow.commit_collateral_manager(manager.address);
+        await tx.wait();
+        await voting_escrow.apply_collateral_manager();
+
+        console.log(manager.address);
+        console.log(await voting_escrow.collateral_manager());
 
         //setup
         token_balances = [ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40, ten_to_the_40];
@@ -80,19 +89,19 @@ describe('LiquidityGauge', function() {
         unlock_time = timestamp.add(WEEK.mul(st_lock_duration)).div(WEEK).mul(WEEK);
 
         if(st_value == 0){
-            console.log("--revert: 1, account:",st_account_n );
+            console.log("--revert: 1");
             await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("dev: need non-zero value");
 
         }else if(voting_balances[st_account_n]["value"].gt("0")){
-            console.log("--revert: 2, account:",st_account_n );
+            console.log("--revert: 2");
             await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Withdraw old tokens first");
 
         }else if(unlock_time.lte(timestamp)){
-            console.log("--revert: 3, account:",st_account_n );
+            console.log("--revert: 3" );
             await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can only lock until time in the future");
 
         }else if(unlock_time.gte(timestamp.add(YEAR.mul("4")))){
-            console.log("--revert: 4, account:",st_account_n );
+            console.log("--revert: 4" );
             await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Voting lock can be 4 years max");
 
         }else{
@@ -117,15 +126,15 @@ describe('LiquidityGauge', function() {
         let timestamp = BigNumber.from((await ethers.provider.getBlock('latest')).timestamp);
 
         if(st_value == 0){
-            console.log("--revert: 1, account:",st_account_n);
+            console.log("--revert: 1");
             await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("dev: need non-zero value");
 
         }else if(voting_balances[st_account_n]["value"].eq("0")){
-            console.log("--revert: 2, account:",st_account_n);
+            console.log("--revert: 2");
             await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("No existing lock found");
 
         }else if(voting_balances[st_account_n]["unlock_time"].lte(timestamp)){
-            console.log("--revert: 3, account:",st_account_n);
+            console.log("--revert: 3");
             await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("Cannot add to expired lock. Withdraw");
 
         }else{
@@ -150,19 +159,19 @@ describe('LiquidityGauge', function() {
         let unlock_time = timestamp.add(st_lock_duration.mul(WEEK)).div(WEEK).mul(WEEK);
 
         if(voting_balances[st_account_n]["unlock_time"].lte(timestamp)){
-            console.log("--revert: 1, account:",st_account_n);
+            console.log("--revert: 1");
             await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Lock expired");
 
         }else if(voting_balances[st_account_n]["value"].eq("0")){
-            console.log("--revert: 2, account:",st_account_n);
+            console.log("--revert: 2");
             await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Nothing is locked");
 
         }else if(voting_balances[st_account_n]["unlock_time"].gte(unlock_time)){
-            console.log("--revert: 3, account:",st_account_n);
+            console.log("--revert: 3");
             await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Can only increase lock duration");
 
         }else if(unlock_time.gt(timestamp.add(YEAR.mul("4")))){
-            console.log("--revert: 4, account:",st_account_n);
+            console.log("--revert: 4");
             await expect(voting_escrow.connect(st_account).increase_unlock_time(unlock_time)).to.revertedWith("Voting lock can be 4 years max");
 
         }else{
@@ -188,9 +197,41 @@ describe('LiquidityGauge', function() {
             console.log("--reverted");
             await expect(voting_escrow.connect(st_account).withdraw()).to.revertedWith("The lock didn't expire");
         }else{
-            console.log("--success");
+            console.log("--success, account:", st_account_n);
             await voting_escrow.connect(st_account).withdraw();
             voting_balances[st_account_n]["value"] = BigNumber.from("0");
+        }
+    }
+
+    async function rule_force_unlock(){
+        console.log("rule_force_unlock");
+
+        //st_account
+        let rdm = Math.floor(Math.random()*10);//0~9 integer
+        st_account_n = rdm;
+        st_account = accounts[st_account_n];
+
+        let target_account_n = Math.floor(Math.random()*10)
+        let target_account = accounts[target_account_n];
+
+        if(st_account == creator){
+        //only creator can execute TestCollateralManager:force_unlock()
+
+            if(voting_balances[target_account_n]["value"].eq(BigNumber.from("0"))){
+                //there is no locked insure token or already withdrawed.
+                console.log("--reverted");
+                await expect(manager.connect(st_account).force_unlock(target_account.address)).to.revertedWith("There is no locked INSURE");
+            }else{
+                console.log("--success_force_unlock, account:",target_account_n);
+                tx = await manager.connect(st_account).force_unlock(target_account.address);
+                await tx.wait();
+                voting_balances[target_account_n]["value"] = BigNumber.from("0");
+                voting_balances[target_account_n]["unlock_time"] = BigNumber.from("0");
+            }
+
+        }else{
+            console.log("--reverted");
+            await expect(manager.connect(st_account).force_unlock(target_account.address)).to.revertedWith("only admin");
         }
     }
 
@@ -213,19 +254,20 @@ describe('LiquidityGauge', function() {
         await ethers.provider.send("evm_mine");
 
         if(st_sleep_duration == 1){
-            console.log("Time advanced:", st_sleep_duration, "WEEK");
+            console.log("Time advanced");
         }else{
-            console.log("Time advanced:", st_sleep_duration, "WEEKs");
+            console.log("Time advanced");
         }
         
     }
 
-    let func = ["rule_create_lock", "rule_increase_amount", "rule_increase_unlock_time", "rule_withdraw", "rule_checkpoint", "rule_advance_time"];
+    let func = ["rule_create_lock", "rule_increase_amount", "rule_increase_unlock_time", "rule_withdraw", "rule_checkpoint", "rule_advance_time", "rule_force_unlock"];
 
     describe("test_votingescrow_admin", function(){
-        for(let x=0; x<30; x++){
+        //set arbitral number of repeats
+        for(let x=0; x<10; x++){
             it("try "+eval("x+1"), async()=>{
-                for(let i=0;i<30;i++){
+                for(let i=0;i<100;i++){
                     let n = await rdm_value(func.length);
                     await eval(func[n])();
                 }
@@ -248,7 +290,7 @@ describe('LiquidityGauge', function() {
         for(acct = 0; acct < accounts.length; acct++){
             let data = voting_balances[acct];
 
-            let balance = await voting_escrow['balanceOf(address,uint256)'](accounts[acct].address, 0);
+            let balance = await voting_escrow['balanceOf(address)'](accounts[acct].address);
             total_supply = total_supply.add(balance);
 
             if(data["unlock_time"].gt(timestamp) && data["value"].div(YEAR).gt("0")){
@@ -257,7 +299,7 @@ describe('LiquidityGauge', function() {
                 expect(balance.isZero()).to.equal(true);
             }
         }
-        expect(await voting_escrow.totalSupply(0)).to.equal(total_supply);
+        expect(await voting_escrow['totalSupply()']()).to.equal(total_supply);
 
         
         console.log("invariant_historic_balances");

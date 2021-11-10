@@ -22,7 +22,7 @@ describe('VotingEscrow', function() {
         it("test_commit_admin_only", async()=> {
             await expect(
                 ve.connect(alice).commit_transfer_ownership(alice.address)).to.revertedWith(
-                "dev: admin only"
+                "only admin"
             );
         });
 

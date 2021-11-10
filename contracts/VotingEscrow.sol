@@ -30,6 +30,7 @@ pragma solidity 0.8.7;
 // The check() method is modifying to be able to use caching
 // for individual wallet addresses
 import "./interfaces/dao/ISmartWalletChecker.sol";
+import "./interfaces/dao/ICollateralManager.sol";
 
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -68,6 +69,7 @@ contract VotingEscrow is ReentrancyGuard{
 
     event Deposit(address indexed provider, uint256 value, uint256 indexed locktime, int256 _type, uint256 ts);
     event Withdraw(address indexed provider, uint256 value, uint256 ts);
+    event ForceUnlock(address target, uint256 value, uint256 ts);
 
     event Supply(uint256 prevSupply, uint256 supply);
 
@@ -106,6 +108,22 @@ contract VotingEscrow is ReentrancyGuard{
     address public admin;  // Can and will be a smart contract
     address public future_admin;
 
+    address public collateral_manager;
+    address public future_collateral_manager;
+
+
+    modifier checkStatus(){
+        if(collateral_manager != address(0)){
+            require(ICollateralManager(collateral_manager).checkStatus(msg.sender), "rejected by collateral manager");
+        }
+        _;
+    }
+
+    modifier onlyAdmin(){
+        require(msg.sender == admin, "only admin");
+        _;
+    }
+
     constructor(address token_addr, string memory _name, string memory _symbol, string memory _version){
         /***
         *@notice Contract constructor
@@ -128,46 +146,6 @@ contract VotingEscrow is ReentrancyGuard{
         name = _name;
         symbol = _symbol;
         version = _version;
-    }
-
-    function commit_transfer_ownership(address addr)external{
-        /***
-        *@notice Transfer ownership of VotingEscrow contract to `addr`
-        *@param addr Address to have ownership transferred to
-        */
-        require (msg.sender == admin, "dev: admin only");
-        future_admin = addr;
-        emit CommitOwnership(addr);
-    }
-
-    function accept_transfer_ownership()external{
-        /***
-        *@notice Accept a transfer of ownership
-        *@return bool success
-        */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptOwnership(admin);
-
-    }
-
-    function commit_smart_wallet_checker(address addr)external{
-        /***
-        *@notice Set an external contract to check for approved smart contract wallets
-        *@param addr Address of Smart contract checker
-        */
-        assert (msg.sender == admin);
-        future_smart_wallet_checker = addr;
-    }
-
-    function apply_smart_wallet_checker()external{
-        /***
-        *@notice Apply setting external contract to check approved smart contract wallets
-        */
-        assert (msg.sender == admin);
-        smart_wallet_checker = future_smart_wallet_checker;
     }
 
     function assert_not_contract(address addr)internal{
@@ -385,7 +363,7 @@ contract VotingEscrow is ReentrancyGuard{
     }
 
     
-    function checkpoint()external{
+    function checkpoint()public{
         /***
         *@notice Record global data to checkpoint
         */
@@ -463,16 +441,19 @@ contract VotingEscrow is ReentrancyGuard{
         _deposit_for(msg.sender, 0, unlock_time, _locked, INCREASE_UNLOCK_TIME);
     }
 
-    function withdraw()external nonReentrant{
+    function withdraw()external checkStatus nonReentrant{
         /***
         *@notice Withdraw all tokens for `msg.sender`
         *@dev Only possible if the lock has expired
         */
-        LockedBalance memory _locked = locked[msg.sender];
+
+        LockedBalance memory _locked = LockedBalance(locked[msg.sender].amount, locked[msg.sender].end);
+
         require( block.timestamp >= _locked.end, "The lock didn't expire");
         uint256 value = uint256(_locked.amount);
 
-        LockedBalance memory old_locked = _locked;
+        LockedBalance memory old_locked = LockedBalance(locked[msg.sender].amount, locked[msg.sender].end);
+
         _locked.end = 0;
         _locked.amount = 0;
         locked[msg.sender] = _locked;
@@ -668,6 +649,19 @@ contract VotingEscrow is ReentrancyGuard{
         return uint256(last_point.bias);
     }
 
+    function totalSupply()external view returns (uint256){
+        /***
+        *@notice Calculate total voting power
+        *@dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
+        *@return Total voting power
+        */
+
+        uint256 _epoch = epoch;
+        Point memory last_point = point_history[_epoch];
+
+        return supply_at(last_point, block.timestamp);
+    }
+
     function totalSupply(uint256 t)external view returns (uint256){
         /***
         *@notice Calculate total voting power
@@ -684,16 +678,6 @@ contract VotingEscrow is ReentrancyGuard{
         return supply_at(last_point, t);
         
     }
-
-    /**
-    function totalSupply()external view returns (uint256){
-
-        uint256 _epoch = epoch;
-        Point memory last_point = point_history[_epoch];
-
-        return supply_at(last_point, block.timestamp);
-    }
-    */
 
     function totalSupplyAt(uint256 _block)external view returns (uint256){
         /***
@@ -736,4 +720,94 @@ contract VotingEscrow is ReentrancyGuard{
     function get_user_point_epoch(address _user)external view returns(uint256){
         return user_point_epoch[_user];
     }
+
+    //----------------------Investment module----------------------//
+
+    function force_unlock(address _target)external returns(bool){
+        /***
+        *@notice unlock INSURE token without waiting for its end time.
+        *@param _target address of being unlocked.
+        *@return 
+        */
+        require(msg.sender == collateral_manager, "only collateral manager can execute this function");
+
+        //withdraw
+        LockedBalance memory _locked = LockedBalance(locked[_target].amount, locked[_target].end);
+        LockedBalance memory old_locked = LockedBalance(locked[_target].amount, locked[_target].end);
+
+        uint256 value = uint256(_locked.amount);
+
+        //there must be locked INSURE
+        require(value != 0, "There is no locked INSURE");
+
+        _locked.end = 0;
+        _locked.amount = 0;
+        locked[_target] = _locked;
+        uint256 supply_before = supply;
+        supply = supply_before.sub(value);
+
+        _checkpoint(_target, old_locked, _locked);
+
+        //transfer INSURE to collateral_manager
+        assert (IERC20(token).transfer(collateral_manager, value));
+
+        emit ForceUnlock(_target, value, block.timestamp);
+        emit Supply(supply_before, supply_before.sub(value));
+    }
+
+    //---------------------- Admin Only ----------------------//
+    function commit_smart_wallet_checker(address addr)external onlyAdmin{
+        /***
+        *@notice Set an external contract to check for approved smart contract wallets
+        *@param addr Address of Smart contract checker
+        */
+        future_smart_wallet_checker = addr;
+    }
+
+    function apply_smart_wallet_checker()external onlyAdmin{
+        /***
+        *@notice Apply setting external contract to check approved smart contract wallets
+        */
+        smart_wallet_checker = future_smart_wallet_checker;
+    }
+
+
+    function commit_collateral_manager(address _new_collateral_manager)external onlyAdmin{
+        /***
+        *@notice Commit setting external contract to check user's collateral status
+        */
+        future_collateral_manager = _new_collateral_manager;
+    }
+
+    function apply_collateral_manager()external onlyAdmin{
+        /***
+        *@notice Apply setting external contract to check user's collateral status
+        */
+        collateral_manager = future_collateral_manager;
+    }
+
+
+    function commit_transfer_ownership(address addr)external onlyAdmin{
+        /***
+        *@notice Transfer ownership of VotingEscrow contract to `addr`
+        *@param addr Address to have ownership transferred to
+        */
+        future_admin = addr;
+        emit CommitOwnership(addr);
+    }
+
+    //only future admin
+    function accept_transfer_ownership()external{
+        /***
+        *@notice Accept a transfer of ownership
+        *@return bool success
+        */
+        require(address(msg.sender) == future_admin, "dev: future_admin only");
+
+        admin = future_admin;
+
+        emit AcceptOwnership(admin);
+
+    }
+
 }

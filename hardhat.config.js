@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-web3");
 require("solidity-coverage");
+//require("hardhat-gas-reporter");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -15,11 +16,11 @@ module.exports = {
   networks: {
     hardhat: {
       initialBaseFeePerGas: 0,
-      forking: {url: "https://eth-mainnet.alchemyapi.io/v2/-vmufhhPyGeTxZH6ep9q2PuHjaPp4l0u",} //remove comment when testing mainnet fork
+      //forking: {url: "https://eth-mainnet.alchemyapi.io/v2/-vmufhhPyGeTxZH6ep9q2PuHjaPp4l0u",} //remove comment when testing mainnet fork
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${infuraKey}`,
-      accounts: [`0x${key}`] //Dev: Change the address when do the public testnet event
+      accounts: [`0x${key}`]
     }
   },
   solidity: {
@@ -33,13 +34,17 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    //tests: "./test/local",
+    tests: "./test/local",
     //tests: "./test/mainnet_fork",
-    tests: "./test",
+    //tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts"
   },
   mocha: {
     timeout: 20000000
   },
+  gasReporter: {
+    currency: 'ETH',
+    gasPrice: 100
+  }
 };
