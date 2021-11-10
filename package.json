@@ -14,11 +14,10 @@
         "ethereum-waffle": "^3.2.0",
         "ethers": "^5.0.0",
         "hardhat": "^2.6.1",
-        "i": "^0.3.7",
-        "npm": "^8.1.2",
         "solidity-coverage": "^0.7.17"
     },
     "devDependencies": {
+        "ansi-regex": ">=5.0.1",
         "chai": "",
         "hardhat-gas-reporter": "^1.0.4",
         "solidity-coverage": ""
