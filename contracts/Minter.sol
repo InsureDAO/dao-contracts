@@ -18,13 +18,10 @@ import "./interfaces/pool/IRegistry.sol";
 
 //libraries
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract Minter is ReentrancyGuard{
-    using SafeMath for uint256;
 
     event Minted(address indexed recipient, address gauge, uint256 minted);
     event SetAdmin(address admin);
@@ -58,7 +55,7 @@ contract Minter is ReentrancyGuard{
 
         ILiquidityGauge(gauge_addr).user_checkpoint(_for);
         uint256 total_mint = ILiquidityGauge(gauge_addr).integrate_fraction(_for); //Total amount of both mintable and minted.
-        uint256 to_mint = total_mint.sub(minted[_for][gauge_addr]); //mint amount for this time. (total_amount - minted = mintable)
+        uint256 to_mint = total_mint - minted[_for][gauge_addr]; //mint amount for this time. (total_amount - minted = mintable)
 
         if (to_mint != 0){
             insure_token.mint(_for, to_mint);
