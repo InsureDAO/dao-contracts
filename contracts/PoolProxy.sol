@@ -24,14 +24,10 @@ import "./interfaces/pool/IVault.sol";
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract PoolProxy is ReentrancyGuard{
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
 
@@ -103,7 +99,7 @@ contract PoolProxy is ReentrancyGuard{
         Distributor memory new_distributor = Distributor({name: _name, addr: _addr});
         uint256 id = n_distributors[_token];
         distributors[_token][id] = new_distributor;
-        n_distributors[_token] = n_distributors[_token].add(1);
+        n_distributors[_token] += 1;
 
         return true;
     }
@@ -154,7 +150,7 @@ contract PoolProxy is ReentrancyGuard{
 
         //update distibutor weight and total_weight
         distributor_weight[_token][_id] = new_weight;
-        total_weights[_token] = total_weights[_token].add(new_weight).sub(old_weight);
+        total_weights[_token] = total_weights[_token] + new_weight - old_weight;
     }
 
     function set_distributor_weight(address _token, uint256 _id, uint256 _weight)external returns(bool){
@@ -225,8 +221,8 @@ contract PoolProxy is ReentrancyGuard{
             for(uint256 id=0; id<n_distributors[_token]; id++){
                 uint256 aloc_point = distributor_weight[_token][id];
 
-                uint256 aloc_amount = amount.mul(aloc_point).div(total_weights[_token]); //round towards zero.
-                distributable[_token][id] = distributable[_token][id].add(aloc_amount); //count up the allocated fee
+                uint256 aloc_amount = amount * aloc_point / total_weights[_token]; //round towards zero.
+                distributable[_token][id] += aloc_amount; //count up the allocated fee
             }
         }
     }
