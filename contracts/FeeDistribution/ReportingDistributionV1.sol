@@ -8,13 +8,10 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract ReportingDistributionV1 is ReentrancyGuard{
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     event Distribution(uint256 amount, uint256 blocktime);
@@ -87,10 +84,10 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         require(has_registered[_addr] == false, "already registered");
 
         if(IERC20(insure_reporting).balanceOf(_addr) != 0){
-            reporters_length = reporters_length.add(1);
+            reporters_length += 1;
             reporters[reporters_length] = _addr;
             has_registered[_addr] = true;
-            active_reporter = active_reporter.add(1);
+            active_reporter += 1;
         }
     }
 
@@ -106,7 +103,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
             if(IERC20(insure_reporting).balanceOf(_addr) != 0){
                 if(is_kicked[_addr] == true){//kicked => not kicked
                     is_kicked[_addr] = false;
-                    active_reporter = active_reporter.add(1);
+                    active_reporter += 1;
                 }
                 
                 emit UpdateReportingMember(_addr, true);
@@ -114,7 +111,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
             }else{
                 if(is_kicked[_addr] == false){//not kicked => kicked
                     is_kicked[_addr] = true;
-                    active_reporter = active_reporter.sub(1);
+                    active_reporter -= 1;
                 }
                 emit UpdateReportingMember(_addr, false);
                 return false;
@@ -160,9 +157,9 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         if(total_amount != 0){
             IERC20(_coin).safeTransferFrom(address(msg.sender), address(this), total_amount); //allowance will be 0
 
-            uint256 bonus = total_amount.mul(bonus_ratio).div(bonus_ratio_divider);
-            bonus_total = bonus_total.add(bonus);
-            fee_total = fee_total.add(total_amount.sub(bonus));
+            uint256 bonus = total_amount * bonus_ratio / bonus_ratio_divider;
+            bonus_total += bonus;
+            fee_total += total_amount - bonus;
 
             if(fee_total != 0){
                 //update all reporters & active_member#
@@ -176,12 +173,12 @@ contract ReportingDistributionV1 is ReentrancyGuard{
                     address _addr = reporters[i];
 
                     if(!is_kicked[_addr]){//if not kicked
-                        uint256 _amount = total_amount.div(active_reporter);
-                        claimable_fee[_addr] = claimable_fee[_addr].add(_amount);
-                        distributed = distributed.add(_amount);
+                        uint256 _amount = total_amount / active_reporter;
+                        claimable_fee[_addr] += _amount;
+                        distributed += _amount;
                     }
                 }
-                fee_total = fee_total.sub(distributed);
+                fee_total -= distributed;
             }
 
             emit Distribution(total_amount, block.timestamp);
@@ -203,7 +200,7 @@ contract ReportingDistributionV1 is ReentrancyGuard{
         for(uint256 i=0;i<100;i++){
             if(_ids[i]!=0){
                 require(i<= reporters_length);
-                total_allocation = total_allocation.add(_allocations[i]);
+                total_allocation += _allocations[i];
             }else{
                 break;
             }
@@ -215,15 +212,15 @@ contract ReportingDistributionV1 is ReentrancyGuard{
             if(_ids[i]!=0){
                 //distribute all registerd address. (including kicked member for case he was kicked during the term)
                 address _addr = reporters[_ids[i]];
-                uint256 _amount = bonus_total.mul(_allocations[i]).div(total_allocation);
+                uint256 _amount = bonus_total * _allocations[i] / total_allocation;
 
-                distributed = distributed.add(_amount);
-                claimable_fee[_addr] = claimable_fee[_addr].add(_amount);
+                distributed += _amount;
+                claimable_fee[_addr] += _amount;
             }else{
                 break;
             }
         }
-        bonus_total = bonus_total.sub(distributed);
+        bonus_total -= distributed;
     }
 
 

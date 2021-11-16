@@ -12,8 +12,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
 import "../interfaces/dao/IConverter.sol";
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -22,7 +20,6 @@ import "hardhat/console.sol";
 
 
 contract ConverterV1_2 is IConverter{
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     event getAmountIn(address tokenOut, uint256 amountOut, address tokenIn, uint256 amountIn);

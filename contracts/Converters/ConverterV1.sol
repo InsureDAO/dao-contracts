@@ -11,13 +11,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../InsureToken.sol";
 
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/utils/IUniswapV2Router02.sol";
 
 contract ConverterV1{
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     IUniswapV2Router02 public UniswapV2 = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D); //rinkeby
@@ -47,7 +44,7 @@ contract ConverterV1{
         path[2] = address(insure_token); //insure token
 
         //swap
-        UniswapV2.swapExactTokensForTokens(_amountIn, 0, path, _to, block.timestamp.add(25));
+        UniswapV2.swapExactTokensForTokens(_amountIn, 0, path, _to, block.timestamp + 25);
 
         return true;
     }
@@ -84,7 +81,7 @@ contract ConverterV1{
         path[1] = address(WETH);
         path[2] = address(USDC);
         
-        UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp.add(25));
+        UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp + 25);
 
         return true;
     }
