@@ -9,13 +9,9 @@ pragma solidity 0.8.7;
 
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 
 
 contract InsureToken is IERC20{
-    using SafeMath for uint256;
-    using SignedSafeMath for int256;
     
     event UpdateMiningParameters(uint256 time, uint256 rate, uint256 supply, int256 miningepoch);
     event SetMinter(address minter);
@@ -97,15 +93,11 @@ contract InsureToken is IERC20{
         admin = msg.sender;
         emit Transfer(address(0), msg.sender, init_supply);
 
-        start_epoch_time = block.timestamp.add(INFLATION_DELAY).sub(RATE_REDUCTION_TIME);
+        start_epoch_time = block.timestamp + INFLATION_DELAY - RATE_REDUCTION_TIME;
         mining_epoch = -1;
         rate = 0;
         start_epoch_supply = init_supply;
     }
-
-    //function get_rate()external view returns(uint256){
-    //    return rate;
-    //}
 
     function decimals() public view returns (uint256) {
         return _decimals;
@@ -119,17 +111,17 @@ contract InsureToken is IERC20{
         uint256 _rate = rate;
         uint256 _start_epoch_supply = start_epoch_supply;
 
-        start_epoch_time = start_epoch_time.add(RATE_REDUCTION_TIME);
-        mining_epoch = mining_epoch.add(1);
+        start_epoch_time += RATE_REDUCTION_TIME;
+        mining_epoch += 1;
 
         if (mining_epoch == 0){
             _rate = RATES[uint256(mining_epoch)];
         }else if(mining_epoch < int256(6)){
-            _start_epoch_supply = _start_epoch_supply.add(RATES[uint256(mining_epoch) - 1].mul(YEAR));
+            _start_epoch_supply += RATES[uint256(mining_epoch) - 1] * YEAR;
             start_epoch_supply = _start_epoch_supply;
             _rate = RATES[uint256(mining_epoch)];
         }else{
-            _start_epoch_supply = _start_epoch_supply.add(RATES[5].mul(YEAR));
+            _start_epoch_supply += RATES[5] * YEAR;
             start_epoch_supply = _start_epoch_supply;
             _rate = RATES[5];
         }
@@ -143,7 +135,7 @@ contract InsureToken is IERC20{
         * @dev Callable by any address, but only once per epoch
         *     Total supply becomes slightly larger if this function is called late
         */
-        require(block.timestamp >= start_epoch_time.add(RATE_REDUCTION_TIME), "dev: too soon!");
+        require(block.timestamp >= start_epoch_time + RATE_REDUCTION_TIME, "dev: too soon!");
         _update_mining_parameters();
     }
 
@@ -154,7 +146,7 @@ contract InsureToken is IERC20{
         *@return Timestamp of the epoch
         */
         uint256 _start_epoch_time = start_epoch_time;
-        if (block.timestamp >= _start_epoch_time.add(RATE_REDUCTION_TIME)){
+        if (block.timestamp >= _start_epoch_time + RATE_REDUCTION_TIME){
             _update_mining_parameters();
             return start_epoch_time;
         }else{
@@ -170,16 +162,16 @@ contract InsureToken is IERC20{
         */
 
         uint256 _start_epoch_time = start_epoch_time;
-        if (block.timestamp >= _start_epoch_time.add(RATE_REDUCTION_TIME)){
+        if (block.timestamp >= _start_epoch_time + RATE_REDUCTION_TIME){
             _update_mining_parameters();
-            return start_epoch_time.add(RATE_REDUCTION_TIME);
+            return start_epoch_time + RATE_REDUCTION_TIME;
         }else{
-            return _start_epoch_time.add(RATE_REDUCTION_TIME);
+            return _start_epoch_time + RATE_REDUCTION_TIME;
         }
     }
 
     function _available_supply() internal view returns(uint256){
-        return start_epoch_supply.add((block.timestamp.sub(start_epoch_time)).mul(rate)).add(emergency_minted);
+        return start_epoch_supply + ((block.timestamp - start_epoch_time) * rate) + emergency_minted;
     }
 
     function available_supply() external view returns(uint256){
@@ -203,43 +195,43 @@ contract InsureToken is IERC20{
         int256 current_epoch = mining_epoch;
 
         // Special case if end is in future (not yet minted) epoch
-        if (end > current_epoch_time.add(RATE_REDUCTION_TIME)){
-            current_epoch_time = current_epoch_time.add(RATE_REDUCTION_TIME);
+        if (end > current_epoch_time + RATE_REDUCTION_TIME){
+            current_epoch_time += RATE_REDUCTION_TIME;
             if(current_epoch < 5){
-                current_rate = RATES[uint256(mining_epoch.add(int256(1)))];
+                current_rate = RATES[uint256(mining_epoch + int256(1))];
             }else{
                 current_rate = RATES[5];
             }
         }
 
-        require(end <= current_epoch_time.add(RATE_REDUCTION_TIME), "dev: too far in future");
+        require(end <= current_epoch_time + RATE_REDUCTION_TIME, "dev: too far in future");
 
 
         for(uint i = 0; i < 999; i++){  // InsureDAO will not work in 1000 years.
             if(end >= current_epoch_time){
                 uint256 current_end = end;
-                if(current_end > current_epoch_time.add(RATE_REDUCTION_TIME)){
-                    current_end = current_epoch_time.add(RATE_REDUCTION_TIME);
+                if(current_end > current_epoch_time + RATE_REDUCTION_TIME){
+                    current_end = current_epoch_time + RATE_REDUCTION_TIME;
                 }
                 uint256 current_start = start;
-                if (current_start >= current_epoch_time.add(RATE_REDUCTION_TIME)){
+                if (current_start >= current_epoch_time + RATE_REDUCTION_TIME){
                     break;  // We should never get here but what if...
                 }else if(current_start < current_epoch_time){
                     current_start = current_epoch_time;
                 }
-                to_mint = to_mint.add(current_rate.mul(current_end.sub(current_start)));
+                to_mint += (current_rate * (current_end - current_start));
 
                 if (start >= current_epoch_time){
                     break;
                 }
             }
-            current_epoch_time = current_epoch_time.sub(RATE_REDUCTION_TIME);
+            current_epoch_time -= RATE_REDUCTION_TIME;
             if(current_epoch < 5){
-                current_rate = RATES[uint256(current_epoch.add(int256(1)))];
-                current_epoch = current_epoch.add(1);
+                current_rate = RATES[uint256(current_epoch + int256(1))];
+                current_epoch += 1;
             }else{
                 current_rate = RATES[5];
-                current_epoch = current_epoch.add(1);
+                current_epoch += 1;
             }
             assert(current_rate <= RATES[0]);  // This should never happen
         }
@@ -296,8 +288,8 @@ contract InsureToken is IERC20{
         *@return bool success
         */
         require(_to != address(0), "dev: transfers to 0x0 are not allowed");
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
@@ -313,9 +305,9 @@ contract InsureToken is IERC20{
         require(_from != address(0), "ERC20: transfer from the zero address");
         require(_to != address(0), "ERC20: transfer to the zero address");
 
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        allowances[_from][msg.sender] = allowances[_from][msg.sender].sub(_value);
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        allowances[_from][msg.sender] -= _value;
         emit Transfer(_from, _to, _value);
         return true;
     }
@@ -340,7 +332,7 @@ contract InsureToken is IERC20{
     }
 
     function increaseAllowance(address _spender, uint256 addedValue)external returns (bool) {
-        _approve(msg.sender, _spender, allowances[msg.sender][_spender].add(addedValue));
+        _approve(msg.sender, _spender, allowances[msg.sender][_spender] + addedValue);
         
         return true;
     }
@@ -348,7 +340,7 @@ contract InsureToken is IERC20{
     function decreaseAllowance(address _spender, uint256 subtractedValue)external returns (bool) {
         uint256 currentAllowance = allowances[msg.sender][_spender];
         require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-        _approve(msg.sender, _spender, currentAllowance.sub(subtractedValue));
+        _approve(msg.sender, _spender, currentAllowance - subtractedValue);
 
         return true;
     }
@@ -372,15 +364,15 @@ contract InsureToken is IERC20{
     }
 
     function _mint(address _to, uint256 _value)internal{
-        if (block.timestamp >= start_epoch_time.add(RATE_REDUCTION_TIME)){
+        if (block.timestamp >= start_epoch_time + RATE_REDUCTION_TIME){
             _update_mining_parameters();
         }
-        uint256 _total_supply = total_supply.add(_value);
+        uint256 _total_supply = total_supply + _value;
         
         require(_total_supply <= _available_supply(), "dev: exceeds allowable mint amount");
         total_supply = _total_supply;
 
-        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[_to] += _value;
         emit Transfer(address(0), _to, _value);
     }
 
@@ -394,8 +386,8 @@ contract InsureToken is IERC20{
         require(balanceOf[msg.sender] >= _value, "_value > balanceOf[msg.sender]");
 
 
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        total_supply = total_supply.sub(_value);
+        balanceOf[msg.sender] -= _value;
+        total_supply -= _value;
 
         emit Transfer(msg.sender, address(0), _value);
         return true;
@@ -422,7 +414,7 @@ contract InsureToken is IERC20{
         */
         require(msg.sender == minter, "dev: minter only");
         //mint
-        emergency_minted = emergency_minted.add(_amount);
+        emergency_minted += _amount;
         _mint(_to, _amount);
     }
 }
