@@ -8,14 +8,11 @@ pragma solidity 0.8.7;
 */
 
 //libraries
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract VestingEscrow is ReentrancyGuard{
-    using SafeMath for uint256;
     
     event Fund(address indexed recipient, uint256 amount);
     event Claim(address indexed recipient, uint256 claimed);
@@ -91,7 +88,7 @@ contract VestingEscrow is ReentrancyGuard{
         */
         require (msg.sender == admin, "dev admin only"); // dev admin only
         require (IERC20(token).transferFrom(msg.sender, address(this), _amount), "dev transfer failed");
-        unallocated_supply = unallocated_supply.add(_amount);
+        unallocated_supply += _amount;
     }
 
     function fund(address[100] memory _recipients, uint256[100] memory _amounts)external nonReentrant{
@@ -112,13 +109,13 @@ contract VestingEscrow is ReentrancyGuard{
             if (recipient == address(0)){
                 break;
             }
-            _total_amount = _total_amount.add(amount);
-            initial_locked[recipient] = initial_locked[recipient].add(amount);
+            _total_amount += amount;
+            initial_locked[recipient] += amount;
             emit Fund(recipient, amount);
         }
 
-        initial_locked_supply = initial_locked_supply.add(_total_amount);
-        unallocated_supply = unallocated_supply.sub(_total_amount);
+        initial_locked_supply += _total_amount;
+        unallocated_supply -= _total_amount;
     }
 
 
@@ -173,7 +170,7 @@ contract VestingEscrow is ReentrancyGuard{
         if (_time < start){
             return 0;
         }
-        return min(locked.mul(_time.sub(start)).div(end.sub(start)), locked);
+        return min(locked * (_time - start) / (end - start), locked);
     }
 
     function _total_vested()internal view returns (uint256){
@@ -184,7 +181,7 @@ contract VestingEscrow is ReentrancyGuard{
         if(block.timestamp < start){
             return 0;
         }else{
-            return min(locked.mul(block.timestamp.sub(start)).div(end.sub(start)), locked); // when block.timestamp > end, return locked
+            return min(locked * (block.timestamp - start) / (end - start), locked); // when block.timestamp > end, return locked
         }
     }
 
@@ -201,7 +198,7 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Get the total number of tokens which are still locked
         *        (have not yet vested)
         */
-        return initial_locked_supply.sub(_total_vested());
+        return initial_locked_supply - _total_vested();
     }
 
     function vestedOf(address _recipient)external view returns (uint256){
@@ -217,7 +214,7 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Get the number of unclaimed, vested tokens for a given address
         *@param _recipient address to check
         */
-        return _total_vested_of(_recipient, block.timestamp).sub(total_claimed[_recipient]);
+        return _total_vested_of(_recipient, block.timestamp) - total_claimed[_recipient];
     }
 
     function lockedOf(address _recipient)external view returns (uint256){
@@ -225,7 +222,7 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Get the number of locked tokens for a given address
         *@param _recipient address to check
         */
-        return initial_locked[_recipient].sub(_total_vested_of(_recipient, block.timestamp));
+        return initial_locked[_recipient] - _total_vested_of(_recipient, block.timestamp);
     }
 
     function claim(address addr)external nonReentrant{
@@ -237,9 +234,9 @@ contract VestingEscrow is ReentrancyGuard{
         if (t == 0){
             t = block.timestamp;
         }
-        uint256 claimable = _total_vested_of(addr, t).sub(total_claimed[addr]);
+        uint256 claimable = _total_vested_of(addr, t) - total_claimed[addr];
 
-        total_claimed[addr] = total_claimed[addr].add(claimable);
+        total_claimed[addr] += claimable;
         assert (IERC20(token).transfer(addr, claimable));
 
         emit Claim(addr, claimable);
