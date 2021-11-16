@@ -18,14 +18,10 @@ import "./interfaces/pool/IPoolTemplate.sol";
 
 //libraries
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract LiquidityGauge is ReentrancyGuard{
-    using SafeMath for uint256;
-    using SignedSafeMath for int256;
 
     event Deposit(address indexed provider, uint256 value);
     event Withdraw(address indexed provider, uint256 value);
@@ -115,15 +111,15 @@ contract LiquidityGauge is ReentrancyGuard{
         uint256 voting_balance = voting_escrow.balanceOf(addr, block.timestamp);
         uint256 voting_total = voting_escrow.totalSupply(block.timestamp);
 
-        uint256 lim = l.mul(TOKENLESS_PRODUCTION).div(100);
-        if ((voting_total > 0) && (block.timestamp > period_timestamp[0].add(BOOST_WARMUP))){
-            lim = lim.add(L.mul(voting_balance).mul(100 - TOKENLESS_PRODUCTION).div(voting_total).div(100));
+        uint256 lim = l * TOKENLESS_PRODUCTION / 100;
+        if ((voting_total > 0) && (block.timestamp > period_timestamp[0] + BOOST_WARMUP)){
+            lim += L * voting_balance * (100 - TOKENLESS_PRODUCTION) / voting_total / 100;
         }
 
         lim = min(l, lim);
         uint256 old_bal = working_balances[addr];
         working_balances[addr] = lim;
-        uint256 _working_supply = working_supply.add(lim).sub(old_bal);
+        uint256 _working_supply = working_supply + lim - old_bal;
         working_supply = _working_supply;
 
         emit UpdateLiquidityLimit(addr, l, L, lim, _working_supply, voting_balance, voting_total);
@@ -178,11 +174,11 @@ contract LiquidityGauge is ReentrancyGuard{
         // Update integral of 1/supply
         if (block.timestamp > st._period_time){
             uint256 prev_week_time = st._period_time;
-            uint256 week_time = min((st._period_time.add(WEEK)).div(WEEK).mul(WEEK), block.timestamp);
+            uint256 week_time = min((st._period_time + WEEK) / WEEK * WEEK, block.timestamp);
 
             for(uint i; i < 500; i++){
-                uint256 dt = week_time.sub(prev_week_time);
-                uint256 w = controller.gauge_relative_weight(address(this), prev_week_time.div(WEEK).mul(WEEK));
+                uint256 dt = week_time - prev_week_time;
+                uint256 w = controller.gauge_relative_weight(address(this), prev_week_time / WEEK * WEEK);
 
                 if (_working_supply > 0){
                     if (st.prev_future_epoch >= prev_week_time && st.prev_future_epoch < week_time){
@@ -191,11 +187,11 @@ contract LiquidityGauge is ReentrancyGuard{
                         // the last epoch.
                         // If more than one epoch is crossed - the gauge gets less,
                         // but that'd meen it wasn't called for more than 1 year
-                        st._integrate_inv_supply = st._integrate_inv_supply.add(st.rate.mul(w).mul(st.prev_future_epoch.sub(prev_week_time)).div(_working_supply));
+                        st._integrate_inv_supply += st.rate * w * (st.prev_future_epoch - prev_week_time) / _working_supply;
                         st.rate = st.new_rate;
-                        st._integrate_inv_supply = st._integrate_inv_supply.add(st.rate.mul(w).mul(week_time.sub(st.prev_future_epoch)).div(_working_supply));
+                        st._integrate_inv_supply += st.rate * w * (week_time - st.prev_future_epoch) / _working_supply;
                     }else{
-                        st._integrate_inv_supply = st._integrate_inv_supply.add(st.rate.mul(w).mul(dt).div(_working_supply));
+                        st._integrate_inv_supply += st.rate * w * dt / _working_supply;
                     }
                     // On precisions of the calculation
                     // rate ~= 10e18
@@ -208,18 +204,18 @@ contract LiquidityGauge is ReentrancyGuard{
                     break;
                 }
                 prev_week_time = week_time;
-                week_time = min(week_time.add(WEEK), block.timestamp);
+                week_time = min(week_time + WEEK, block.timestamp);
             }
         }
 
-        st._period = st._period.add(1);
+        st._period += 1;
         period = st._period;
         period_timestamp[st._period] = block.timestamp;
         integrate_inv_supply[st._period] = st._integrate_inv_supply;
 
         // Update user-specific integrals
         // Calc the ΔIu of addr and add it to Iu.
-        integrate_fraction[addr] = integrate_fraction[addr].add(_working_balance.mul(st._integrate_inv_supply.sub(integrate_inv_supply_of[addr])).div(10 ** 18));
+        integrate_fraction[addr] += _working_balance * (st._integrate_inv_supply - integrate_inv_supply_of[addr]) / 10 ** 18;
         integrate_inv_supply_of[addr] = st._integrate_inv_supply;
         integrate_checkpoint_of[addr] = block.timestamp;
     }
@@ -243,7 +239,7 @@ contract LiquidityGauge is ReentrancyGuard{
         *@return uint256 number of claimable tokens per user
         */
         _checkpoint(addr);
-        return (integrate_fraction[addr].sub(minter.minted(addr, address(this))));
+        return (integrate_fraction[addr] - minter.minted(addr, address(this)));
     }
 
 
@@ -260,7 +256,7 @@ contract LiquidityGauge is ReentrancyGuard{
         uint256 _balance = balanceOf[addr];
 
         require(voting_escrow.balanceOf(addr, block.timestamp) == 0 || t_ve > t_last, "dev: kick not allowed");
-        require(working_balances[addr] > _balance.mul(TOKENLESS_PRODUCTION).div(100), "dev: kick not needed");
+        require(working_balances[addr] > _balance * TOKENLESS_PRODUCTION / 100, "dev: kick not needed");
 
         _checkpoint(addr);
         _update_liquidity_limit(addr, balanceOf[addr], totalSupply);
@@ -288,8 +284,8 @@ contract LiquidityGauge is ReentrancyGuard{
         _checkpoint(addr);
 
         if (_value != 0){
-            uint256 _balance = balanceOf[addr].add(_value);
-            uint256 _supply = totalSupply.add(_value);
+            uint256 _balance = balanceOf[addr] + _value;
+            uint256 _supply = totalSupply + _value;
             balanceOf[addr] = _balance;
             totalSupply = _supply;
 
@@ -307,8 +303,8 @@ contract LiquidityGauge is ReentrancyGuard{
         */
         _checkpoint(msg.sender);
 
-        uint256 _balance = balanceOf[msg.sender].sub(_value);
-        uint256 _supply = totalSupply.sub(_value);
+        uint256 _balance = balanceOf[msg.sender] - _value;
+        uint256 _supply = totalSupply - _value;
         balanceOf[msg.sender] = _balance;
         totalSupply = _supply;
 
