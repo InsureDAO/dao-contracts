@@ -11,8 +11,6 @@ pragma solidity 0.8.7;
 import "./VestingEscrowSimple.sol"; //For the flatten file readability, import the contract directly.
 
 //libraries
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
