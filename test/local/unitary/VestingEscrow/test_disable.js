@@ -87,7 +87,9 @@ describe('VestingEscrow', function() {
             expect(await vesting.can_disable()).to.equal(false);
         });
 
-
+        it("revert add_token when not admin", async()=>{
+            await expect(vesting.connect(alice).add_tokens(ten_to_the_21)).to.revertedWith("dev admin only");
+        });
     });
 
     

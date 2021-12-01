@@ -9,26 +9,31 @@ pragma solidity 0.8.7;
 
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract VestingEscrow is ReentrancyGuard{
+    using SafeERC20 for IERC20;
     
     event Fund(address indexed recipient, uint256 amount);
     event Claim(address indexed recipient, uint256 claimed);
+    event RugPull(address recipient, uint256 rugged);
     event ToggleDisable(address recipient, bool disabled);
     event CommitOwnership(address admin);
     event AcceptOwnership(address admin);
 
 
-    address public token; //address of $Insure
+    address public token; //address of $INSURE
     uint256 public start_time;
     uint256 public end_time;
     mapping(address => uint256)public initial_locked;
     mapping(address => uint256)public total_claimed;
+    mapping(address => bool)public is_ragged;
 
     uint256 public initial_locked_supply;
     uint256 public unallocated_supply;
+    uint256 public rugged_amount;
 
     bool public can_disable;
     mapping(address => uint256) public disabled_at;
@@ -76,7 +81,6 @@ contract VestingEscrow is ReentrancyGuard{
                 }
             }
         }
-
     }
 
     
@@ -87,7 +91,7 @@ contract VestingEscrow is ReentrancyGuard{
         *@param _amount Number of tokens to transfer
         */
         require (msg.sender == admin, "dev admin only"); // dev admin only
-        require (IERC20(token).transferFrom(msg.sender, address(this), _amount), "dev transfer failed");
+        IERC20(token).safeTransferFrom(msg.sender, address(this), _amount);
         unallocated_supply += _amount;
     }
 
@@ -118,6 +122,24 @@ contract VestingEscrow is ReentrancyGuard{
         unallocated_supply -= _total_amount;
     }
 
+    function rug_pull(address _target)external {
+        /***
+        *@notice Disable further flow of tokens and clawback the unvested part to admin
+        */
+        require (msg.sender == admin, "dev: admin only");
+    
+        uint256 raggable = initial_locked[_target] - _total_vested_of(_target, block.timestamp); //all unvested token
+ 
+        is_ragged[_target] = true;
+        disabled_at[_target] = block.timestamp; //never be updated later on.
+
+        rugged_amount += raggable;
+
+        assert (IERC20(token).transfer(admin, raggable));
+
+        emit RugPull(admin, raggable);
+    }
+
 
     
     function toggle_disable(address _recipient)external{
@@ -130,6 +152,7 @@ contract VestingEscrow is ReentrancyGuard{
         */
         require (msg.sender == admin, "dev: admin only");
         require (can_disable, "Cannot disable");
+        require (!is_ragged[_recipient], "is rugged");
 
         bool is_disabled = disabled_at[_recipient] == 0;
         if (is_disabled){
@@ -206,7 +229,12 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Get the number of tokens which have vested for a given address
         *@param _recipient address to check
         */
-        return _total_vested_of(_recipient, block.timestamp);
+        uint256 t = disabled_at[_recipient];
+        if (t == 0){
+            t = block.timestamp;
+        }
+
+        return _total_vested_of(_recipient, t);
     }
 
     function balanceOf(address _recipient)external view returns (uint256){
@@ -214,7 +242,13 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Get the number of unclaimed, vested tokens for a given address
         *@param _recipient address to check
         */
-        return _total_vested_of(_recipient, block.timestamp) - total_claimed[_recipient];
+
+        uint256 t = disabled_at[_recipient];
+        if (t == 0){
+            t = block.timestamp;
+        }
+
+        return _total_vested_of(_recipient, t) - total_claimed[_recipient];
     }
 
     function lockedOf(address _recipient)external view returns (uint256){
@@ -222,7 +256,12 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Get the number of locked tokens for a given address
         *@param _recipient address to check
         */
-        return initial_locked[_recipient] - _total_vested_of(_recipient, block.timestamp);
+
+        if(is_ragged[_recipient] == true){
+            return 0;
+        }else{
+            return initial_locked[_recipient] - _total_vested_of(_recipient, block.timestamp);
+        }
     }
 
     function claim(address addr)external nonReentrant{

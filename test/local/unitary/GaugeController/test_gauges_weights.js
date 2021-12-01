@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
-
 describe('GaugeController', function(){
     let InsureToken;
     let VotingEscrow;
@@ -63,7 +62,6 @@ describe('GaugeController', function(){
 
         //setup
         await gauge_controller.add_type('Liquidity', TYPE_WEIGHTS[0]);
-
     });
 
     describe("test_gauges_weights", function(){

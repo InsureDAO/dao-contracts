@@ -284,6 +284,8 @@ describe('VestingEscrow', function() {
         it("test_disable_fund_admin", async()=>{
             let accounts = [creator, alice, bob, chad, tom, noone, seven, eight, nine, ten];
 
+            await expect(vesting.connect(accounts[1]).disable_fund_admins()).to.revertedWith("dev admin only")
+
             
             await vesting.connect(accounts[0]).disable_fund_admins();
 
