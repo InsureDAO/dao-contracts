@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('DevFeeForwarder', () => {
     const name = "Fee Token";
     const simbol = "FT";
@@ -11,7 +19,7 @@ describe('DevFeeForwarder', () => {
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
     const FEE = BigNumber.from("1000000")
   
-    beforeEach(async () => {
+    before(async () => {
       [creator, alice, bob, chad, dad] = await ethers.getSigners();
       addresses = [creator.address, alice.address, bob.address, chad.address, dad.address]
       const Token = await ethers.getContractFactory('TestToken');
@@ -20,6 +28,14 @@ describe('DevFeeForwarder', () => {
       token = await Token.deploy(name, simbol, decimal);
       dstr = await Distributor.deploy(alice.address);
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("Condition", function () {
         it("contract should be deployed", async () => {

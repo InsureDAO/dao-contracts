@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('VestingEscrow', function() {
     const YEAR = BigNumber.from(86400*365);
 
@@ -10,7 +18,7 @@ describe('VestingEscrow', function() {
     const ten_to_the_20 = BigNumber.from("100000000000000000000");
     const ten_to_the_17 = BigNumber.from("100000000000000000");
 
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice, bob, chad, dad] = await ethers.getSigners();
         const VestingEscrow = await ethers.getContractFactory('VestingEscrow');
@@ -27,6 +35,14 @@ describe('VestingEscrow', function() {
         await coin_a._mint_for_testing(ten_to_the_21);
         await coin_a.approve(vesting.address, ten_to_the_21);
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("test_vesting_escrow_admin", function(){
         it("test_commit_admin_only", async()=> {

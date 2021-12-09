@@ -405,7 +405,7 @@ contract InsureToken is IERC20{
         symbol = _symbol;
     }
 
-    function emergency_mint(uint256 _amount, address _to)external {
+    function emergency_mint(uint256 _amount, address _to)external returns(bool){
         /***
         * @notice Emergency minting only when CDS couldn't afford the insolvency.
         * @dev 
@@ -416,5 +416,7 @@ contract InsureToken is IERC20{
         //mint
         emergency_minted += _amount;
         _mint(_to, _amount);
+
+        return true;
     }
 }

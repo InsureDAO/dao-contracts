@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('LiquidityGauge', function() {
     const YEAR = BigNumber.from(86400*365);
     const WEEK = BigNumber.from(86400*7);

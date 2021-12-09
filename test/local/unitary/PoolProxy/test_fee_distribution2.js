@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('PoolProxy', () => {
     const name = "InsureToken";
     const simbol = "Insure";
@@ -10,7 +18,7 @@ describe('PoolProxy', () => {
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
   
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice, bob] = await ethers.getSigners();
         const PoolProxy = await ethers.getContractFactory('PoolProxy');
@@ -51,6 +59,14 @@ describe('PoolProxy', () => {
 
 
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("withdraw_admin_fee", function(){
 

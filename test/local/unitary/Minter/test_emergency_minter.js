@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 
 describe('Minter', function(){
     const YEAR = BigNumber.from(86400*365);
@@ -33,7 +41,7 @@ describe('Minter', function(){
     const GAUGE_WEIGHTS = [ten_to_the_19, ten_to_the_18, ten_to_the_17.mul(a)];
     const GAUGE_TYPES = [1, 1, 2];
 
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice, bob, charly] = await ethers.getSigners();
         const Token = await ethers.getContractFactory('InsureToken');
@@ -41,43 +49,37 @@ describe('Minter', function(){
         const GaugeController = await ethers.getContractFactory('GaugeController');
         const Registry = await ethers.getContractFactory('TestRegistry');
         const Minter = await ethers.getContractFactory('Minter');
-        const TestConverter = await ethers.getContractFactory('TestConverter');
+        const TestEmergencyModule = await ethers.getContractFactory('TestEmergencyModule');
 
         //deploy
         Insure = await Token.deploy(name, simbol, decimal);
         voting_escrow = await VotingEscrow.deploy(Insure.address, "Voting-escrowed Insure", "veInsure", 'veInsure');
         gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address);
-        converter = await TestConverter.deploy(Insure.address);
 
         registry = await Registry.deploy();
         minter = await Minter.deploy(Insure.address, gauge_controller.address, registry.address);
+
+        emrg_minter = await TestEmergencyModule.deploy(minter.address);
         
         await Insure.set_minter(minter.address);
+        await minter.set_emergency_mint_module(emrg_minter.address);
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("emergency_minter", function(){
         it("test_emergency_minter", async()=>{
             let amount = BigNumber.from("1000");
 
-            await minter.set_converter(converter.address);
-            await minter.connect(alice).emergency_mint(FAKE_TOKEN_ADDRESS,amount);
+            await emrg_minter.mint(amount);
 
-            expect(await Insure.balanceOf(converter.address)).to.equal(55);//55 defined at TestConverter.sol
+            expect(await Insure.balanceOf(emrg_minter.address)).to.equal(amount);
         });
-
-        it("test_revert_set_admin", async()=>{
-            expect(await minter.admin()).to.equal(creator.address);
-
-            await expect(minter.connect(alice).set_admin(alice.address)).to.revertedWith("dev: admin only");
-        });
-
-        it("test_set_admin", async()=>{
-            expect(await minter.admin()).to.equal(creator.address);
-
-            await minter.set_admin(alice.address);
-
-            expect(await minter.admin()).to.equal(alice.address);
-        });
-
     });
 });

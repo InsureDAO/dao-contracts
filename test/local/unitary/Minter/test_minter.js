@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 
 describe('Minter', function(){
     const YEAR = BigNumber.from(86400*365);
@@ -31,7 +39,7 @@ describe('Minter', function(){
     const GAUGE_WEIGHTS = [ten_to_the_19, ten_to_the_18, ten_to_the_17.mul(a)];
     const GAUGE_TYPES = [1, 1, 2];
 
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice, bob, charly] = await ethers.getSigners();
         const Token = await ethers.getContractFactory('InsureToken');
@@ -85,6 +93,14 @@ describe('Minter', function(){
             }
         }
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("test_minter", function(){
         it("test_mint", async()=>{

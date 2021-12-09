@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('VestingEscrow', function() {
     const YEAR = BigNumber.from(86400*365);
 
@@ -11,7 +19,7 @@ describe('VestingEscrow', function() {
     const ten_to_the_17 = BigNumber.from("100000000000000000");
 
     describe("test_getters", function(){
-        beforeEach(async () => {
+        before(async () => {
             [creator, alice, bob, chad, tom, noone, seven, eight, nine, ten] = await ethers.getSigners();
             let accounts = [creator.address, alice.address, bob.address, chad.address, tom.address, noone.address, seven.address, eight.address, nine.address, ten.address];
             const VestingEscrow = await ethers.getContractFactory('VestingEscrow');
@@ -59,6 +67,14 @@ describe('VestingEscrow', function() {
             expect(await vesting.initial_locked(accounts[9])).to.equal(ten_to_the_17.mul(BigNumber.from('10')));//ok
             //expect(await vesting.initial_locked_supply()).to.equal(amounts.reduce(reducer));//ok
         });
+
+        beforeEach(async () => {
+            snapshotId = await snapshot()
+          });
+        
+          afterEach(async () => {
+            await restore(snapshotId)
+          })
         
         it("test_vested_supply", async() => {
             expect(await vesting.vestedSupply()).to.equal(BigNumber.from('0'));

@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('LiquidityGauge', function(){
     const YEAR = BigNumber.from(86400*365);
     const WEEK = BigNumber.from(86400*7);
@@ -22,7 +30,7 @@ describe('LiquidityGauge', function(){
     const ten_to_the_17 = BigNumber.from("100000000000000000");
     const ten_to_the_9 = BigNumber.from("1000000000");
 
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice] = await ethers.getSigners();
         const Token = await ethers.getContractFactory('InsureToken');
@@ -43,6 +51,14 @@ describe('LiquidityGauge', function(){
         liquidity_gauge = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, creator.address);
 
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("test_kick", function(){
         

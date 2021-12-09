@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('GaugeController', () => {
     let InsureToken;
     let VotingEscrow;
@@ -32,7 +40,7 @@ describe('GaugeController', () => {
     const TYPE_WEIGHTS = [ten_to_the_17.mul(b), ten_to_the_18.mul(a)];
     const GAUGE_WEIGHTS = [ten_to_the_18.mul(a), ten_to_the_18, ten_to_the_17.mul(b)];
     
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice, bob] = await ethers.getSigners();
         const Token = await ethers.getContractFactory('InsureToken');
@@ -62,6 +70,14 @@ describe('GaugeController', () => {
         //setup
         await gauge_controller.add_type('Liquidity', TYPE_WEIGHTS[0]);
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("test_timestamp", function(){
        it("test_timestamp", async()=>{

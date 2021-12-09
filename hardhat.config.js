@@ -34,7 +34,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    tests: "./test/local/unitary/VestingEscrow",
+    tests: "./test/local",
     //tests: "./test/mainnet_fork",
     //tests: "./test",
     cache: "./cache",

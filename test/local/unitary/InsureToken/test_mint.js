@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('InsureToken', function() {
     let owner;
     let Insure;
@@ -15,7 +23,7 @@ describe('InsureToken', function() {
     const WEEK = 86400*7;
     const YEAR = 86400*365;
 
-    beforeEach(async () => {
+    before(async () => {
         [creator, alice, bob] = await ethers.getSigners();
 
         const Token = await ethers.getContractFactory('InsureToken')
@@ -27,6 +35,14 @@ describe('InsureToken', function() {
         await ethers.provider.send("evm_increaseTime", [86401]);
         await Insure.update_mining_parameters(); //mining_epoch -1=>0
     });
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
+      
     describe("test_mint", function(){
 
         it("test_available_supply", async () => {

@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+  return network.provider.send('evm_snapshot', [])
+}
+
+async function restore (snapshotId) {
+  return network.provider.send('evm_revert', [snapshotId])
+}
+
 describe("InsureToken", function(){
   describe("test_epoch_time_supply", function(){
     const YEAR = BigNumber.from(86400*365);
@@ -16,11 +24,18 @@ describe("InsureToken", function(){
     const INITIAL_SUPPLY = BigNumber.from('126000000000000000000000000');
     const INITIAL_RATE = (BigNumber.from('28000000')).mul(BigNumber.from("10").pow("18")).div(YEAR);
       
-    beforeEach(async () => {
+    before(async () => {
       [creator, alice, bob] = await ethers.getSigners();
       const Token = await ethers.getContractFactory('InsureToken')
       Insure = await Token.deploy(name, simbol, decimal);
     });
+    beforeEach(async () => {
+      snapshotId = await snapshot()
+    });
+  
+    afterEach(async () => {
+      await restore(snapshotId)
+    })
   
     //------ epoch_time_wirte -------//
     it("test_start_epoch_time_write", async () => {

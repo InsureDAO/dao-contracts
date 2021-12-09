@@ -11,7 +11,7 @@ pragma solidity 0.8.7;
 import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/ILiquidityGauge.sol";
 import "./interfaces/dao/IGaugeController.sol";
-import "./interfaces/dao/IConverter.sol";
+import "./interfaces/dao/IEmergencyMintModule.sol";
 
 //pool-contracts
 import "./interfaces/pool/IRegistry.sol";
@@ -30,10 +30,9 @@ contract Minter is ReentrancyGuard{
     IRegistry public registry;
     IInsureToken public insure_token;
     IGaugeController public gauge_controller;
+    IEmergencyMintModule public emergency_module;
 
-    //for emergency_mint
     address public admin;
-    IConverter public converter;
 
 
     // user -> gauge -> value
@@ -112,7 +111,6 @@ contract Minter is ReentrancyGuard{
     }
 
     //-----------------emergency mint-----------------/
-
     function set_admin(address _admin) external{
         /***
         *@notice Set the new admin.
@@ -124,28 +122,18 @@ contract Minter is ReentrancyGuard{
         emit SetAdmin(_admin);
     }
 
-    function set_converter(address _converter) external {
+    function set_emergency_mint_module(address _emergency_module)external {
         require (msg.sender == admin, "dev: admin only");
-        converter = IConverter(_converter);
-
-        emit SetConverter(_converter);
+        emergency_module = IEmergencyMintModule(_emergency_module);
     }
 
-    function emergency_mint(address _tokenOut, uint256 _amountOut)external{
+    function emergency_mint(uint256 mint_amount)external{
         /**
-        *@param _tokenOut
-        *@param _amountOut
+        *@param mint_amount amount of INSURE to be minted
         */
-        require(registry.isListed(msg.sender)); //only from Official Pool.
-
-        //get amountIn
-        uint256 _amountInMax = converter.getAmountsIn(_tokenOut, _amountOut);
+        require (msg.sender == address(emergency_module), "dev: admin only");
 
         //mint
-        insure_token.emergency_mint(_amountInMax, address(this));
-
-        //convert
-        insure_token.approve(address(converter), _amountInMax);
-        converter.swap_insure_to_exact(_tokenOut, _amountOut, _amountInMax, msg.sender);
+        insure_token.emergency_mint(mint_amount, address(emergency_module));
     }
 }

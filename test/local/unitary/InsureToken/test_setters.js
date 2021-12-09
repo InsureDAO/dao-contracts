@@ -2,6 +2,14 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+    return network.provider.send('evm_snapshot', [])
+  }
+  
+  async function restore (snapshotId) {
+    return network.provider.send('evm_revert', [snapshotId])
+  }
+
 describe('InsureToken', function(){
     describe("test_setters", function(){
         const name = "InsureToken";
@@ -13,11 +21,19 @@ describe('InsureToken', function(){
         const YEAR = BigNumber.from(86400*365);
         const WEEK = BigNumber.from(86400*7);
 
-        beforeEach(async () => {
+        before(async () => {
             [creator, alice, bob] = await ethers.getSigners();
             const Token = await ethers.getContractFactory('InsureToken')
             Insure = await Token.deploy(name, simbol, decimal);
         });
+
+        beforeEach(async () => {
+            snapshotId = await snapshot()
+          });
+        
+          afterEach(async () => {
+            await restore(snapshotId)
+          })
 
         //revert test
         it("test_set_minter_admin_only", async()=>{

@@ -2,13 +2,21 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
 
+async function snapshot () {
+  return network.provider.send('evm_snapshot', [])
+}
+
+async function restore (snapshotId) {
+  return network.provider.send('evm_revert', [snapshotId])
+}
+
 describe('VotingEscrow', function() {
 
     const name = "InsureToken";
     const simbol = "Insure";
     const decimal = 18;
 
-    beforeEach(async () => {
+    before(async () => {
         //import
         [creator, alice, bob, charly] = await ethers.getSigners();
         const Token = await ethers.getContractFactory('InsureToken');
@@ -17,6 +25,14 @@ describe('VotingEscrow', function() {
         Insure = await Token.deploy(name, simbol, decimal);
         ve = await VotingEscrow.deploy(Insure.address, "Voting-escrowed Insure", "veInsure", 'veInsure');
     });
+
+    beforeEach(async () => {
+        snapshotId = await snapshot()
+      });
+    
+      afterEach(async () => {
+        await restore(snapshotId)
+      })
 
     describe("test_votingescrow_admin", function(){
         it("test_commit_admin_only", async()=> {
