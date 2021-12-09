@@ -29,5 +29,4 @@ contract TestEmergencyModule{
 
     IVault(vault).repayDebt(amount, address(0));
   }
-
 }
