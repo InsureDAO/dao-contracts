@@ -13,10 +13,8 @@ import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/IMinter.sol";
 import "./interfaces/dao/IVotingEscrow.sol";
 
-//pool-contracts
-import "./interfaces/pool/IPoolTemplate.sol";
-
 //libraries
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -36,7 +34,7 @@ contract LiquidityGauge is ReentrancyGuard{
     //Contracts
     IMinter public minter;
     IInsureToken public insure_token;
-    IPoolTemplate public template;
+    IERC20 public template;
     IGaugeController public controller;
     IVotingEscrow public voting_escrow;
 
@@ -86,7 +84,7 @@ contract LiquidityGauge is ReentrancyGuard{
         assert (lp_addr != address(0));
         assert (_minter != address(0));
 
-        template = IPoolTemplate(lp_addr);
+        template = IERC20(lp_addr);
         minter = IMinter(_minter);
         address insure_addr = minter.insure_token();
         insure_token = IInsureToken(insure_addr);

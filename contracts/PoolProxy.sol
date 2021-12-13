@@ -11,9 +11,10 @@ pragma solidity 0.8.7;
 import "./interfaces/dao/IDistributor.sol";
 
 //pool-contracts
+import "./interfaces/pool/ICDSTemplate.sol";
 import "./interfaces/pool/IFactory.sol";
-import "./interfaces/pool/IFeeModel.sol";
 import "./interfaces/pool/IIndexTemplate.sol";
+import "./interfaces/pool/IOwnership.sol";
 import "./interfaces/pool/IParameters.sol";
 import "./interfaces/pool/IPoolTemplate.sol";
 import "./interfaces/pool/IPremiumModel.sol";
@@ -393,16 +394,29 @@ contract PoolProxy is ReentrancyGuard{
     * pool-contracts' owner is this contract. 
     * For the detail of each function, see the pool-contracts repository.
     */
+    //ownership
+    function ownership_accept_transfer_ownership(address _ownership_contract)external{
+        require(msg.sender == ownership_admin, "Access denied");
+
+        IOwnership(_ownership_contract).acceptTransferOwnership(); 
+    }
+
+    function ownership_commit_transfer_ownership(address _ownership_contract, address newOwner)external{
+        require(msg.sender == ownership_admin, "Access denied");
+
+        IOwnership(_ownership_contract).commitTransferOwnership(newOwner);
+    }
+
 
     //Factory
-    function approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen, bool _duplicate)external{
+    function factory_approve_template(address _factory, address _template_addr, bool _approval, bool _isOpen, bool _duplicate)external{
         require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         IFactory(_factory).approveTemplate(_template, _approval, _isOpen, _duplicate);
     }
 
-    function approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{
+    function factory_approve_reference(address _factory, address _template_addr, uint256 _slot, address _target, bool _approval)external{
 
         require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
@@ -410,14 +424,14 @@ contract PoolProxy is ReentrancyGuard{
         IFactory(_factory).approveReference(_template, _slot, _target, _approval);
     }
 
-    function set_condition_factory(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{
+    function factory_set_condition(address _factory, address _template_addr, uint256 _slot, uint256 _target)external{
         require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
         IFactory(_factory).setCondition(_template, _slot, _target);
     }
 
-    function create_market(
+    function factory_create_market(
         address _factory,
         address _template_addr,
         string memory _metaData,
@@ -437,80 +451,29 @@ contract PoolProxy is ReentrancyGuard{
         return _market;
     }
 
-    function commit_transfer_ownership_factory(address _factory, address _future_admin)external{
-
-        require(msg.sender == ownership_admin, "Access denied");
-        IFactory(_factory).commitTransferOwnership(_future_admin);
-    }
-
-    function apply_transfer_ownership_factory(address _factory)external{
-
-        IFactory(_factory).applyTransferOwnership();
-    }
-
-
-
-    //FeeModel
-    function set_fee(address _fee, uint256 _target)external{
-
-        require(msg.sender == parameter_admin, "Access denied");
-        IFeeModel(_fee).setFee(_target);
-    }
-
-    function commit_transfer_ownership_feemodel(address _fee, address _future_owner)external{
-
-        require(msg.sender == ownership_admin, "Access denied");
-        IFeeModel(_fee).commitTransferOwnership(_future_owner);
-    }
-
-    function apply_transfer_ownership_feemodel(address _fee)external{
-
-        IFeeModel(_fee).applyTransferOwnership();
-    }
-
-
     //Premium model
-    function set_premium(address _premium, uint256 _baseRatePerYear, uint256 _multiplierPerYear)external{
+    function pm_set_premium(address _premium, uint256 _multiplierPerYear, uint256 _initialBaseRatePerYear, uint256 _finalBaseRatePerYear, uint256 _goalTVL)external{
         
         require(msg.sender == parameter_admin, "Access denied");
-        IPremiumModel(_premium).setPremium(_baseRatePerYear, _multiplierPerYear);
-    }
-
-    function set_options(address _premium, uint256 _a, uint256 _b, uint256 _c, uint256 _d)external{
-    
-        require(msg.sender == parameter_admin, "Access denied");
-        IPremiumModel(_premium).setOptions(_a, _b, _c, _d);
-    }
-
-
-    function commit_transfer_ownership_premiummodel(address _premium, address _future_owner)external{
-
-        require(msg.sender == ownership_admin, "Access denied");
-        IPremiumModel(_premium).commitTransferOwnership(_future_owner);
-
-    }
-
-    function apply_transfer_ownership_premiummodel(address _premium)external{
-
-        IPremiumModel(_premium).applyTransferOwnership();
+        IPremiumModel(_premium).setPremium(_multiplierPerYear, _initialBaseRatePerYear, _finalBaseRatePerYear, _goalTVL);
     }
 
 
     //Universal(Pool/Index/CDS)
-    function set_paused(address _pool, bool _state)external nonReentrant{
+    function pm_set_paused(address _pool, bool _state)external nonReentrant{
 
         require(msg.sender == emergency_admin || msg.sender == ownership_admin, "Access denied");
         IUniversalMarket(_pool).setPaused(_state);
     }
 
-    function change_metadata(address _pool, string calldata _metadata) external {
+    function pm_change_metadata(address _pool, string calldata _metadata) external {
         require(msg.sender == parameter_admin, "Access denied");
         IUniversalMarket(_pool).changeMetadata(_metadata);
     }
 
 
     //Pool
-    function apply_cover(
+    function pool_apply_cover(
         address _pool,
         uint256 _pending,
         uint256 _payoutNumerator,
@@ -527,45 +490,45 @@ contract PoolProxy is ReentrancyGuard{
 
 
     //Index
-    function set_leverage(address _index, uint256 _target)external{
+    function index_set_leverage(address _index, uint256 _target)external{
 
         require(msg.sender == parameter_admin, "Access denied");
 
         IIndexTemplate(_index).setLeverage(_target);
     }
 
-
-    function set(address _index_address, uint256 _index, address _pool, uint256 _allocPoint)external{
+    function index_set(address _index_address, uint256 _index, address _pool, uint256 _allocPoint)external{
         require(msg.sender == parameter_admin, "Access denied");
 
         IIndexTemplate(_index_address).set(_index, _pool, _allocPoint);
     }
 
+    //CDS
+    function defund(address _cds, uint256 _amount)external{
+        require(msg.sender == ownership_admin, "Access denied");
+
+        ICDSTemplate(_cds).defund(_amount);
+    }
+
 
     //Vault
-    function set_keeper(address _vault, address _keeper)external{
+    function vault_withdraw_redundant(address _vault, address _token, address _to) external{
+
+        require(msg.sender == ownership_admin, "Access denied");
+        IVault(_vault).withdrawRedundant(_token, _to);
+    }
+
+    function vault_set_keeper(address _vault, address _keeper)external{
 
         require(msg.sender == ownership_admin, "Access denied");
         IVault(_vault).setKeeper(_keeper);
     }
 
-    function set_controller(address _vault, address _controller)external{
+    function vault_set_controller(address _vault, address _controller)external{
         
         require(msg.sender == ownership_admin, "Access denied");
         IVault(_vault).setController(_controller);
     }
-
-    function commit_transfer_ownership_vault(address _vault, address _future_owner)external{
-
-        require(msg.sender == ownership_admin, "Access denied");
-        IVault(_vault).commitTransferOwnership(_future_owner);
-    }
-
-    function apply_transfer_ownership_vault(address _vault)external{
-        
-        IVault(_vault).applyTransferOwnership();
-    }
-
 
     //Parameters
     function set_parameters(address _parameters)external {
@@ -577,86 +540,69 @@ contract PoolProxy is ReentrancyGuard{
         parameters = _parameters;
     }
 
-    function commit_transfer_ownership_parameters(address _parameters, address _future_owner)external{
-        
-        require(msg.sender == ownership_admin, "Access denied");
-        IParameters(_parameters).commitTransferOwnership(_future_owner);
-    }
-
-    function apply_transfer_ownership_parameters(address _parameters)external{
-        
-        IParameters(_parameters).applyTransferOwnership();
-    }
-
-    function set_vault(address _parameters, address _token, address _vault)external{
+    function parameters_set_vault(address _parameters, address _token, address _vault)external{
 
         require(msg.sender == ownership_admin, "Access denied");
 
         IParameters(_parameters).setVault(_token, _vault);
     }
 
-    function set_lockup(address _parameters, address _address, uint256 _target)external{
+    function parameters_set_lockup(address _parameters, address _address, uint256 _target)external{
 
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setLockup(_address, _target);
     }
 
-    function set_grace(address _parameters, address _address, uint256 _target)external{
+    function parameters_set_grace(address _parameters, address _address, uint256 _target)external{
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setGrace(_address, _target);
     }
 
-    function set_mindate(address _parameters, address _address, uint256 _target)external{
+    function parameters_set_mindate(address _parameters, address _address, uint256 _target)external{
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setMindate(_address, _target);
     }
 
-    function set_cds_premium(address _parameters, address _address, uint256 _target)external{
-
+    function parameters_set_upper_slack(address _parameters, address _address, uint256 _target) external{
         require(msg.sender == parameter_admin, "Access denied");
 
-        IParameters(_parameters).setCDSPremium(_address, _target);
+        IParameters(_parameters).setUpperSlack(_address, _target);
     }
 
-    function set_depositFee(address _parameters, address _address, uint256 _target)external{
-
+    function parameters_set_lower_slack(address _parameters, address _address, uint256 _target) external{
         require(msg.sender == parameter_admin, "Access denied");
 
-        IParameters(_parameters).setDepositFee(_address, _target);
+        IParameters(_parameters).setLowerSlack(_address, _target);
     }
 
-    function set_withdrawable(address _parameters, address _address, uint256 _target)external{
-
+    function parameters_set_withdrawable(address _parameters, address _address, uint256 _target)external{
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setWithdrawable(_address, _target);
     }
 
-    function set_premium_model(address _parameters, address _address, address _target)external{
-
+    function parameters_set_premium_model(address _parameters, address _address, address _target)external{
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setPremiumModel(_address, _target);
     }
 
-    function set_fee_model(address _parameters, address _address, address _target)external{
-
+    function setFeeRate(address _parameters, address _address, uint256 _target) external{
         require(msg.sender == parameter_admin, "Access denied");
 
-        IParameters(_parameters).setFeeModel(_address, _target);
+        IParameters(_parameters).setFeeRate(_address, _target);
     }
 
-    function set_max_list(address _parameters, address _address, uint256 _target)external{
-
+    function parameters_set_max_list(address _parameters, address _address, uint256 _target)external{
         require(msg.sender == parameter_admin, "Access denied");
+
         IParameters(_parameters).setMaxList(_address, _target);
     }
 
-    function set_condition_parameters(address _parameters, bytes32 _reference, bytes32 _target) external{
-
+    function parameters_set_condition_parameters(address _parameters, bytes32 _reference, bytes32 _target) external{
         require(msg.sender == parameter_admin, "Access denied");
 
         IParameters(_parameters).setCondition(_reference, _target);
@@ -664,39 +610,27 @@ contract PoolProxy is ReentrancyGuard{
 
 
     //Registry
-    function set_factory(address _registry, address _factory)external{
-
+    function registry_set_factory(address _registry, address _factory)external{
         require(msg.sender == ownership_admin, "Access denied");
 
         IRegistry(_registry).setFactory(_factory);
     }
 
-    function support_market(address _registry, address _market) external{
-
+    function registry_support_market(address _registry, address _market) external{
         require(msg.sender == ownership_admin, "Access denied");
+
         IRegistry(_registry).supportMarket(_market);
     }
 
-    function set_existence(address _registry, address _target, uint256 _typeId)external{
-
+    function registry_set_existence(address _registry, address _target, uint256 _typeId)external{
         require(msg.sender == ownership_admin, "Access denied");
+
         IRegistry(_registry).setExistence(_target, _typeId);
     }
 
-    function set_cds(address _registry, address _address, address _target) external{
-
+    function registry_set_cds(address _registry, address _address, address _target) external{
         require(msg.sender == ownership_admin, "Access denied");
-        IRegistry(_registry).setCDS(_address, _target);
-    }
-
-    function commit_transfer_ownership_registry(address _registry, address _future_admin)external{
-
-        require(msg.sender == ownership_admin, "Access denied");
-        IRegistry(_registry).commitTransferOwnership(_future_admin);
-    }
-
-    function apply_transfer_ownership_registry(address _registry)external{
         
-        IRegistry(_registry).applyTransferOwnership();
+        IRegistry(_registry).setCDS(_address, _target);
     }
 }

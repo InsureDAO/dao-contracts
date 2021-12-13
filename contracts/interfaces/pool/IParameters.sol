@@ -1,33 +1,67 @@
-// SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.7;
 
-interface IParameters {
-    function commitTransferOwnership(address) external;
+abstract contract IParameters {
+    function setMinter(address _minter) external virtual;
+    function setVault(address _token, address _vault) external virtual;
+    function setLockup(address _address, uint256 _target) external virtual;
+    function setGrace(address _address, uint256 _target) external virtual;
+    function setMindate(address _address, uint256 _target) external virtual;
+    function setUpperSlack(address _address, uint256 _target) external virtual;
+    function setLowerSlack(address _address, uint256 _target) external virtual;
+    function setWithdrawable(address _address, uint256 _target) external virtual;
+    function setPremiumModel(address _address, address _target) external virtual;
+    function setFeeRate(address _address, uint256 _target) external virtual;
+    function setMaxList(address _address, uint256 _target) external virtual;
+    function setCondition(bytes32 _reference, bytes32 _target) external virtual;
 
-    function applyTransferOwnership() external ;
 
-    function setVault(address, address) external ;
+    function getOwner() external view virtual returns (address);
+    function getMinter() public view virtual returns (address);
+    function getVault(address _token) external view virtual returns (address);
 
-    function setLockup(address, uint256) external ;
+    function getPremium(
+        uint256 _amount,
+        uint256 _term,
+        uint256 _totalLiquidity,
+        uint256 _lockedAmount,
+        address _target
+    ) external view virtual returns (uint256);
 
-    function setGrace(address _address, uint256 _target) external ;
+    function getFee(address _target) external view virtual returns (uint256);
 
-    function setMindate(address _address, uint256 _target) external ;
+    function getUpperSlack(address _target)
+        external
+        view
+        virtual
+        returns (uint256);
 
-    function setCDSPremium(address _address, uint256 _target) external ;
+    function getLowerSlack(address _target)
+        external
+        view
+        virtual
+        returns (uint256);
 
-    function setDepositFee(address _address, uint256 _target) external ;
+    function getLockup(address _target) external view virtual returns (uint256);
 
-    function setWithdrawable(address _address, uint256 _target)external;
+    function getWithdrawable(address _target)
+        external
+        view
+        virtual
+        returns (uint256);
 
-    function setPremiumModel(address _address, address _target)external;
+    function getGrace(address _target) external view virtual returns (uint256);
 
-    function setFeeModel(address _address, address _target) external ;
+    function getMin(address _target) external view virtual returns (uint256);
 
-    function setMaxList(address, uint256) external;
+    function getMaxList(address _target)
+        external
+        view
+        virtual
+        returns (uint256);
 
-    function setCondition(bytes32 _reference, bytes32 _target) external ;
-
-    function getVault(address _token) external view returns (address);
+    function getCondition(bytes32 _reference)
+        external
+        view
+        virtual
+        returns (bytes32);
 }
