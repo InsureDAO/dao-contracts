@@ -23,7 +23,7 @@ describe('ReportingFeeDistributorV1', () => {
       [creator, alice, bob, chad, dad] = await ethers.getSigners();
       addresses = [creator.address, alice.address, bob.address, chad.address, dad.address]
       const Token = await ethers.getContractFactory('TestToken');
-      const Distributor = await ethers.getContractFactory('ReportingDistributionV1');
+      const Distributor = await ethers.getContractFactory('ReportingFeeDistributor');
 
       fee = await Token.deploy(name, simbol, decimal);
       rpt_token = await Token.deploy(name, simbol, rpt_decimal);

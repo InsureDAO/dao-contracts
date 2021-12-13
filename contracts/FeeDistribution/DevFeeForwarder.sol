@@ -33,7 +33,7 @@ contract DevFeeForwarder is ReentrancyGuard{
             IERC20(_token).safeTransferFrom(msg.sender, address(this), claimable);
         }
 
-        //transfer all token in this contract to the wallet.
+        //transfer all the token in this contract to the wallet.
         uint256 amount = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(wallet, amount);
 
