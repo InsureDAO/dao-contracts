@@ -14,9 +14,8 @@ import "../interfaces/pool/IPremiumModel.sol";
 import "hardhat/console.sol";
 
 contract Parameters is IParameters {
-    event MinterSet(address minter);
     event VaultSet(address indexed token, address vault);
-    event FeeSet(address indexed target, uint256 rate);
+    event FeeRateSet(address indexed target, uint256 rate);
     event PremiumSet(address indexed target, address model);
     event UpperSlack(address indexed target, uint256 rate);
     event LowerSlack(address indexed target, uint256 rate);
@@ -27,11 +26,10 @@ contract Parameters is IParameters {
     event ConditionSet(bytes32 indexed ref, bytes32 condition);
     event MaxListSet(address target, uint256 max);
 
-    address public minter;
     address public ownership;
 
     mapping(address => address) private _vaults; //address of the vault contract for each token
-    mapping(address => uint256) private _fee; //fee rate in 1e5 (100% = 1e5)
+    mapping(address => uint256) private _fee; //fee rate in 1e6 (100% = 1e6)
     mapping(address => address) private _premium; //address for each premium model contract
     mapping(address => uint256) private _lowerSlack; //lower slack range before adjustAlloc for index
     mapping(address => uint256) private _upperSlack; //upper slack range before adjustAlloc for index
@@ -55,16 +53,6 @@ contract Parameters is IParameters {
             "Restricted: caller is not allowed to operate"
         );
         _;
-    }
-
-    /**
-     * @notice set the minter address
-     * @param _minter minter address
-     */
-    function setMinter(address _minter) external override onlyOwner {
-        require(minter == address(0), "dev: already initialized");
-        minter = _minter;
-        emit MinterSet(_minter);
     }
 
     /**
@@ -116,7 +104,7 @@ contract Parameters is IParameters {
      * @param _address address to set the parameter
      * @param _target parameter
      */
-    function setMindate(address _address, uint256 _target)
+    function setMinDate(address _address, uint256 _target)
         external
         override
         onlyOwner
@@ -193,7 +181,7 @@ contract Parameters is IParameters {
         onlyOwner
     {
         _fee[_address] = _target;
-        emit FeeSet(_address, _target);
+        emit FeeRateSet(_address, _target);
     }
 
     /**
@@ -230,14 +218,6 @@ contract Parameters is IParameters {
      */
     function getOwner() public view override returns (address) {
         return IOwnership(ownership).owner();
-    }
-
-    /**
-     * @notice Get the minter address
-     * @return minter's address
-     */
-    function getMinter() public view override returns (address) {
-        return minter;
     }
 
     /**
@@ -289,7 +269,12 @@ contract Parameters is IParameters {
      * @param _target address of insurance market
      * @return fee rate
      */
-    function getFee(address _target) external view override returns (uint256) {
+    function getFeeRate(address _target)
+        external
+        view
+        override
+        returns (uint256)
+    {
         if (_fee[_target] == 0) {
             return _fee[address(0)];
         } else {
@@ -392,7 +377,12 @@ contract Parameters is IParameters {
      * @param _target target contract's address
      * @return minimum lenght of policy
      */
-    function getMin(address _target) external view override returns (uint256) {
+    function getMinDate(address _target)
+        external
+        view
+        override
+        returns (uint256)
+    {
         if (_min[_target] == 0) {
             return _min[address(0)];
         } else {
