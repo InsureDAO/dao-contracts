@@ -184,29 +184,29 @@ contract GaugeController {
          *@return Sum of weights
          */
         require(_gauge_type != 0, "unset");
-        uint256 t = time_sum[_gauge_type];
-        if (t > 0) {
-            Point memory pt = points_sum[_gauge_type][t];
+        uint256 _t = time_sum[_gauge_type];
+        if (_t > 0) {
+            Point memory _pt = points_sum[_gauge_type][_t];
             for (uint256 i; i < 500; i++) {
-                if (t > block.timestamp) {
+                if (_t > block.timestamp) {
                     break;
                 }
-                t += WEEK;
-                uint256 d_bias = pt.slope * WEEK;
-                if (pt.bias > d_bias) {
-                    pt.bias -= d_bias;
-                    uint256 d_slope = changes_sum[_gauge_type][t];
-                    pt.slope -= d_slope;
+                _t += WEEK;
+                uint256 _d_bias = _pt.slope * WEEK;
+                if (_pt.bias > _d_bias) {
+                    _pt.bias -= _d_bias;
+                    uint256 _d_slope = changes_sum[_gauge_type][_t];
+                    _pt.slope -= _d_slope;
                 } else {
-                    pt.bias = 0;
-                    pt.slope = 0;
+                    _pt.bias = 0;
+                    _pt.slope = 0;
                 }
-                points_sum[_gauge_type][t] = pt;
-                if (t > block.timestamp) {
-                    time_sum[_gauge_type] = t;
+                points_sum[_gauge_type][_t] = _pt;
+                if (_t > block.timestamp) {
+                    time_sum[_gauge_type] = _t;
                 }
             }
-            return pt.bias;
+            return _pt.bias;
         } else {
             return 0;
         }
@@ -244,9 +244,9 @@ contract GaugeController {
                 if (_gauge_type == _n_gauge_types) {
                     break;
                 }
-                uint256 type_sum = points_sum[_gauge_type][_t].bias;
-                uint256 type_weight = points_type_weight[_gauge_type][_t];
-                _pt += type_sum * type_weight;
+                uint256 _type_sum = points_sum[_gauge_type][_t].bias;
+                uint256 _type_weight = points_type_weight[_gauge_type][_t];
+                _pt += _type_sum * _type_weight;
             }
             points_total[_t] = _pt;
 
@@ -552,20 +552,20 @@ contract GaugeController {
             _vp.old_dt = _old_slope.end - _vp.next_time;
         }
         _vp.old_bias = _old_slope.slope * _vp.old_dt;
-        VotedSlope memory new_slope = VotedSlope({
+        VotedSlope memory _new_slope = VotedSlope({
             slope: (_vp.slope * _user_weight) / 10000,
             power: _user_weight,
             end: _vp.lock_end
         });
-        uint256 new_dt = _vp.lock_end - _vp.next_time; // dev: raises when expired
-        uint256 new_bias = new_slope.slope * new_dt;
+        uint256 _new_dt = _vp.lock_end - _vp.next_time; // dev: raises when expired
+        uint256 _new_bias = _new_slope.slope * _new_dt;
 
         // Check and update powers (weights) used
-        uint256 power_used = vote_user_power[msg.sender];
-        power_used = power_used + new_slope.power - _old_slope.power;
-        vote_user_power[msg.sender] = power_used;
+        uint256 _power_used = vote_user_power[msg.sender];
+        _power_used = _power_used + _new_slope.power - _old_slope.power;
+        vote_user_power[msg.sender] = _power_used;
         require(
-            (power_used >= 0) && (power_used <= 10000),
+            (_power_used >= 0) && (_power_used <= 10000),
             "Used too much power"
         );
 
@@ -580,21 +580,21 @@ contract GaugeController {
             .slope;
 
         points_weight[_gauge_addr][_vp.next_time].bias =
-            max(_old_weight_bias + new_bias, _vp.old_bias) -
+            max(_old_weight_bias + _new_bias, _vp.old_bias) -
             _vp.old_bias;
         points_sum[_vp.gauge_type][_vp.next_time].bias =
-            max(_old_weight_bias + new_bias, _vp.old_bias) -
+            max(_old_sum_bias + _new_bias, _vp.old_bias) -
             _vp.old_bias;
         if (_old_slope.end > _vp.next_time) {
             points_weight[_gauge_addr][_vp.next_time].slope =
-                max(_old_weight_slope + new_slope.slope, _old_slope.slope) -
+                max(_old_weight_slope + _new_slope.slope, _old_slope.slope) -
                 _old_slope.slope;
             points_sum[_vp.gauge_type][_vp.next_time].slope =
-                max(_old_sum_slope + new_slope.slope, _old_slope.slope) -
+                max(_old_sum_slope + _new_slope.slope, _old_slope.slope) -
                 _old_slope.slope;
         } else {
-            points_weight[_gauge_addr][_vp.next_time].slope += new_slope.slope;
-            points_sum[_vp.gauge_type][_vp.next_time].slope += new_slope.slope;
+            points_weight[_gauge_addr][_vp.next_time].slope += _new_slope.slope;
+            points_sum[_vp.gauge_type][_vp.next_time].slope += _new_slope.slope;
         }
         if (_old_slope.end > block.timestamp) {
             // Cancel old slope changes if they still didn't happen
@@ -602,12 +602,12 @@ contract GaugeController {
             changes_sum[_vp.gauge_type][_old_slope.end] -= _old_slope.slope;
         }
         // Add slope changes for new slopes
-        changes_weight[_gauge_addr][new_slope.end] += new_slope.slope;
-        changes_sum[_vp.gauge_type][new_slope.end] += new_slope.slope;
+        changes_weight[_gauge_addr][_new_slope.end] += _new_slope.slope;
+        changes_sum[_vp.gauge_type][_new_slope.end] += _new_slope.slope;
 
         _get_total();
 
-        vote_user_slopes[msg.sender][_gauge_addr] = new_slope;
+        vote_user_slopes[msg.sender][_gauge_addr] = _new_slope;
 
         // Record last action time
         last_user_vote[msg.sender][_gauge_addr] = block.timestamp;

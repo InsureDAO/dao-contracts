@@ -22,7 +22,7 @@ contract InsureToken is IERC20 {
 
     string public name;
     string public symbol;
-    uint256 public _decimals;
+    uint256 public constant decimals = 18;
 
     mapping(address => uint256) public override balanceOf;
     mapping(address => mapping(address => uint256)) allowances;
@@ -78,11 +78,7 @@ contract InsureToken is IERC20 {
 
     uint256 public emergency_minted;
 
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        uint256 _decimal
-    ) {
+    constructor(string memory _name, string memory _symbol) {
         /***
          * @notice Contract constructor
          * @param _name Token full name
@@ -90,10 +86,9 @@ contract InsureToken is IERC20 {
          * @param _decimal will be 18 in the migration script.
          */
 
-        uint256 _init_supply = INITIAL_SUPPLY * 10**_decimal;
+        uint256 _init_supply = INITIAL_SUPPLY * RATE_DENOMINATOR;
         name = _name;
         symbol = _symbol;
-        _decimals = _decimal;
         balanceOf[msg.sender] = _init_supply;
         total_supply = _init_supply;
         admin = msg.sender;
@@ -106,10 +101,6 @@ contract InsureToken is IERC20 {
         mining_epoch = -1;
         rate = 0;
         start_epoch_supply = _init_supply;
-    }
-
-    function decimals() public view returns (uint256) {
-        return _decimals;
     }
 
     function _update_mining_parameters() internal {

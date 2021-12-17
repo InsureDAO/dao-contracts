@@ -18,6 +18,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract Minter is ReentrancyGuard {
+    event EmergencyMint(uint256 minted);
     event Minted(address indexed recipient, address gauge, uint256 minted);
     event SetAdmin(address admin);
     event SetConverter(address converter);
@@ -125,13 +126,15 @@ contract Minter is ReentrancyGuard {
         emergency_module = IEmergencyMintModule(_emergency_module);
     }
 
-    function emergency_mint(uint256 mint_amount) external {
+    function emergency_mint(uint256 _mint_amount) external {
         /**
          *@param mint_amount amount of INSURE to be minted
          */
         require(msg.sender == address(emergency_module), "dev: admin only");
 
         //mint
-        insure_token.emergency_mint(mint_amount, address(emergency_module));
+        insure_token.emergency_mint(_mint_amount, address(emergency_module));
+
+        emit EmergencyMint(_mint_amount);
     }
 }

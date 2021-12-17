@@ -94,8 +94,8 @@ contract LiquidityGauge is ReentrancyGuard {
 
         template = IERC20(_lp_addr);
         minter = IMinter(_minter);
-        address insure_addr = minter.insure_token();
-        insure_token = IInsureToken(insure_addr);
+        address _insure_addr = minter.insure_token();
+        insure_token = IInsureToken(_insure_addr);
         controller = IGaugeController(minter.gauge_controller());
         voting_escrow = IVotingEscrow(controller.get_voting_escrow());
         period_timestamp[0] = block.timestamp;
@@ -176,19 +176,19 @@ contract LiquidityGauge is ReentrancyGuard {
          * working_supply & working_balance = total_supply & total_balance with INSURE locking boost。
          * Check whitepaper about Iis and Iu.
          */
-        CheckPointParameters memory st;
+        CheckPointParameters memory _st;
 
-        st.period = period;
-        st.period_time = period_timestamp[st.period];
-        st.integrate_inv_supply = integrate_inv_supply[st.period];
-        st.rate = inflation_rate;
-        st.new_rate = st.rate;
-        st.prev_future_epoch = future_epoch_time;
-        if (st.prev_future_epoch >= st.period_time) {
+        _st.period = period;
+        _st.period_time = period_timestamp[_st.period];
+        _st.integrate_inv_supply = integrate_inv_supply[_st.period];
+        _st.rate = inflation_rate;
+        _st.new_rate = _st.rate;
+        _st.prev_future_epoch = future_epoch_time;
+        if (_st.prev_future_epoch >= _st.period_time) {
             //update future_epoch_time & inflation_rate
             future_epoch_time = insure_token.future_epoch_time_write();
-            st.new_rate = insure_token.rate();
-            inflation_rate = st.new_rate;
+            _st.new_rate = insure_token.rate();
+            inflation_rate = _st.new_rate;
         }
         controller.checkpoint_gauge(address(this));
 
@@ -196,14 +196,14 @@ contract LiquidityGauge is ReentrancyGuard {
         uint256 _working_supply = working_supply;
 
         if (is_killed) {
-            st.rate = 0; // Stop distributing inflation as soon as killed
+            _st.rate = 0; // Stop distributing inflation as soon as killed
         }
 
         // Update integral of 1/supply
-        if (block.timestamp > st.period_time) {
-            uint256 _prev_week_time = st.period_time;
+        if (block.timestamp > _st.period_time) {
+            uint256 _prev_week_time = _st.period_time;
             uint256 _week_time = min(
-                ((st.period_time + WEEK) / WEEK) * WEEK,
+                ((_st.period_time + WEEK) / WEEK) * WEEK,
                 block.timestamp
             );
 
@@ -216,28 +216,28 @@ contract LiquidityGauge is ReentrancyGuard {
 
                 if (_working_supply > 0) {
                     if (
-                        st.prev_future_epoch >= _prev_week_time &&
-                        st.prev_future_epoch < _week_time
+                        _st.prev_future_epoch >= _prev_week_time &&
+                        _st.prev_future_epoch < _week_time
                     ) {
                         // If we went across one or multiple epochs, apply the rate
                         // of the first epoch until it ends, and then the rate of
                         // the last epoch.
                         // If more than one epoch is crossed - the gauge gets less,
                         // but that'd meen it wasn't called for more than 1 year
-                        st.integrate_inv_supply +=
-                            (st.rate *
+                        _st.integrate_inv_supply +=
+                            (_st.rate *
                                 _w *
-                                (st.prev_future_epoch - _prev_week_time)) /
+                                (_st.prev_future_epoch - _prev_week_time)) /
                             _working_supply;
-                        st.rate = st.new_rate;
-                        st.integrate_inv_supply +=
-                            (st.rate *
+                        _st.rate = _st.new_rate;
+                        _st.integrate_inv_supply +=
+                            (_st.rate *
                                 _w *
-                                (_week_time - st.prev_future_epoch)) /
+                                (_week_time - _st.prev_future_epoch)) /
                             _working_supply;
                     } else {
-                        st.integrate_inv_supply +=
-                            (st.rate * _w * _dt) /
+                        _st.integrate_inv_supply +=
+                            (_st.rate * _w * _dt) /
                             _working_supply;
                     }
                     // On precisions of the calculation
@@ -255,18 +255,18 @@ contract LiquidityGauge is ReentrancyGuard {
             }
         }
 
-        st.period += 1;
-        period = st.period;
-        period_timestamp[st.period] = block.timestamp;
-        integrate_inv_supply[st.period] = st.integrate_inv_supply;
+        _st.period += 1;
+        period = _st.period;
+        period_timestamp[_st.period] = block.timestamp;
+        integrate_inv_supply[_st.period] = _st.integrate_inv_supply;
 
         // Update user-specific integrals
         // Calc the ΔIu of _addr and add it to Iu.
         integrate_fraction[_addr] +=
             (_working_balance *
-                (st.integrate_inv_supply - integrate_inv_supply_of[_addr])) /
+                (_st.integrate_inv_supply - integrate_inv_supply_of[_addr])) /
             10**18;
-        integrate_inv_supply_of[_addr] = st.integrate_inv_supply;
+        integrate_inv_supply_of[_addr] = _st.integrate_inv_supply;
         integrate_checkpoint_of[_addr] = block.timestamp;
     }
 
