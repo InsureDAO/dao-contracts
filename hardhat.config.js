@@ -6,6 +6,8 @@ require("solidity-coverage");
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+
+//create your own .key & .infuraKey files
 const fs = require("fs");
 const key = fs.readFileSync(".key").toString().trim();
 const infuraKey = fs.readFileSync(".infuraKey").toString().trim();
