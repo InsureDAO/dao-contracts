@@ -20,6 +20,9 @@ abstract contract IPoolTemplate {
     function availableBalance() public view virtual returns (uint256 _balance);
 
     function utilizationRate() public view virtual returns (uint256 _rate);
+    function totalLiquidity() public view virtual returns (uint256 _balance);
+    function totalCredit() external view virtual returns (uint256);
+    function lockedAmount() external view virtual returns (uint256);
 
     function valueOfUnderlying(address _owner)
         public
@@ -42,9 +45,7 @@ abstract contract IPoolTemplate {
         uint256 _payoutDenominator,
         uint256 _incidentTimestamp,
         bytes32 _merkleRoot,
-        bytes32[] calldata _rawdata,
+        string calldata _rawdata,
         string calldata _memo
     ) external virtual;
-
-
 }

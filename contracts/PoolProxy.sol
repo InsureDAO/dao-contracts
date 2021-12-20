@@ -553,7 +553,7 @@ contract PoolProxy is ReentrancyGuard {
         uint256 _goalTVL
     ) external {
         require(msg.sender == parameter_admin, "Access denied");
-        IPremiumModel(_premium).setPremium(
+        IPremiumModel(_premium).setPremiumParameters(
             _multiplierPerYear,
             _initialBaseRatePerYear,
             _finalBaseRatePerYear,
@@ -585,7 +585,7 @@ contract PoolProxy is ReentrancyGuard {
         uint256 _payoutDenominator,
         uint256 _incidentTimestamp,
         bytes32 _merkleRoot,
-        bytes32[] calldata _rawdata,
+        string calldata _rawdata,
         string calldata _memo
     ) external {
         require(msg.sender == reporting_admin[_pool], "Access denied");
