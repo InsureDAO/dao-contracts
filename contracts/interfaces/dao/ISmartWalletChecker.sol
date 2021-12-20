@@ -2,6 +2,6 @@
 
 pragma solidity 0.8.7;
 
-interface ISmartWalletChecker{
-    function check(address addr)external returns(bool);
+interface ISmartWalletChecker {
+    function check(address _addr) external returns (bool);
 }

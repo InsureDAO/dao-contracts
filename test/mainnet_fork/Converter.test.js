@@ -34,7 +34,7 @@ const getMinTick = (tickSpacing) => Math.ceil(-887272 / tickSpacing) * tickSpaci
 const getMaxTick = (tickSpacing) => Math.floor(887272 / tickSpacing) * tickSpacing;
 
 
-describe('TEST', () => {
+describe('Converter', () => {
     const name = "Fee Token";
     const simbol = "FT";
     const decimal = 18;
