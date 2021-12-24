@@ -83,7 +83,6 @@ contract InsureToken is IERC20 {
          * @notice Contract constructor
          * @param _name Token full name
          * @param _symbol Token symbol
-         * @param _decimal will be 18 in the migration script.
          */
 
         uint256 _init_supply = INITIAL_SUPPLY * RATE_DENOMINATOR;

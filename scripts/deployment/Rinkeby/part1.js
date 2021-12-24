@@ -1,0 +1,133 @@
+const hre = require("hardhat");
+const { ethers } = require("hardhat");
+const { BigNumber } = require('ethers');
+
+/***
+ * Before the launch, make sure that
+ * - BOOST_WARMUP = 0;
+ * - INFLATION_DELAY > now - (Wed 12pm UTC)
+ */
+
+async function main() {
+  await hre.run('compile');
+
+  //addresses
+  const {
+    USDCAddress,
+    RegistryAddress,
+    Market1,
+    Market2,
+    Market3,
+    CDSAddress,
+    IndexAddress,
+  } = require("./deployments.js");
+
+  const [deployer] = await ethers.getSigners();
+
+
+  // We get the contract to deploy
+  const InsureToken = await hre.ethers.getContractFactory("InsureToken");
+  const VotingEscrow = await hre.ethers.getContractFactory("VotingEscrow");
+  const GaugeController = await hre.ethers.getContractFactory("GaugeController");
+  const Minter = await hre.ethers.getContractFactory("Minter");
+  const LiquidityGauge = await hre.ethers.getContractFactory("LiquidityGauge");
+
+  //config
+  const name = "InsureToken";
+  const simbol = "Insure";
+
+  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+  let VESTING_ADDRESSES = ["0x9c56673F8446d8B982054dAD1C19D3098dB0716A"];
+  let VESTING_ALLOCATION = [BigNumber.from("1000").mul("1000000000000000000")];//1000e18
+  const ARAGON_AGENT = "0x1000000000000000000000000000000000000000";
+
+  const GAUGE_TYPES = [
+      ["Liquidity", BigNumber.from("1000000000000000000")], //10**18
+  ]
+
+  const POOL_TOKENS = [
+    ["Pool1", Market1, 50],
+    ["Pool2", Market2, 50],
+    ["Pool3", Market3, 50],
+    ["Index1", IndexAddress, 200],
+    ["CDS", CDSAddress, 100]
+  ]
+
+  const POOL_PROXY_ADMINS = {
+      "Ownership": deployer.address,
+      "Params": deployer.address,
+      "Emergency": deployer.address 
+  }
+
+  const FUNDING_ADMINS = [
+      deployer.address,
+      ZERO_ADDRESS,
+      ZERO_ADDRESS,
+      ZERO_ADDRESS
+  ];
+
+  //===deploy start===
+  console.log("========== Basic Deployment START ==========");
+  console.log("deployer:", deployer.address);
+
+  //InsureToken
+  const token = await InsureToken.deploy(name, simbol);
+  console.log("InsureToken deployed to:", token.address);
+
+
+  //VotingEscrow
+  const voting_escrow = await VotingEscrow.deploy(
+      token.address,
+      "Vote-escrowed INSURE",
+      "veINSURE",
+      "veINSURE_1.0.0"
+  );
+  console.log("VotingEscrow deployed to:", voting_escrow.address);
+
+
+  //GaugeController
+  const gauge_controller = await GaugeController.deploy(
+      token.address,
+      voting_escrow.address
+  );
+  console.log("GaugeController deployed to:", gauge_controller.address);
+
+
+  //Minter
+  const minter = await Minter.deploy(token.address, gauge_controller.address);
+  console.log("Minter deployed to:", minter.address);
+
+  //setup
+  let tx = await token.set_minter(minter.address);
+  await tx.wait();
+
+  //set Gauge type 1 == Liquidity
+  for(let el in GAUGE_TYPES){
+      let name = GAUGE_TYPES[el][0];
+      let weight = GAUGE_TYPES[el][1];
+      tx = await gauge_controller.add_type(name, weight);
+      await tx.wait();
+  };
+
+  //LiquidityGauge x5 for pools
+  for(let el in POOL_TOKENS){
+      let name = POOL_TOKENS[el][0];
+      let lp_token = POOL_TOKENS[el][1];
+      let weight = POOL_TOKENS[el][2];
+      let liquidity_gauge = await LiquidityGauge.deploy(lp_token, minter.address, deployer.address);
+
+      await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
+
+      console.log("LiquidityGauge deployed to:", liquidity_gauge.address, "{",name, lp_token, weight,"}");
+  }
+
+  console.log("========== Basic Deployment END ==========");
+}
+
+main()
+    .then(() => process.exit(0))
+    .catch(error => {
+    console.error(error);
+    process.exit(1);
+    });

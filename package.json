@@ -14,7 +14,8 @@
         "ethereum-waffle": "^3.2.0",
         "ethers": "^5.0.0",
         "hardhat": "^2.6.1",
-        "solidity-coverage": "^0.7.17"
+        "solidity-coverage": "^0.7.17",
+        "abdk-libraries-solidity": "3.0.0"
     },
     "devDependencies": {
         "ansi-regex": ">=5.0.1",
