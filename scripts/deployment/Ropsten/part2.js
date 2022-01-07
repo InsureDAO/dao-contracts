@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
+const fs = require("fs");
 
 /***
  * Before the launch, make sure that

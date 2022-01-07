@@ -1,6 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
+const fs = require("fs");
 
 /***
  * Before the launch, make sure that
@@ -14,12 +15,20 @@ async function main() {
   //addresses
   const {
     USDCAddress,
+    OwnershipAddress,
     RegistryAddress,
+    FactoryAddress,
+    PremiumModelAddress,
+    ParametersAddress,
+    VaultAddress,
+    PoolTemplateAddress,
+    IndexTemplateAddress,
+    CDSTemplateAddress,
     Market1,
     Market2,
     Market3,
-    CDS,
     Index,
+    CDS,
   } = require("./deployments.js");
 
   const [deployer] = await ethers.getSigners();
@@ -34,7 +43,7 @@ async function main() {
 
   //config
   const name = "InsureToken";
-  const simbol = "Insure";
+  const symbol = "Insure";
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -72,7 +81,7 @@ async function main() {
   console.log("deployer:", deployer.address);
 
   //InsureToken
-  const token = await InsureToken.deploy(name, simbol);
+  const token = await InsureToken.deploy(name, symbol);
   console.log("InsureToken deployed to:", token.address);
 
 
@@ -120,9 +129,72 @@ async function main() {
       await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
 
       console.log("LiquidityGauge deployed to:", liquidity_gauge.address, "{",name, lp_token, weight,"}");
+      POOL_TOKENS[el].push(liquidity_gauge.address)
   }
 
   console.log("========== Basic Deployment END ==========");
+
+  //write deployments.js
+  let text = 
+    `
+    const USDCAddress = "${USDCAddress}" 
+    const OwnershipAddress = "${OwnershipAddress}"  
+    const RegistryAddress = "${RegistryAddress}"  
+    const FactoryAddress = "${FactoryAddress}"  
+    const PremiumModelAddress = "${PremiumModelAddress}"  
+    const ParametersAddress = "${ParametersAddress}"  
+    const VaultAddress = "${VaultAddress}"
+
+    const PoolTemplateAddress = "${PoolTemplateAddress}" 
+    const IndexTemplateAddress = "${IndexTemplateAddress}"  
+    const CDSTemplateAddress = "${CDSTemplateAddress}"
+
+    const Market1 = "${Market1}"
+    const Market2 = "${Market2}" 
+    const Market3 = "${Market3}" 
+    const Index = "${Index}"
+    const CDS = "${CDS}" 
+
+    //DAO contracts
+    const LiquidityGauges = {
+      //market: gauge
+      '${POOL_TOKENS[0][1]}': '${POOL_TOKENS[0][3]}',
+      '${POOL_TOKENS[1][1]}': '${POOL_TOKENS[1][3]}',
+      '${POOL_TOKENS[2][1]}': '${POOL_TOKENS[2][3]}',
+      '${POOL_TOKENS[3][1]}': '${POOL_TOKENS[3][3]}',
+      '${POOL_TOKENS[4][1]}': '${POOL_TOKENS[4][3]}',
+    }
+
+    const InsureToken = "${token.address}" 
+    const VotingEscrow = "${voting_escrow.address}" 
+    const GaugeController = "${gauge_controller.address}" 
+    const Minter = "${minter.address}" 
+
+
+    Object.assign(exports, {
+      USDCAddress,
+      OwnershipAddress,
+      RegistryAddress,
+      FactoryAddress,
+      PremiumModelAddress,
+      ParametersAddress,
+      VaultAddress,
+      PoolTemplateAddress,
+      IndexTemplateAddress,
+      CDSTemplateAddress,
+      Market1,
+      Market2,
+      Market3,
+      Index,
+      CDS,
+    })
+    `
+  try {
+    fs.writeFileSync("./scripts/deployment/Ropsten/deployments.js", text);
+    console.log('write end');
+  }catch(e){
+    console.log(e);
+  }
 }
 
 main()

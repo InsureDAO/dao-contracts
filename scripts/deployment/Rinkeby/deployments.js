@@ -19,8 +19,8 @@ const pools = [
 const Market1 = "0x6A5Fe3d20e89F8d1C4C23C532dF35975dA444A55";
 const Market2 = "0x3e5734497F097368B033eEE91Fe92C8d2ea56539";
 const Market3 = "0xaFE0DC7C5b9c51977BC07899daAFa3551a40e58E";
-const CDSAddress = "0x2F398c37429D4b3F2cB4b11F49DC6877162f82A7";
-const IndexAddress = "0x9516335DD0c069e3560a88e0eBE0a14a9937f136";
+const CDS = "0x2F398c37429D4b3F2cB4b11F49DC6877162f82A7";
+const Index = "0x9516335DD0c069e3560a88e0eBE0a14a9937f136";
 
 
 //DAO contracts
@@ -56,6 +56,6 @@ Object.assign(exports, {
   Market1,
   Market2,
   Market3,
-  CDSAddress,
-  IndexAddress,
+  CDS,
+  Index,
 })

@@ -1,14 +1,14 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-web3");
 require("solidity-coverage");
-//require("hardhat-gas-reporter");
+require("@nomiclabs/hardhat-etherscan");
+require('dotenv').config()
 
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
-const fs = require("fs");
-const key = fs.readFileSync(".key").toString().trim();
-const infuraKey = fs.readFileSync(".infuraKey").toString().trim();
+const { 
+  ETHERSCAN_API,
+  KEY,
+  INFURA_KEY
+ } = process.env
 
 module.exports = {
   solidity: "0.8.7",
@@ -19,8 +19,12 @@ module.exports = {
       //forking: {url: "https://eth-mainnet.alchemyapi.io/v2/-vmufhhPyGeTxZH6ep9q2PuHjaPp4l0u",} //remove comment when testing mainnet fork
     },
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${infuraKey}`,
-      accounts: [`0x${key}`]
+      url: `https://rinkeby.infura.io/v3/${INFURA_KEY}`,
+      accounts: [`0x${KEY}`]
+    },
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${INFURA_KEY}`,
+      accounts: [`0x${KEY}`]
     }
   },
   solidity: {
@@ -46,5 +50,10 @@ module.exports = {
   gasReporter: {
     currency: 'ETH',
     gasPrice: 100
-  }
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: `${ETHERSCAN_API}`,
+  },
 };
