@@ -2,12 +2,37 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 
+
+const {
+  ZERO_ADDRESS,
+  YEAR,
+  WEEK,
+  DAY,
+  ZERO,
+  INFLATION_DELAY,
+} = require("../../constant-utils");
+
 async function snapshot() {
   return network.provider.send("evm_snapshot", []);
 }
 
 async function restore(snapshotId) {
   return network.provider.send("evm_revert", [snapshotId]);
+}
+
+async function moveForwardPeriods(days) {
+  await ethers.provider.send("evm_increaseTime", [DAY.mul(days).toNumber()]);
+  await ethers.provider.send("evm_mine");
+
+  return true;
+}
+
+async function now() {
+  return BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+}
+
+async function setNextBlock(time) {
+  await ethers.provider.send("evm_setNextBlockTimestamp", [time.toNumber()]);
 }
 
 describe("InsureToken", function () {
@@ -114,6 +139,31 @@ describe("InsureToken", function () {
           creation_time.add(YEAR.mul("21").div("10"))
         )
       ).to.revertedWith("dev: too far in future");
+    });
+
+    it("test_mintable_in_timeframe_multiple_epochs", async () => {
+      let creation_time = await Insure.start_epoch_time();
+
+      
+      await moveForwardPeriods(1) //INFURATION_DELAY
+      await Insure.update_mining_parameters()
+      expect(await Insure.mining_epoch()).to.equal("0");
+
+      await moveForwardPeriods(365) //RATE_REDUCTION_TIME
+      await Insure.update_mining_parameters()
+      expect(await Insure.mining_epoch()).to.equal("1");
+
+      await moveForwardPeriods(365) //RATE_REDUCTION_TIME
+      await Insure.update_mining_parameters()
+      expect(await Insure.mining_epoch()).to.equal("2");
+
+      let time = await now()
+
+      await Insure.mintable_in_timeframe(
+        creation_time,
+        time.add(YEAR.mul("19").div("10"))
+      );
+
     });
 
     it("test_available_supply", async () => {
