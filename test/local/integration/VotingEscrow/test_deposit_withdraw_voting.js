@@ -34,12 +34,14 @@ describe('LiquidityGauge', function() {
         //import
         [creator, alice, bob, chad, dad, elephant, fei, god, hecta, iloveyou] = await ethers.getSigners();
         accounts = [creator, alice, bob, chad, dad, elephant, fei, god, hecta, iloveyou];
+        const Ownership = await ethers.getContractFactory("Ownership");
         const Token = await ethers.getContractFactory('TestToken');
         const VotingEscrow = await ethers.getContractFactory('VotingEscrow');
         const CollateralManager = await ethers.getContractFactory('TestCollateralManager');
 
+        ownership = await Ownership.deploy();
         token = await Token.deploy(name, simbol, decimal);
-        voting_escrow = await VotingEscrow.deploy(token.address, "Voting-escrowed Insure", "veInsure", 'veInsure');
+        voting_escrow = await VotingEscrow.deploy(token.address, "Voting-escrowed Insure", "veInsure", 'veInsure', ownership.address);
         manager = await CollateralManager.deploy(voting_escrow.address);
 
         //init

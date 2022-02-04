@@ -13,6 +13,8 @@ import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/IMinter.sol";
 import "./interfaces/dao/IVotingEscrow.sol";
 
+import "./interfaces/pool/IOwnership.sol";
+
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -30,8 +32,6 @@ contract LiquidityGauge is ReentrancyGuard {
         uint256 voting_balance,
         uint256 voting_total
     );
-    event CommitOwnership(address admin);
-    event AcceptOwnership(address admin);
 
     uint256 constant TOKENLESS_PRODUCTION = 40;
     uint256 constant BOOST_WARMUP = 86400 * 14;
@@ -72,15 +72,22 @@ contract LiquidityGauge is ReentrancyGuard {
     mapping(address => uint256) public integrate_fraction; //Mintable Token amount (include minted amount)
 
     uint256 public inflation_rate;
-
-    address public admin;
-    address public future_admin; // Can and will be a smart contract
     bool public is_killed;
+
+    IOwnership public immutable ownership;
+
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
 
     constructor(
         address _lp_addr,
         address _minter,
-        address _admin
+        address _ownership
     ) {
         /***
          *@notice Contract constructor
@@ -101,7 +108,7 @@ contract LiquidityGauge is ReentrancyGuard {
         period_timestamp[0] = block.timestamp;
         inflation_rate = insure_token.rate();
         future_epoch_time = insure_token.future_epoch_time_write();
-        admin = _admin;
+        ownership = IOwnership(_ownership);
     }
 
     function _update_liquidity_limit(
@@ -380,31 +387,8 @@ contract LiquidityGauge is ReentrancyGuard {
         return period_timestamp[period];
     }
 
-    function kill_me() external {
-        assert(msg.sender == admin);
+    function kill_me() external onlyOwner{
         is_killed = !is_killed;
-    }
-
-    function commit_transfer_ownership(address _addr) external {
-        /***
-         *@notice Transfer ownership of GaugeController to `_addr`
-         *@param _addr Address to have ownership transferred to
-         */
-        require(msg.sender == admin, "dev: admin only");
-        future_admin = _addr;
-        emit CommitOwnership(_addr);
-    }
-
-    function accept_transfer_ownership() external {
-        /***
-         *@notice Accept a transfer of ownership
-         *@return bool success
-         */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptOwnership(admin);
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {

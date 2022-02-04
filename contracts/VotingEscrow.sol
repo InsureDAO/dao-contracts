@@ -31,6 +31,8 @@ pragma solidity 0.8.7;
 import "./interfaces/dao/ISmartWalletChecker.sol";
 import "./interfaces/dao/ICollateralManager.sol";
 
+import "./interfaces/pool/IOwnership.sol";
+
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -55,9 +57,6 @@ contract VotingEscrow is ReentrancyGuard {
     int256 constant CREATE_LOCK_TYPE = 1;
     int256 constant INCREASE_LOCK_AMOUNT = 2;
     int256 constant INCREASE_UNLOCK_TIME = 3;
-
-    event CommitOwnership(address admin);
-    event AcceptOwnership(address admin);
 
     event Deposit(
         address indexed provider,
@@ -101,11 +100,18 @@ contract VotingEscrow is ReentrancyGuard {
     address public future_smart_wallet_checker;
     address public smart_wallet_checker;
 
-    address public admin; // Can and will be a smart contract
-    address public future_admin;
-
     address public collateral_manager;
     address public future_collateral_manager;
+
+    IOwnership public immutable ownership;
+
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
 
     modifier checkStatus() {
         if (collateral_manager != address(0)) {
@@ -117,16 +123,12 @@ contract VotingEscrow is ReentrancyGuard {
         _;
     }
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "only admin");
-        _;
-    }
-
     constructor(
         address _token_addr,
         string memory _name,
         string memory _symbol,
-        string memory _version
+        string memory _version,
+        address _ownership
     ) {
         /***
          *@notice Contract constructor
@@ -135,7 +137,7 @@ contract VotingEscrow is ReentrancyGuard {
          *@param _symbol Token symbol
          *@param _version Contract version - required for Aragon compatibility
          */
-        admin = msg.sender;
+        ownership = IOwnership(_ownership);
         token = _token_addr;
         point_history[0].blk = block.number;
         point_history[0].ts = block.timestamp;
@@ -871,7 +873,7 @@ contract VotingEscrow is ReentrancyGuard {
     }
 
     //---------------------- Admin Only ----------------------//
-    function commit_smart_wallet_checker(address _addr) external onlyAdmin {
+    function commit_smart_wallet_checker(address _addr) external onlyOwner {
         /***
          *@notice Set an external contract to check for approved smart contract wallets
          *@param _addr Address of Smart contract checker
@@ -879,7 +881,7 @@ contract VotingEscrow is ReentrancyGuard {
         future_smart_wallet_checker = _addr;
     }
 
-    function apply_smart_wallet_checker() external onlyAdmin {
+    function apply_smart_wallet_checker() external onlyOwner {
         /***
          *@notice Apply setting external contract to check approved smart contract wallets
          */
@@ -888,7 +890,7 @@ contract VotingEscrow is ReentrancyGuard {
 
     function commit_collateral_manager(address _new_collateral_manager)
         external
-        onlyAdmin
+        onlyOwner
     {
         /***
          *@notice Commit setting external contract to check user's collateral status
@@ -896,32 +898,10 @@ contract VotingEscrow is ReentrancyGuard {
         future_collateral_manager = _new_collateral_manager;
     }
 
-    function apply_collateral_manager() external onlyAdmin {
+    function apply_collateral_manager() external onlyOwner {
         /***
          *@notice Apply setting external contract to check user's collateral status
          */
         collateral_manager = future_collateral_manager;
-    }
-
-    function commit_transfer_ownership(address _addr) external onlyAdmin {
-        /***
-         *@notice Transfer ownership of VotingEscrow contract to `_addr`
-         *@param _addr Address to have ownership transferred to
-         */
-        future_admin = _addr;
-        emit CommitOwnership(_addr);
-    }
-
-    //only future admin
-    function accept_transfer_ownership() external {
-        /***
-         *@notice Accept a transfer of ownership
-         *@return bool success
-         */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptOwnership(admin);
     }
 }

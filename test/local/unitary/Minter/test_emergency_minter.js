@@ -46,6 +46,7 @@ describe("Minter", function () {
   before(async () => {
     //import
     [creator, alice, bob, charly] = await ethers.getSigners();
+    const Ownership = await ethers.getContractFactory("Ownership");
     const Token = await ethers.getContractFactory("InsureToken");
     const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
     const GaugeController = await ethers.getContractFactory("GaugeController");
@@ -56,20 +57,23 @@ describe("Minter", function () {
     );
 
     //deploy
+    ownership = await Ownership.deploy();
     Insure = await Token.deploy(name, simbol);
     voting_escrow = await VotingEscrow.deploy(
       Insure.address,
       "Voting-escrowed Insure",
       "veInsure",
-      "veInsure"
+      "veInsure",
+      ownership.address
     );
     gauge_controller = await GaugeController.deploy(
       Insure.address,
-      voting_escrow.address
+      voting_escrow.address,
+      ownership.address
     );
 
     registry = await Registry.deploy();
-    minter = await Minter.deploy(Insure.address, gauge_controller.address);
+    minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 
     emrg_minter = await TestEmergencyModule.deploy(minter.address);
 
