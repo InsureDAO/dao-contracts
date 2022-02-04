@@ -1,61 +1,55 @@
-//Market contracts
-const USDCAddress = "0xa1D3c75Fe197D1d07Ce50E2489ee611F6248d397";
-const OwnershipAddress = "0x00B6813DBD6a1407Cd8633002b6F1841c5a3aA51";
-const RegistryAddress = "0x9Af1220b64832033167d81Eab8100732c531c465";
-const FactoryAddress = "0xF9D37714b03de26aFF67f1F1774150F71D78d494";
-const PremiumModelAddress = "0x215e373cb8Ade09C0c73416AA31DfE75bf698Aa0";
-const ParametersAddress = "0xc6fd416D05e72c07fbaECeeF4e9d8AA0E7200481";
-const VaultAddress = "0xCd37905637a8B86808113DEF8b90e8b9AE844613";
 
-const PoolTemplateAddress = "0x43F0Ba06026EF8e573B7e27cBBc3addF439E0622";
-const CDSTemplateAddress = "0x37fA8Bef894799DdB2C25be94541a2dc19F2c693";
-const IndexTemplateAddress = "0x55e5Faefa43CA3386Dc8FAE26385E57756e02713";
+    const USDCAddress = "0x820F684a6e9b5811b4597De77Fb4Ce751945b84A" 
+    const OwnershipAddress = "0x98a7f67ae6Ea0b95d4bDFd4F81d0De0d7D9513b0"  
+    const RegistryAddress = "0x46fFB90171082982e98Ec63aCDE8Ff5c6024B909"  
+    const FactoryAddress = "0x1dAa84dA2e6a2429ae0bAD7153Edd8f0Dab1E12c"  
+    const PremiumModelAddress = "0xd0203EAa146c379766fCe29f3463eC7c3B713035"  
+    const ParametersAddress = "0x80C38a6E8688BdB5fE77bf98860388cb2B9210d3"  
+    const VaultAddress = "0x218963F00c58531BfE63e9F12008E6B6675A9B03"
 
-const pools = [
-  {
+    const PoolTemplateAddress = "0x530298567bb8C96DA1B691444729C57840C8E01F" 
+    const IndexTemplateAddress = "0xE9E834faE342D45fE671c1AcCE87ca2a5b634935"  
+    const CDSTemplateAddress = "0x42E0fACa325f590B48229c119e112a352eDD6717"
+
+    const Market1 = "0xd1698FAb3030Ac43a4FB2b358cdcaA724Db2dDA2"
+    const Market2 = "0xfb753C02B2BA6213804E9F778614e95ee21C1384" 
+    const Market3 = "0xE5b4af9b997f6d80E3ed9e383ACC26a2102BC998" 
+    const Index = "0x25505D6D27c7d6898d972037f59bC9fDDF12C647"
+    const CDS = "0x4439E1dD99b134b06c22c10258CAa0040A194Eba" 
+
+    //DAO contracts
+    const LiquidityGauges = {
+      //market: gauge
+      '0xd1698FAb3030Ac43a4FB2b358cdcaA724Db2dDA2': '0x406B172E3b047F2024D74a85711806408ecfeD38',
+      '0xfb753C02B2BA6213804E9F778614e95ee21C1384': '0xE65DD7Ce12688386fd77C73339eFb5424ddAB9Aa',
+      '0xE5b4af9b997f6d80E3ed9e383ACC26a2102BC998': '0x341124969d25897Ba3DC6C0Fc5cB107aa9A11737',
+      '0x25505D6D27c7d6898d972037f59bC9fDDF12C647': '0xb9af78Dc605389E5e7D5e56dc072C6A99677ACd3',
+      '0x4439E1dD99b134b06c22c10258CAa0040A194Eba': '0xf797f07806EEcBd54ED56DeFBC629cE0ABf33118',
+    }
+
+    const GovOwnershipAddress = "0xFF1cBb0876065EaC1Ba0a2712aacF9ae55e4b6F7"  
+    const InsureToken = "0x333882d6Dc5c8B820D0316EAd747A939ee8D3d33" 
+    const VotingEscrow = "0x393ce0BD2F8e5491ce40EAb33CE1f4bf2B39f01d" 
+    const GaugeController = "0x65612a0C42EDCafA71F6cCa9331d0D9a4ceC5530" 
+    const Minter = "0x4D25e8e1b316F81a0387c3eeea651355A7bE75b2" 
+
+
+    Object.assign(exports, {
+      USDCAddress,
+      OwnershipAddress,
+      GovOwnershipAddress,
+      RegistryAddress,
+      FactoryAddress,
+      PremiumModelAddress,
+      ParametersAddress,
+      VaultAddress,
+      PoolTemplateAddress,
+      IndexTemplateAddress,
+      CDSTemplateAddress,
+      Market1,
+      Market2,
+      Market3,
+      Index,
+      CDS,
+    })
     
-  }
-]
-const Market1 = "0x6A5Fe3d20e89F8d1C4C23C532dF35975dA444A55";
-const Market2 = "0x3e5734497F097368B033eEE91Fe92C8d2ea56539";
-const Market3 = "0xaFE0DC7C5b9c51977BC07899daAFa3551a40e58E";
-const CDS = "0x2F398c37429D4b3F2cB4b11F49DC6877162f82A7";
-const Index = "0x9516335DD0c069e3560a88e0eBE0a14a9937f136";
-
-
-//DAO contracts
-const LiquidityGauges = {
-  //market: gauge
-  '0x6A5Fe3d20e89F8d1C4C23C532dF35975dA444A55': '0x6A5Fe3d20e89F8d1C4C23C532dF35975dA444A55',
-  '0x3e5734497F097368B033eEE91Fe92C8d2ea56539': '0xA66d44671bAC78f048d7dec20551129dBcF0E508',
-  '0xaFE0DC7C5b9c51977BC07899daAFa3551a40e58E': '0x58d4d69f9613c715Ba2fbEafF9594a92D4348B4f',
-  '0x9516335DD0c069e3560a88e0eBE0a14a9937f136': '0x758c6D74596037e5703f9e01472c551bA3D166bb',
-  '0x2F398c37429D4b3F2cB4b11F49DC6877162f82A7': '0x10aB030Ce8d699ba783D1D1552A27D4A76eF7FDb',
-}
-
-const InsureToken = "0x487c50262110F5ccc0186e484348D0F5019a55f7"
-const VotingEscrow = "0x56Ddd624CfBde63221216a1F78BA095B8C5e971c"
-const GaugeController = "0xE727AEcb1a6d1E530Bb5BF9EE930e27C9C501fEc"
-const Minter = "0xA880cfFaD3Bf06ce90898D01C1640bDb044C7E23"
-const PoolProxy = "0x4B835F139AC523fD8e1d48B0A3437c45Edd528fC"
-
-
-
-
-Object.assign(exports, {
-  USDCAddress,
-  OwnershipAddress,
-  RegistryAddress,
-  FactoryAddress,
-  PremiumModelAddress,
-  ParametersAddress,
-  VaultAddress,
-  PoolTemplateAddress,
-  CDSTemplateAddress,
-  IndexTemplateAddress,
-  Market1,
-  Market2,
-  Market3,
-  CDS,
-  Index,
-})

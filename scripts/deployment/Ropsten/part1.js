@@ -44,6 +44,7 @@ async function main() {
 
 
   // We get the contract to deploy
+  const Ownership = await hre.ethers.getContractFactory("Ownership");
   const InsureToken = await hre.ethers.getContractFactory("InsureToken");
   const VotingEscrow = await hre.ethers.getContractFactory("VotingEscrow");
   const GaugeController = await hre.ethers.getContractFactory("GaugeController");
@@ -89,6 +90,10 @@ async function main() {
   console.log("========== Basic Deployment START ==========");
   console.log("deployer:", deployer.address);
 
+  //Ownership
+  const ownership = await Ownership.deploy();
+  console.log("Ownership deployed to:", ownership.address);
+
   //InsureToken
   const token = await InsureToken.deploy(name, symbol);
   console.log("InsureToken deployed to:", token.address);
@@ -99,7 +104,8 @@ async function main() {
       token.address,
       "Vote-escrowed INSURE",
       "veINSURE",
-      "veINSURE_1.0.0"
+      "veINSURE_1.0.0",
+      ownership.address
   );
   console.log("VotingEscrow deployed to:", voting_escrow.address);
 
@@ -107,13 +113,18 @@ async function main() {
   //GaugeController
   const gauge_controller = await GaugeController.deploy(
       token.address,
-      voting_escrow.address
+      voting_escrow.address,
+      ownership.address
   );
   console.log("GaugeController deployed to:", gauge_controller.address);
 
 
   //Minter
-  const minter = await Minter.deploy(token.address, gauge_controller.address);
+  const minter = await Minter.deploy(
+    token.address,
+    gauge_controller.address,
+    ownership.address
+  );
   console.log("Minter deployed to:", minter.address);
 
   //setup
@@ -133,7 +144,7 @@ async function main() {
       let name = POOL_TOKENS[el][0];
       let lp_token = POOL_TOKENS[el][1];
       let weight = POOL_TOKENS[el][2];
-      let liquidity_gauge = await LiquidityGauge.deploy(lp_token, minter.address, deployer.address);
+      let liquidity_gauge = await LiquidityGauge.deploy(lp_token, minter.address, ownership.address);
 
       await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
 
@@ -174,6 +185,7 @@ async function main() {
       '${POOL_TOKENS[4][1]}': '${POOL_TOKENS[4][3]}',
     }
 
+    const GovOwnershipAddress = "${ownership.address}"  
     const InsureToken = "${token.address}" 
     const VotingEscrow = "${voting_escrow.address}" 
     const GaugeController = "${gauge_controller.address}" 
@@ -183,6 +195,7 @@ async function main() {
     Object.assign(exports, {
       USDCAddress,
       OwnershipAddress,
+      GovOwnershipAddress,
       RegistryAddress,
       FactoryAddress,
       PremiumModelAddress,

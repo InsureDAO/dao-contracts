@@ -20,6 +20,7 @@ async function main() {
   const {
     USDCAddress,
     OwnershipAddress,
+    GovOwnershipAddress,
     RegistryAddress,
     FactoryAddress,
     PremiumModelAddress,
@@ -44,6 +45,7 @@ async function main() {
 
 
   // We get the contract to deploy
+  const Ownership = await ethers.getContractFactory("Ownership");
   const PoolProxy = await hre.ethers.getContractFactory("PoolProxy");
 
   const POOL_PROXY_ADMINS = {
@@ -53,7 +55,7 @@ async function main() {
   }
 
   //===deploy start===
-  //InsureToken
+  //PoolProxy
   const pool_proxy = await PoolProxy.deploy(
     POOL_PROXY_ADMINS['Ownership'], 
     POOL_PROXY_ADMINS['Params'], 
@@ -62,8 +64,21 @@ async function main() {
   console.log("PoolProxy deployed to:", pool_proxy.address)
 
   await pool_proxy.commit_set_default_reporting_admin(ReportingAddress)
-  //need to accept by ReportingAddress
 
+
+
+  //===transfer ownership start===
+  const ownership = await Ownership.attach(OwnershipAddress);
+  const govOwnership = await Ownership.attach(GovOwnershipAddress);
+
+  await ownership.commitTransferOwnership(DAOAddress);
+  await govOwnership.commitTransferOwnership(DAOAddress);
+
+
+/*** TODO
+ * - ReportingDAO => accept
+ * - Gnosis wallet => accept x2
+ */
 }
 
 main()
