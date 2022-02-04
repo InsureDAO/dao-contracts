@@ -9,19 +9,36 @@ const fs = require("fs");
  * - INFLATION_DELAY > now - (Wed 12pm UTC)
  */
 
+/***
+ *  deploy PoolProxy and transfer dao ownership
+ */
+
 async function main() {
   await hre.run('compile');
 
   //addresses
   const {
     USDCAddress,
+    OwnershipAddress,
     RegistryAddress,
+    FactoryAddress,
+    PremiumModelAddress,
+    ParametersAddress,
+    VaultAddress,
+    PoolTemplateAddress,
+    IndexTemplateAddress,
+    CDSTemplateAddress,
     Market1,
     Market2,
     Market3,
-    CDS,
     Index,
+    CDS,
   } = require("./deployments.js");
+
+  const {
+    DAOAddress,
+    ReportingAddress
+  } = require("./constants.js");
 
   const [deployer] = await ethers.getSigners();
 
@@ -30,9 +47,9 @@ async function main() {
   const PoolProxy = await hre.ethers.getContractFactory("PoolProxy");
 
   const POOL_PROXY_ADMINS = {
-      "Ownership": deployer.address,
-      "Params": deployer.address,
-      "Emergency": deployer.address 
+      "Ownership": DAOAddress,
+      "Params": DAOAddress,
+      "Emergency": DAOAddress
   }
 
   //===deploy start===
@@ -42,8 +59,10 @@ async function main() {
     POOL_PROXY_ADMINS['Params'], 
     POOL_PROXY_ADMINS['Emergency']
   );
-  console.log("PoolProxy deployed to:", pool_proxy.address);
+  console.log("PoolProxy deployed to:", pool_proxy.address)
 
+  await pool_proxy.commit_set_default_reporting_admin(ReportingAddress)
+  //need to accept by ReportingAddress
 
 }
 

@@ -9,6 +9,15 @@ const fs = require("fs");
  * - INFLATION_DELAY > now - (Wed 12pm UTC)
  */
 
+/***
+ * This script does
+ *  - deploy 
+ *    - Token, Gauges, VotingEscrow
+ * not deploy 
+ *  - Vesting
+ *  - PoolProxy
+ */
+
 async function main() {
   await hre.run('compile');
 
