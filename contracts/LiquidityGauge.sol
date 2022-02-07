@@ -214,7 +214,7 @@ contract LiquidityGauge is ReentrancyGuard {
                 block.timestamp
             );
 
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 uint256 _dt = _week_time - _prev_week_time;
                 uint256 _w = controller.gauge_relative_weight(
                     address(this),
@@ -259,6 +259,9 @@ contract LiquidityGauge is ReentrancyGuard {
                 }
                 _prev_week_time = _week_time;
                 _week_time = min(_week_time + WEEK, block.timestamp);
+                unchecked {
+                    ++i;
+                }
             }
         }
 

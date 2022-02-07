@@ -88,11 +88,14 @@ contract Minter is ReentrancyGuard {
          *@dev address[8]: 8 has randomly decided and has no meaning.
          */
 
-        for (uint256 i; i < 8; i++) {
+        for (uint256 i; i < 8;) {
             if (gauge_addrs[i] == address(0)) {
                 break;
             }
             _mint_for(gauge_addrs[i], msg.sender);
+            unchecked {
+                ++i;
+            }
         }
     }
 

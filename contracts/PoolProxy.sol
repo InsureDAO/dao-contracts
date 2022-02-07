@@ -213,11 +213,14 @@ contract PoolProxy is ReentrancyGuard {
          */
         require(msg.sender == parameter_admin, "only parameter admin");
 
-        for (uint256 i = 0; i < 20; i++) {
+        for (uint256 i; i < 20;) {
             if (_tokens[i] == address(0)) {
                 break;
             }
             _set_distributor_weight(_tokens[i], _ids[i], _weights[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -261,12 +264,16 @@ contract PoolProxy is ReentrancyGuard {
 
         if (amount != 0) {
             //allocate the fee to corresponding distributors
-            for (uint256 id = 0; id < n_distributors[_token]; id++) {
+            uint256 _distributors = n_distributors[_token];
+            for (uint256 id; id < _distributors;) {
                 uint256 aloc_point = distributor_weight[_token][id];
 
                 uint256 aloc_amount = (amount * aloc_point) /
                     total_weights[_token]; //round towards zero.
                 distributable[_token][id] += aloc_amount; //count up the allocated fee
+                unchecked {
+                    ++id;
+                }
             }
         }
     }
@@ -338,11 +345,14 @@ contract PoolProxy is ReentrancyGuard {
         assert(tx.origin == msg.sender);
         require(!distributor_kill, "distribution killed");
 
-        for (uint256 i = 0; i < 20; i++) {
+        for (uint256 i; i < 20;) {
             if (_tokens[i] == address(0)) {
                 break;
             }
             _distribute(_tokens[i], _ids[i]);
+            unchecked {
+                ++i;
+            }
         }
     }
 

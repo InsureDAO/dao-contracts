@@ -223,7 +223,7 @@ contract InsureToken is IERC20 {
             "dev: too far in future"
         );
 
-        for (uint256 i = 0; i < 999; i++) {
+        for (uint256 i; i < 999;) {
             // InsureDAO will not work in 1000 years.
             if (end >= _current_epoch_time) {
                 uint256 current_end = end;
@@ -253,6 +253,9 @@ contract InsureToken is IERC20 {
                 _current_epoch += 1;
             }
             assert(_current_rate <= RATES[0]); // This should never happen
+            unchecked {
+                ++i;
+            }
         }
         return _to_mint;
     }

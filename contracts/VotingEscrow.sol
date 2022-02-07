@@ -276,7 +276,7 @@ contract VotingEscrow is ReentrancyGuard {
 
         // Go over weeks to fill history and calculate what the current point is
         uint256 _t_i = (_last_checkpoint / WEEK) * WEEK;
-        for (uint256 i; i < 255; i++) {
+        for (uint256 i; i < 255;) {
             // Hopefully it won't happen that this won't get used in 5 years!
             // If it does, users will be able to withdraw but vote weight will be broken
             _t_i += WEEK;
@@ -310,6 +310,9 @@ contract VotingEscrow is ReentrancyGuard {
                 break;
             } else {
                 point_history[_epoch] = _last_point;
+            }
+            unchecked {
+                ++i;
             }
         }
         epoch = _epoch;
@@ -571,7 +574,7 @@ contract VotingEscrow is ReentrancyGuard {
         // Binary search
         uint256 _min = 0;
         uint256 _max = _max_epoch;
-        for (uint256 i; i <= 128; i++) {
+        for (uint256 i; i <= 128;) {
             // Will be always enough for 128-bit numbers
             if (_min >= _max) {
                 break;
@@ -581,6 +584,9 @@ contract VotingEscrow is ReentrancyGuard {
                 _min = _mid;
             } else {
                 _max = _mid - 1;
+            }
+            unchecked {
+                ++i;
             }
         }
         return _min;
@@ -670,7 +676,7 @@ contract VotingEscrow is ReentrancyGuard {
         // Binary search
         _st.min = 0;
         _st.max = user_point_epoch[_addr];
-        for (uint256 i; i <= 128; i++) {
+        for (uint256 i; i <= 128;) {
             // Will be always enough for 128-bit numbers
             if (_st.min >= _st.max) {
                 break;
@@ -680,6 +686,9 @@ contract VotingEscrow is ReentrancyGuard {
                 _st.min = _mid;
             } else {
                 _st.max = _mid - 1;
+            }
+            unchecked {
+                ++i;
             }
         }
 
@@ -724,7 +733,7 @@ contract VotingEscrow is ReentrancyGuard {
          */
         Point memory _last_point = point;
         uint256 _t_i = (_last_point.ts / WEEK) * WEEK;
-        for (uint256 i; i < 255; i++) {
+        for (uint256 i; i < 255;) {
             _t_i += WEEK;
             int256 d_slope = 0;
 
@@ -742,6 +751,9 @@ contract VotingEscrow is ReentrancyGuard {
             }
             _last_point.slope += d_slope;
             _last_point.ts = _t_i;
+            unchecked {
+                ++i;
+            }
         }
 
         if (_last_point.bias < 0) {

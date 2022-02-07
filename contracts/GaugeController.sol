@@ -145,7 +145,7 @@ contract GaugeController {
         uint256 _t = time_type_weight[_gauge_type];
         if (_t > 0) {
             uint256 _w = points_type_weight[_gauge_type][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -153,6 +153,9 @@ contract GaugeController {
                 points_type_weight[_gauge_type][_t] = _w;
                 if (_t > block.timestamp) {
                     time_type_weight[_gauge_type] = _t;
+                }
+                unchecked {
+                    ++i;
                 }
             }
             return _w;
@@ -172,7 +175,7 @@ contract GaugeController {
         uint256 _t = time_sum[_gauge_type];
         if (_t > 0) {
             Point memory _pt = points_sum[_gauge_type][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -189,6 +192,9 @@ contract GaugeController {
                 points_sum[_gauge_type][_t] = _pt;
                 if (_t > block.timestamp) {
                     time_sum[_gauge_type] = _t;
+                }
+                unchecked {
+                    ++i;
                 }
             }
             return _pt.bias;
@@ -211,32 +217,41 @@ contract GaugeController {
         }
         uint256 _pt = points_total[_t];
 
-        for (uint256 _gauge_type = 1; _gauge_type < 100; _gauge_type++) {
+        for (uint256 _gauge_type = 1; _gauge_type < 100;) {
             if (_gauge_type == _n_gauge_types) {
                 break;
             }
             _get_sum(_gauge_type);
             _get_type_weight(_gauge_type);
+            unchecked {
+                ++_gauge_type;
+            }
         }
-        for (uint256 i; i < 500; i++) {
+        for (uint256 i; i < 500;) {
             if (_t > block.timestamp) {
                 break;
             }
             _t += WEEK;
             _pt = 0;
             // Scales as n_types * n_unchecked_weeks (hopefully 1 at most)
-            for (uint256 _gauge_type = 1; _gauge_type < 100; _gauge_type++) {
+            for (uint256 _gauge_type = 1; _gauge_type < 100;) {
                 if (_gauge_type == _n_gauge_types) {
                     break;
                 }
                 uint256 _type_sum = points_sum[_gauge_type][_t].bias;
                 uint256 _type_weight = points_type_weight[_gauge_type][_t];
                 _pt += _type_sum * _type_weight;
+                unchecked {
+                    ++_gauge_type;
+                }
             }
             points_total[_t] = _pt;
 
             if (_t > block.timestamp) {
                 time_total = _t;
+            }
+            unchecked {
+                ++i;
             }
         }
         return _pt;
@@ -252,7 +267,7 @@ contract GaugeController {
         uint256 _t = time_weight[_gauge_addr];
         if (_t > 0) {
             Point memory _pt = points_weight[_gauge_addr][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -269,6 +284,9 @@ contract GaugeController {
                 points_weight[_gauge_addr][_t] = _pt;
                 if (_t > block.timestamp) {
                     time_weight[_gauge_addr] = _t;
+                }
+                unchecked {
+                    ++i;
                 }
             }
             return _pt.bias;
@@ -431,7 +449,9 @@ contract GaugeController {
          */
         uint256 _type_id = n_gauge_types;
         gauge_type_names[_type_id] = _name;
-        n_gauge_types = _type_id + 1;
+        unchecked {
+            n_gauge_types = _type_id + 1;
+        }
         if (_weight != 0) {
             _change_type_weight(_type_id, _weight);
             emit AddType(_name, _type_id);

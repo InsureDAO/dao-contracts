@@ -71,14 +71,18 @@ contract VestingEscrow is ReentrancyGuard{
         can_disable = _can_disable;
 
         bool _fund_admins_enabled = false;
-        for (uint256 i; i < _fund_admins.length; i++){
+        uint256 _length = _fund_admins.length;
+        for (uint256 i; i < _length;){
             address addr = _fund_admins[i];
             if (addr != address(0)){
                 fund_admins[addr] = true;
-                if (!_fund_admins_enabled){
+                if (!_fund_admins_enabled) {
                     _fund_admins_enabled = true;
                     fund_admins_enabled = true;
                 }
+            }
+            unchecked {
+                ++i;
             }
         }
     }
