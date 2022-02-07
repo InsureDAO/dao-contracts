@@ -356,7 +356,10 @@ contract VotingEscrow is ReentrancyGuard {
             }
 
             // Now handle user history
-            uint256 _user_epoch = user_point_epoch[_addr2] + 1;
+            uint256 _user_epoch;
+            unchecked {
+                _user_epoch = user_point_epoch[_addr2] + 1;
+            }
 
             user_point_epoch[_addr2] = _user_epoch;
             _u_new.ts = block.timestamp;

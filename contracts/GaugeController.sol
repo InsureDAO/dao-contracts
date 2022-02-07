@@ -312,11 +312,16 @@ contract GaugeController {
             "dev: cannot add the same gauge twice"
         ); //before adding, addr must be 0 in the mapping.
         uint256 _n = n_gauges;
-        n_gauges = _n + 1;
+        unchecked {
+            n_gauges = _n + 1;
+        }
         gauges[_n] = _addr;
 
         gauge_types_[_addr] = _gauge_type;
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         if (_weight > 0) {
             uint256 _type_weight = _get_type_weight(_gauge_type);
@@ -427,7 +432,10 @@ contract GaugeController {
         uint256 _old_weight = _get_type_weight(_type_id);
         uint256 _old_sum = _get_sum(_type_id);
         uint256 _total_weight = _get_total();
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         _total_weight =
             _total_weight +
@@ -475,7 +483,10 @@ contract GaugeController {
         uint256 _type_weight = _get_type_weight(_gauge_type);
         uint256 _old_sum = _get_sum(_gauge_type);
         uint256 _total_weight = _get_total();
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         points_weight[_addr][_next_time].bias = _weight;
         time_weight[_addr] = _next_time;
@@ -527,7 +538,9 @@ contract GaugeController {
         _vp.slope = uint256(voting_escrow.get_last_user_slope(msg.sender));
         _vp.lock_end = voting_escrow.locked__end(msg.sender);
         _vp._n_gauges = n_gauges;
-        _vp.next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        unchecked {
+            _vp.next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
         require(
             _vp.lock_end > _vp.next_time,
             "Your token lock expires too soon"
@@ -536,11 +549,13 @@ contract GaugeController {
             (_user_weight >= 0) && (_user_weight <= 10000),
             "You used all your voting power"
         );
-        require(
-            block.timestamp >=
-                last_user_vote[msg.sender][_gauge_addr] + WEIGHT_VOTE_DELAY,
-            "Cannot vote so often"
-        );
+        uint256 _voteTime;
+        unchecked {
+            require(
+                block.timestamp >= last_user_vote[msg.sender][_gauge_addr] + WEIGHT_VOTE_DELAY,
+                "Cannot vote so often"
+            );
+        }
 
         _vp.gauge_type = gauge_types_[_gauge_addr];
         require(_vp.gauge_type >= 1, "Gauge not added");

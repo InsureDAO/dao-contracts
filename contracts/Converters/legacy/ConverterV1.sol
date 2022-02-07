@@ -43,8 +43,12 @@ contract ConverterV1{
         path[1] = address(WETH);
         path[2] = address(insure_token); //insure token
 
+        uint256 _deadline;
+        unchecked {
+            _deadline = block.timestamp + 25;
+        }
         //swap
-        UniswapV2.swapExactTokensForTokens(_amountIn, 0, path, _to, block.timestamp + 25);
+        UniswapV2.swapExactTokensForTokens(_amountIn, 0, path, _to, _deadline);
 
         return true;
     }
@@ -80,8 +84,12 @@ contract ConverterV1{
         path[0] = address(insure_token); //insure token
         path[1] = address(WETH);
         path[2] = address(USDC);
-        
-        UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp + 25);
+
+        uint256 _deadline;
+        unchecked {
+            UniswapV2.swapTokensForExactTokens(_amountOut, _amountInMax, path, _to, block.timestamp + 25);
+        }
+
 
         return true;
     }
