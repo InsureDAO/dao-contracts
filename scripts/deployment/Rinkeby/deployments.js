@@ -1,43 +1,50 @@
 
-    const USDCAddress = "0x820F684a6e9b5811b4597De77Fb4Ce751945b84A" 
-    const OwnershipAddress = "0x98a7f67ae6Ea0b95d4bDFd4F81d0De0d7D9513b0"  
-    const RegistryAddress = "0x46fFB90171082982e98Ec63aCDE8Ff5c6024B909"  
-    const FactoryAddress = "0x1dAa84dA2e6a2429ae0bAD7153Edd8f0Dab1E12c"  
-    const PremiumModelAddress = "0xd0203EAa146c379766fCe29f3463eC7c3B713035"  
-    const ParametersAddress = "0x80C38a6E8688BdB5fE77bf98860388cb2B9210d3"  
-    const VaultAddress = "0x218963F00c58531BfE63e9F12008E6B6675A9B03"
+    const USDCAddress = "0x3cF71B8910F48Bc222176B252A48Fd5a8f413DAd" 
+    const OwnershipAddress = "0x4B3229adA1AF21235A287e50f391BB2B0a86A13d"  
+    const RegistryAddress = "0xC74Eda1c16508e5D5262e747715cB051c65A3BF5"  
+    const FactoryAddress = "0xE9427EFAc6FaF9541A6306E121375d6E0247385D"  
+    const PremiumModelAddress = "0x0516376A1bDc9bEc8baE71793a0A55F7d65fB58a"  
+    const ParametersAddress = "0x3F457677aAe6d513c37A7Eeb5EBbD2CdDd7f5050"  
+    const VaultAddress = "0xdcbcbCcDa002E274A4856baB7d61235ab13BB50c"  
 
-    const PoolTemplateAddress = "0x530298567bb8C96DA1B691444729C57840C8E01F" 
-    const IndexTemplateAddress = "0xE9E834faE342D45fE671c1AcCE87ca2a5b634935"  
-    const CDSTemplateAddress = "0x42E0fACa325f590B48229c119e112a352eDD6717"
+    const PoolTemplateAddress = "0xfB603919935e8e164df1908230fdFC8132e10F91" 
+    const IndexTemplateAddress = "0x231cFf3F49A26cd4e926cf4AF0Cb06a0D1727782"  
+    const CDSTemplateAddress = "0xC0361E6764E09e74136e74b3609AA4A2D3E1353c"  
 
-    const Market1 = "0xd1698FAb3030Ac43a4FB2b358cdcaA724Db2dDA2"
-    const Market2 = "0xfb753C02B2BA6213804E9F778614e95ee21C1384" 
-    const Market3 = "0xE5b4af9b997f6d80E3ed9e383ACC26a2102BC998" 
-    const Index = "0x25505D6D27c7d6898d972037f59bC9fDDF12C647"
-    const CDS = "0x4439E1dD99b134b06c22c10258CAa0040A194Eba" 
+    const Pools= [
+       "0xF951F25c01B1D9325FC1BD7E6E3D9ee2b6e51015",
+       "0x20a34eD69AC3e2B3E869169ff0d3522633dFe157",
+       "0x1E74d0874e828ad4309D0Ef4d2eD464f9550358A",
+       "0xDEB74c3B1808446Bc7e7493c2879151b0e3f23C7",
+       "0xE6d17073F6f2079E6b91bD3a577D28790a7213CA",
+       "0xE2Ce64ab292E8F570F9dD9BE26d34f4c2b77633A",
+       "0xded1AfD29F228FF88d26e87135283637e668125a",
+       "0xc2608ECfa51ad3C0707bDD370d324AB2D28B266D",
+       "0xf3939e30Bb926f3c152ECC8a8BF8b4D4A93968f0",
+       "0x54F8EcaaA647058f42ed423f4e5BE349882d37b4",
+       "0x7D9D61Bda146f3A75904eD9A2b8c0eF23685aF95",
+       "0x6123C65f3c456c3A97896eeD9BBB1bf04f29A7e4",
+       "0x3d14730cd19C7FfabFeBcc0640A2Ef3D377bbae1",
+       "0xDa8b8b1C4A19A02aF40cC09E5ea926280877CD4f",
+       "0xC389Bab89A8E072da5ebbA96b9C64ae08a9a759e",
+       "0x151940127C0592A3Faa8cd48A706e6e5D714Df9D",
+       "0x70e3944a7d44C2bBe21faD8D22Fc98543d1D8773"
+      ]
 
-    //DAO contracts
-    const LiquidityGauges = {
-      //market: gauge
-      '0xd1698FAb3030Ac43a4FB2b358cdcaA724Db2dDA2': '0x406B172E3b047F2024D74a85711806408ecfeD38',
-      '0xfb753C02B2BA6213804E9F778614e95ee21C1384': '0xE65DD7Ce12688386fd77C73339eFb5424ddAB9Aa',
-      '0xE5b4af9b997f6d80E3ed9e383ACC26a2102BC998': '0x341124969d25897Ba3DC6C0Fc5cB107aa9A11737',
-      '0x25505D6D27c7d6898d972037f59bC9fDDF12C647': '0xb9af78Dc605389E5e7D5e56dc072C6A99677ACd3',
-      '0x4439E1dD99b134b06c22c10258CAa0040A194Eba': '0xf797f07806EEcBd54ED56DeFBC629cE0ABf33118',
-    }
+    const Indicies = [
+       "0x64F736c6b21E24289A1871F0CFB33B53c8494327",
+       "0x2aE20e578e9E2F789B840c5bF286Ad1a49446580",
+       "0x29438fB33ac81a92bC66f6372025F73d76f7EB4D"
+      ]
 
-    const GovOwnershipAddress = "0xFF1cBb0876065EaC1Ba0a2712aacF9ae55e4b6F7"  
-    const InsureToken = "0x333882d6Dc5c8B820D0316EAd747A939ee8D3d33" 
-    const VotingEscrow = "0x393ce0BD2F8e5491ce40EAb33CE1f4bf2B39f01d" 
-    const GaugeController = "0x65612a0C42EDCafA71F6cCa9331d0D9a4ceC5530" 
-    const Minter = "0x4D25e8e1b316F81a0387c3eeea651355A7bE75b2" 
+    const CDS = [
+       "0x21E43b5e18E6c5A6eBa630d07AaB8666d3e7FdB1"
+      ]
 
 
     Object.assign(exports, {
       USDCAddress,
       OwnershipAddress,
-      GovOwnershipAddress,
       RegistryAddress,
       FactoryAddress,
       PremiumModelAddress,
@@ -46,10 +53,8 @@
       PoolTemplateAddress,
       IndexTemplateAddress,
       CDSTemplateAddress,
-      Market1,
-      Market2,
-      Market3,
-      Index,
-      CDS,
+      Pools,
+      Indicies,
+      CDS
     })
     
