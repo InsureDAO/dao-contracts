@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title Liquidity Gauge
@@ -131,7 +131,10 @@ contract LiquidityGauge is ReentrancyGuard {
         );
         uint256 _voting_total = voting_escrow.totalSupply(block.timestamp);
 
-        uint256 _lim = (_l * TOKENLESS_PRODUCTION) / 100;
+        uint256 _lim;
+        unchecked {
+            _lim = (_l * TOKENLESS_PRODUCTION) / 100;
+        }
         if (
             (_voting_total > 0) &&
             (block.timestamp > period_timestamp[0] + BOOST_WARMUP)
@@ -209,10 +212,13 @@ contract LiquidityGauge is ReentrancyGuard {
         // Update integral of 1/supply
         if (block.timestamp > _st.period_time) {
             uint256 _prev_week_time = _st.period_time;
-            uint256 _week_time = min(
-                ((_st.period_time + WEEK) / WEEK) * WEEK,
-                block.timestamp
-            );
+            uint256 _week_time;
+            unchecked {
+                _week_time = min(
+                    ((_st.period_time + WEEK) / WEEK) * WEEK,
+                    block.timestamp
+                );
+            }
 
             for (uint256 i; i < 500;) {
                 uint256 _dt = _week_time - _prev_week_time;

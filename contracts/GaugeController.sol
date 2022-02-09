@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title Gauge Controller
@@ -159,8 +159,6 @@ contract GaugeController {
                 }
             }
             return _w;
-        } else {
-            return 0;
         }
     }
 
@@ -198,8 +196,6 @@ contract GaugeController {
                 }
             }
             return _pt.bias;
-        } else {
-            return 0;
         }
     }
 
@@ -290,8 +286,6 @@ contract GaugeController {
                 }
             }
             return _pt.bias;
-        } else {
-            return 0;
         }
     }
 
@@ -309,7 +303,7 @@ contract GaugeController {
         assert((_gauge_type >= 1) && (_gauge_type < n_gauge_types)); //gauge_type 0 means unset
         require(
             gauge_types_[_addr] == 0,
-            "dev: cannot add the same gauge twice"
+            "cannot add the same gauge twice"
         ); //before adding, addr must be 0 in the mapping.
         uint256 _n = n_gauges;
         unchecked {
@@ -381,8 +375,6 @@ contract GaugeController {
             uint256 _gauge_weight = points_weight[_addr][_t].bias;
 
             return (MULTIPLIER * _type_weight * _gauge_weight) / _total_weight;
-        } else {
-            return 0;
         }
     }
 

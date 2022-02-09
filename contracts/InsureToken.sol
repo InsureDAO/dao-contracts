@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title InsureToken
@@ -93,11 +93,13 @@ contract InsureToken is IERC20 {
         admin = msg.sender;
         emit Transfer(address(0), msg.sender, _init_supply);
 
-        start_epoch_time =
-            block.timestamp +
-            INFLATION_DELAY -
-            RATE_REDUCTION_TIME;
-        mining_epoch = -1;
+        unchecked {
+            start_epoch_time =
+                block.timestamp +
+                INFLATION_DELAY -
+                RATE_REDUCTION_TIME;
+            mining_epoch = -1;
+        }
         rate = 0;
         start_epoch_supply = _init_supply;
     }
@@ -111,7 +113,9 @@ contract InsureToken is IERC20 {
         uint256 _start_epoch_supply = start_epoch_supply;
 
         start_epoch_time += RATE_REDUCTION_TIME;
-        mining_epoch += 1;
+        unchecked {
+            mining_epoch += 1;
+        }
 
         if (mining_epoch == 0) {
             _rate = RATES[uint256(mining_epoch)];
@@ -245,13 +249,8 @@ contract InsureToken is IERC20 {
                 }
             }
             _current_epoch_time -= RATE_REDUCTION_TIME;
-            if (_current_epoch < 5) {
-                _current_rate = RATES[uint256(_current_epoch + int256(1))];
-                _current_epoch += 1;
-            } else {
-                _current_rate = RATES[5];
-                _current_epoch += 1;
-            }
+            _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch + int256(1))] : RATES[5];
+            _current_epoch += 1;
             assert(_current_rate <= RATES[0]); // This should never happen
             unchecked {
                 ++i;
@@ -269,7 +268,7 @@ contract InsureToken is IERC20 {
         require(msg.sender == admin, "dev: admin only");
         require(
             minter == address(0),
-            "dev: can set the minter only once, at creation"
+            "can set the minter at creation"
         );
         minter = _minter;
         emit SetMinter(_minter);
@@ -321,8 +320,12 @@ contract InsureToken is IERC20 {
          *@param _value The amount to be transferred
          *@return bool success
          */
-        require(_to != address(0), "dev: transfers to 0x0 are not allowed");
-        balanceOf[msg.sender] -= _value;
+        require(_to != address(0), "transfers to 0x0 are not allowed");
+        uint256 _fromBalance = balanceOf[msg.sender];
+        require(_fromBalance >= _value, "transfer amount exceeds balance");
+        unchecked {
+            balanceOf[msg.sender] -= _value;
+        }
         balanceOf[_to] += _value;
         emit Transfer(msg.sender, _to, _value);
         return true;
@@ -340,12 +343,20 @@ contract InsureToken is IERC20 {
          * @param _value uint256 the amount of tokens to be transferred
          * @return bool success
          */
-        require(_from != address(0), "ERC20: transfer from the zero address");
-        require(_to != address(0), "ERC20: transfer to the zero address");
+        uint256 currentAllowance = allowances[_from][msg.sender];
+        require(currentAllowance >= _value, "transfer amount exceeds allow");
+        unchecked {
+            allowances[_from][msg.sender] -= _value;
+        }
+        require(_from != address(0), "transfer from the zero address");
+        require(_to != address(0), "transfer to the zero address");
 
-        balanceOf[_from] -= _value;
+        uint256 _fromBalance = balanceOf[_from];
+        require(_fromBalance >= _value, "transfer amount exceeds balance");
+        unchecked {
+            balanceOf[_from] -= _value;
+        }
         balanceOf[_to] += _value;
-        allowances[_from][msg.sender] -= _value;
         emit Transfer(_from, _to, _value);
         return true;
     }
@@ -355,8 +366,8 @@ contract InsureToken is IERC20 {
         address spender,
         uint256 amount
     ) internal {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "approve from the zero address");
+        require(spender != address(0), "approve to the zero address");
 
         allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
@@ -397,9 +408,11 @@ contract InsureToken is IERC20 {
         uint256 currentAllowance = allowances[msg.sender][_spender];
         require(
             currentAllowance >= subtractedValue,
-            "ERC20: decreased allowance below zero"
+            "decreased allowance below zero"
         );
-        _approve(msg.sender, _spender, currentAllowance - subtractedValue);
+        unchecked {
+            _approve(msg.sender, _spender, currentAllowance - subtractedValue);
+        }
 
         return true;
     }
@@ -421,15 +434,15 @@ contract InsureToken is IERC20 {
     }
 
     function _mint(address _to, uint256 _value) internal {
-        if (block.timestamp >= start_epoch_time + RATE_REDUCTION_TIME) {
-            _update_mining_parameters();
-        }
         uint256 _total_supply = total_supply + _value;
 
         require(
             _total_supply <= _available_supply(),
-            "dev: exceeds allowable mint amount"
+            "exceeds allowable mint amount"
         );
+        if (block.timestamp >= start_epoch_time + RATE_REDUCTION_TIME) {
+            _update_mining_parameters();
+        }
         total_supply = _total_supply;
 
         balanceOf[_to] += _value;
@@ -448,7 +461,9 @@ contract InsureToken is IERC20 {
             "_value > balanceOf[msg.sender]"
         );
 
-        balanceOf[msg.sender] -= _value;
+        unchecked {
+            balanceOf[msg.sender] -= _value;
+        }
         total_supply -= _value;
 
         emit Transfer(msg.sender, address(0), _value);
@@ -462,7 +477,7 @@ contract InsureToken is IERC20 {
          *@param _name New token name
          *@param _symbol New token symbol
          */
-        require(msg.sender == admin, "Only admin is allowed to change name");
+        require(msg.sender == admin, "Only admin can change name");
         name = _name;
         symbol = _symbol;
     }

@@ -137,7 +137,7 @@ describe('LiquidityGauge', function() {
 
         }else if(voting_balances[st_account_n]["unlock_time"].lte(timestamp)){
             console.log("--revert: 3");
-            await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("Cannot add to expired lock. Withdraw");
+            await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("Cannot add to expired lock.");
 
         }else{
             await voting_escrow.connect(st_account).increase_amount(st_value);
