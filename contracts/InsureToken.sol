@@ -343,13 +343,15 @@ contract InsureToken is IERC20 {
          * @param _value uint256 the amount of tokens to be transferred
          * @return bool success
          */
+         
+        require(_from != address(0), "transfer from the zero address");
+        require(_to != address(0), "transfer to the zero address");
+        
         uint256 currentAllowance = allowances[_from][msg.sender];
         require(currentAllowance >= _value, "transfer amount exceeds allow");
         unchecked {
             allowances[_from][msg.sender] -= _value;
         }
-        require(_from != address(0), "transfer from the zero address");
-        require(_to != address(0), "transfer to the zero address");
 
         uint256 _fromBalance = balanceOf[_from];
         require(_fromBalance >= _value, "transfer amount exceeds balance");
