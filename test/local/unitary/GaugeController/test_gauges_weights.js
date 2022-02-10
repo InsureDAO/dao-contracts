@@ -136,7 +136,7 @@ describe("GaugeController", function () {
       await gauge_controller.add_gauge(three_gauges[0], 1, 0);
       await expect(
         gauge_controller.add_gauge(three_gauges[0], 1, 0)
-      ).to.revertedWith("dev: cannot add the same gauge twice");
+      ).to.revertedWith("cannot add the same gauge twice");
 
       expect(await gauge_controller.n_gauges()).to.equal("1");
     });

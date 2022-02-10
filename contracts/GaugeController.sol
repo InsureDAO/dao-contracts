@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title Gauge Controller
@@ -145,7 +145,7 @@ contract GaugeController {
         uint256 _t = time_type_weight[_gauge_type];
         if (_t > 0) {
             uint256 _w = points_type_weight[_gauge_type][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -154,10 +154,11 @@ contract GaugeController {
                 if (_t > block.timestamp) {
                     time_type_weight[_gauge_type] = _t;
                 }
+                unchecked {
+                    ++i;
+                }
             }
             return _w;
-        } else {
-            return 0;
         }
     }
 
@@ -172,7 +173,7 @@ contract GaugeController {
         uint256 _t = time_sum[_gauge_type];
         if (_t > 0) {
             Point memory _pt = points_sum[_gauge_type][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -190,10 +191,11 @@ contract GaugeController {
                 if (_t > block.timestamp) {
                     time_sum[_gauge_type] = _t;
                 }
+                unchecked {
+                    ++i;
+                }
             }
             return _pt.bias;
-        } else {
-            return 0;
         }
     }
 
@@ -211,32 +213,41 @@ contract GaugeController {
         }
         uint256 _pt = points_total[_t];
 
-        for (uint256 _gauge_type = 1; _gauge_type < 100; _gauge_type++) {
+        for (uint256 _gauge_type = 1; _gauge_type < 100;) {
             if (_gauge_type == _n_gauge_types) {
                 break;
             }
             _get_sum(_gauge_type);
             _get_type_weight(_gauge_type);
+            unchecked {
+                ++_gauge_type;
+            }
         }
-        for (uint256 i; i < 500; i++) {
+        for (uint256 i; i < 500;) {
             if (_t > block.timestamp) {
                 break;
             }
             _t += WEEK;
             _pt = 0;
             // Scales as n_types * n_unchecked_weeks (hopefully 1 at most)
-            for (uint256 _gauge_type = 1; _gauge_type < 100; _gauge_type++) {
+            for (uint256 _gauge_type = 1; _gauge_type < 100;) {
                 if (_gauge_type == _n_gauge_types) {
                     break;
                 }
                 uint256 _type_sum = points_sum[_gauge_type][_t].bias;
                 uint256 _type_weight = points_type_weight[_gauge_type][_t];
                 _pt += _type_sum * _type_weight;
+                unchecked {
+                    ++_gauge_type;
+                }
             }
             points_total[_t] = _pt;
 
             if (_t > block.timestamp) {
                 time_total = _t;
+            }
+            unchecked {
+                ++i;
             }
         }
         return _pt;
@@ -252,7 +263,7 @@ contract GaugeController {
         uint256 _t = time_weight[_gauge_addr];
         if (_t > 0) {
             Point memory _pt = points_weight[_gauge_addr][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -270,10 +281,11 @@ contract GaugeController {
                 if (_t > block.timestamp) {
                     time_weight[_gauge_addr] = _t;
                 }
+                unchecked {
+                    ++i;
+                }
             }
             return _pt.bias;
-        } else {
-            return 0;
         }
     }
 
@@ -291,14 +303,19 @@ contract GaugeController {
         assert((_gauge_type >= 1) && (_gauge_type < n_gauge_types)); //gauge_type 0 means unset
         require(
             gauge_types_[_addr] == 0,
-            "dev: cannot add the same gauge twice"
+            "cannot add the same gauge twice"
         ); //before adding, addr must be 0 in the mapping.
         uint256 _n = n_gauges;
-        n_gauges = _n + 1;
+        unchecked {
+            n_gauges = _n + 1;
+        }
         gauges[_n] = _addr;
 
         gauge_types_[_addr] = _gauge_type;
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         if (_weight > 0) {
             uint256 _type_weight = _get_type_weight(_gauge_type);
@@ -358,8 +375,6 @@ contract GaugeController {
             uint256 _gauge_weight = points_weight[_addr][_t].bias;
 
             return (MULTIPLIER * _type_weight * _gauge_weight) / _total_weight;
-        } else {
-            return 0;
         }
     }
 
@@ -409,7 +424,10 @@ contract GaugeController {
         uint256 _old_weight = _get_type_weight(_type_id);
         uint256 _old_sum = _get_sum(_type_id);
         uint256 _total_weight = _get_total();
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         _total_weight =
             _total_weight +
@@ -431,7 +449,9 @@ contract GaugeController {
          */
         uint256 _type_id = n_gauge_types;
         gauge_type_names[_type_id] = _name;
-        n_gauge_types = _type_id + 1;
+        unchecked {
+            n_gauge_types = _type_id + 1;
+        }
         if (_weight != 0) {
             _change_type_weight(_type_id, _weight);
             emit AddType(_name, _type_id);
@@ -455,7 +475,10 @@ contract GaugeController {
         uint256 _type_weight = _get_type_weight(_gauge_type);
         uint256 _old_sum = _get_sum(_gauge_type);
         uint256 _total_weight = _get_total();
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         points_weight[_addr][_next_time].bias = _weight;
         time_weight[_addr] = _next_time;
@@ -507,7 +530,9 @@ contract GaugeController {
         _vp.slope = uint256(voting_escrow.get_last_user_slope(msg.sender));
         _vp.lock_end = voting_escrow.locked__end(msg.sender);
         _vp._n_gauges = n_gauges;
-        _vp.next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        unchecked {
+            _vp.next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
         require(
             _vp.lock_end > _vp.next_time,
             "Your token lock expires too soon"
@@ -516,11 +541,13 @@ contract GaugeController {
             (_user_weight >= 0) && (_user_weight <= 10000),
             "You used all your voting power"
         );
-        require(
-            block.timestamp >=
-                last_user_vote[msg.sender][_gauge_addr] + WEIGHT_VOTE_DELAY,
-            "Cannot vote so often"
-        );
+        uint256 _voteTime;
+        unchecked {
+            require(
+                block.timestamp >= last_user_vote[msg.sender][_gauge_addr] + WEIGHT_VOTE_DELAY,
+                "Cannot vote so often"
+            );
+        }
 
         _vp.gauge_type = gauge_types_[_gauge_addr];
         require(_vp.gauge_type >= 1, "Gauge not added");

@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title Liquidity Gauge
@@ -209,12 +209,15 @@ contract LiquidityGauge is ReentrancyGuard {
         // Update integral of 1/supply
         if (block.timestamp > _st.period_time) {
             uint256 _prev_week_time = _st.period_time;
-            uint256 _week_time = min(
-                ((_st.period_time + WEEK) / WEEK) * WEEK,
-                block.timestamp
-            );
+            uint256 _week_time;
+            unchecked {
+                _week_time = min(
+                    ((_st.period_time + WEEK) / WEEK) * WEEK,
+                    block.timestamp
+                );
+            }
 
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 uint256 _dt = _week_time - _prev_week_time;
                 uint256 _w = controller.gauge_relative_weight(
                     address(this),
@@ -259,6 +262,9 @@ contract LiquidityGauge is ReentrancyGuard {
                 }
                 _prev_week_time = _week_time;
                 _week_time = min(_week_time + WEEK, block.timestamp);
+                unchecked {
+                    ++i;
+                }
             }
         }
 

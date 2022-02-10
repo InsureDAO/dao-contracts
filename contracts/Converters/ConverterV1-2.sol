@@ -42,7 +42,10 @@ contract ConverterV1_2 is IConverter{
         *@param _amountIn amount of USDC for exchange of INSURE
         *@param _to address of INSURE token recipient
         */
-        uint256 deadline = block.timestamp + 60; // using 'now' for convenience, for mainnet pass deadline from frontend!
+        uint256 deadline;
+        unchecked {
+            deadline = block.timestamp + 60; // using 'now' for convenience, for mainnet pass deadline from frontend!
+        }
         address tokenIn = address(_token);
         address tokenOut = address(insure_token);
         uint24 fee = 3000;
@@ -104,7 +107,10 @@ contract ConverterV1_2 is IConverter{
         /***
         *@dev only be used in case of emergency_mint(). Swap minted INSURE to USDC to make a payment.
         */
-        uint256 deadline = block.timestamp + 60;
+        uint256 deadline;
+        unchecked {
+            deadline = block.timestamp + 60;
+        }
         address tokenIn = address(insure_token);
         address tokenOut = address(_tokenOut);
         uint24 fee = 3000;

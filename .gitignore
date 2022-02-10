@@ -10,3 +10,4 @@ coverage/
 coverage.json
 .DS_Store
 .env
+.idea/
