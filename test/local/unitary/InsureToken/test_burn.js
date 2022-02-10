@@ -91,7 +91,7 @@ describe("InsureToken", () => {
       let amount = initial_supply.add("1");
 
       await expect(Insure.burn(amount)).to.revertedWith(
-        "_value > balanceOf[msg.sender]"
+        "_value > _balances[msg.sender]"
       );
     });
   });

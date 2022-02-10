@@ -24,7 +24,7 @@ contract InsureToken is IERC20 {
     string public symbol;
     uint256 public constant decimals = 18;
 
-    mapping(address => uint256) public override balanceOf;
+    mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) allowances;
     uint256 public total_supply;
 
@@ -88,7 +88,7 @@ contract InsureToken is IERC20 {
         uint256 _init_supply = INITIAL_SUPPLY * RATE_DENOMINATOR;
         name = _name;
         symbol = _symbol;
-        balanceOf[msg.sender] = _init_supply;
+        _balances[msg.sender] = _init_supply;
         total_supply = _init_supply;
         admin = msg.sender;
         emit Transfer(address(0), msg.sender, _init_supply);
@@ -292,8 +292,15 @@ contract InsureToken is IERC20 {
         return total_supply;
     }
 
+    function balanceOf(address account) public view virtual override returns (uint256) {
+        /***
+         *@notice Balance of account.
+         */
+        return _balances[account];
+    }
+
     function allowance(address _owner, address _spender)
-        external
+        public
         view
         override
         returns (uint256)
@@ -320,14 +327,8 @@ contract InsureToken is IERC20 {
          *@param _value The amount to be transferred
          *@return bool success
          */
-        require(_to != address(0), "transfers to 0x0 are not allowed");
-        uint256 _fromBalance = balanceOf[msg.sender];
-        require(_fromBalance >= _value, "transfer amount exceeds balance");
-        unchecked {
-            balanceOf[msg.sender] -= _value;
-        }
-        balanceOf[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);
+        address owner = msg.sender;
+        _transfer(owner, _to, _value);
         return true;
     }
 
@@ -343,22 +344,59 @@ contract InsureToken is IERC20 {
          * @param _value uint256 the amount of tokens to be transferred
          * @return bool success
          */
-        uint256 currentAllowance = allowances[_from][msg.sender];
-        require(currentAllowance >= _value, "transfer amount exceeds allow");
-        unchecked {
-            allowances[_from][msg.sender] -= _value;
-        }
-        require(_from != address(0), "transfer from the zero address");
-        require(_to != address(0), "transfer to the zero address");
-
-        uint256 _fromBalance = balanceOf[_from];
-        require(_fromBalance >= _value, "transfer amount exceeds balance");
-        unchecked {
-            balanceOf[_from] -= _value;
-        }
-        balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
+        address spender = msg.sender;
+        _spendAllowance(_from, spender, _value);
+        _transfer(_from, _to, _value);
         return true;
+    }
+
+    function _transfer(
+        address _from,
+        address _to,
+        uint256 _value
+    ) internal virtual {
+        /***
+         * @notice Transfer `_value` tokens from `_from` to `_to`
+         * @param _from address The address which you want to send tokens from
+         * @param _to address The address which you want to transfer to
+         * @param _value uint256 the amount of tokens to be transferred
+         * @return bool success
+         */
+        require(_from != address(0), "ERC20: transfer from the zero address");
+        require(_to != address(0), "ERC20: transfer to the zero address");
+
+        _beforeTokenTransfer(_from, _to, _value);
+
+        uint256 _fromBalance = _balances[_from];
+        require(_fromBalance >= _value, "ERC20: transfer amount exceeds balance");
+        unchecked {
+            _balances[_from] = _fromBalance - _value;
+        }
+        _balances[_to] += _value;
+
+        emit Transfer(_from, _to, _value);
+
+        _afterTokenTransfer(_from, _to, _value);
+    }
+
+    function _spendAllowance(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal virtual {
+        /***
+         *@notice Spend amount from the allowance of owner toward spender
+         *@param owner The address which owns
+         *@param spender The address which will spend
+         *@param amount amount to spend
+         */
+        uint256 currentAllowance = allowance(owner, spender);
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= amount, "ERC20: insufficient allowance");
+            unchecked {
+                _approve(owner, spender, currentAllowance - amount);
+            }
+        }
     }
 
     function _approve(
@@ -445,7 +483,7 @@ contract InsureToken is IERC20 {
         }
         total_supply = _total_supply;
 
-        balanceOf[_to] += _value;
+        _balances[_to] += _value;
         emit Transfer(address(0), _to, _value);
     }
 
@@ -457,12 +495,12 @@ contract InsureToken is IERC20 {
          *@return bool success
          */
         require(
-            balanceOf[msg.sender] >= _value,
-            "_value > balanceOf[msg.sender]"
+            _balances[msg.sender] >= _value,
+            "_value > _balances[msg.sender]"
         );
 
         unchecked {
-            balanceOf[msg.sender] -= _value;
+            _balances[msg.sender] -= _value;
         }
         total_supply -= _value;
 
@@ -498,5 +536,47 @@ contract InsureToken is IERC20 {
         _mint(_to, _amount);
 
         return true;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {
+        /**
+         * @dev Hook that is called before any transfer of tokens. This includes
+         * minting and burning.
+         *
+         * Calling conditions:
+         *
+         * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+         * will be transferred to `to`.
+         * - when `from` is zero, `amount` tokens will be minted for `to`.
+         * - when `to` is zero, `amount` of ``from``'s tokens will be burned.
+         * - `from` and `to` are never both zero.
+         *
+         * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+         */
+    }
+
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual {
+        /**
+         * @dev Hook that is called after any transfer of tokens. This includes
+         * minting and burning.
+         *
+         * Calling conditions:
+         *
+         * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+         * has been transferred to `to`.
+         * - when `from` is zero, `amount` tokens have been minted for `to`.
+         * - when `to` is zero, `amount` of ``from``'s tokens have been burned.
+         * - `from` and `to` are never both zero.
+         *
+         * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+         */
     }
 }
