@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const { BigNumber, ContractTransaction } = require('ethers');
 const { iteratee } = require("underscore");
 
-describe('LiquidityGauge', function() {
+describe('VotingEscrow', function() {
     const YEAR = BigNumber.from(86400*365);
     const WEEK = BigNumber.from(86400*7);
 
@@ -100,7 +100,7 @@ describe('LiquidityGauge', function() {
 
         }else if(unlock_time.lte(timestamp)){
             console.log("--revert: 3" );
-            await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can only lock until time in the future");
+            await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can lock until time in the future");
 
         }else if(unlock_time.gte(timestamp.add(YEAR.mul("4")))){
             console.log("--revert: 4" );
