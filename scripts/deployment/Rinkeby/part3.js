@@ -28,7 +28,7 @@ async function main() {
     TEAM_ADDRESSES,
 
     FUND_ADMINS,
-  } = require("./constants.js");
+  } = require("./config.js");
 
   const [deployer] = await ethers.getSigners();
 
@@ -50,8 +50,8 @@ async function main() {
   const VestingEscrow = await hre.ethers.getContractFactory("VestingEscrow");
   const vesting_team = await VestingEscrow.deploy(
     InsureToken,
-    1644040800, //2022/02/05 15:00:00
-    1738735200, //2025/02/05 15:00:00
+    1644327000, //2022/02/08 22:30:00
+    1739021400, //2025/02/08 22:30:00
     true,
     FUND_ADMINS
   );

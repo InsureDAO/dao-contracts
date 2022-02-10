@@ -7,7 +7,7 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const DEPLOYER = "0x168F8aA6d0aaeFCF75DdD3fF6793861114C035E8";
 const DAOAddress = "0xEa13917C87296ADa5cCB33C9f9ed420DD17213b7"; //core team's gnosis multisig wallet address
-const ReportingAddress = "";
+const ReportingAddress = "0x7baE3f2C5BD44B94a3b6c794234d4C5477957952";
 
 
 
@@ -26,14 +26,6 @@ const POOL_PROXY_ADMINS = {
   "Params": DEPLOYER,
   "Emergency": DEPLOYER
 }
-
-
-
-
-
-
-
-
 
 
 const PERCENTAGE = new BigNumber.from("1000000");//1e6;

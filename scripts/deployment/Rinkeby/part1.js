@@ -213,7 +213,8 @@ async function main() {
       CDSTemplateAddress,
       Pools,
       Indicies,
-      CDS
+      CDS,
+      InsureToken
     })
     `
   try {
