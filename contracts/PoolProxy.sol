@@ -598,7 +598,7 @@ contract PoolProxy is ReentrancyGuard {
         string calldata _rawdata,
         string calldata _memo
     ) external {
-        require(msg.sender == reporting_admin[_pool], "Access denied");
+        require(msg.sender == default_reporting_admin || msg.sender == reporting_admin[_pool], "Access denied");
 
         IPoolTemplate(_pool).applyCover(
             _pending,

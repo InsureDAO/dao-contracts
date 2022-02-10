@@ -20,6 +20,10 @@ async function main() {
   console.log("deployer: ", deployer.address);
 
 
+  const A = 1_000_000;
+  const B = 1;
+
+
 }
 
 main()

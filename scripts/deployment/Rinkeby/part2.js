@@ -16,7 +16,8 @@ const fs = require("fs");
 async function main() {
   await hre.run('compile');
 
-  //addresses
+  const [deployer] = await ethers.getSigners();
+
   const {
     USDCAddress,
     OwnershipAddress,
@@ -38,21 +39,14 @@ async function main() {
 
   const {
     DAOAddress,
-    ReportingAddress
-  } = require("./constants.js");
-
-  const [deployer] = await ethers.getSigners();
+    ReportingAddress,
+    POOL_PROXY_ADMINS,
+  } = require("./config.js");
 
 
   // We get the contract to deploy
   const Ownership = await ethers.getContractFactory("Ownership");
   const PoolProxy = await hre.ethers.getContractFactory("PoolProxy");
-
-  const POOL_PROXY_ADMINS = {
-      "Ownership": DAOAddress,
-      "Params": DAOAddress,
-      "Emergency": DAOAddress
-  }
 
   //===deploy start===
   //PoolProxy
@@ -60,24 +54,27 @@ async function main() {
     deployer.address,
     deployer.address,
     deployer.address
-  );
+  ); //PoolProxy => Deployer
   console.log("PoolProxy deployed to:", pool_proxy.address)
 
-  await pool_proxy.commit_set_default_reporting_admin(ReportingAddress)
+  await pool_proxy.commit_set_default_reporting_admin(ReportingAddress) //Reporting Default
 
   //===transfer ownership start===
   const ownership = await Ownership.attach(OwnershipAddress);
   const govOwnership = await Ownership.attach(GovOwnershipAddress);
 
-  await ownership.commitTransferOwnership(pool_proxy.address); //Pool => PoolProxy => Gnosis, Reporting
-  await govOwnership.commitTransferOwnership(DAOAddress); //DAO => Gnosis
+  await ownership.commitTransferOwnership(pool_proxy.address); //Pool => PoolProxy
+  //await govOwnership.commitTransferOwnership(DAOAddress); //DAO => Gnosis
 
 
+  /**
   await pool_proxy.commit_set_admins(
     POOL_PROXY_ADMINS['Ownership'], 
     POOL_PROXY_ADMINS['Params'], 
     POOL_PROXY_ADMINS['Emergency']
   )
+   */
+  //PoolProxy => Gnosis
 
 
 
