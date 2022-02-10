@@ -131,10 +131,7 @@ contract LiquidityGauge is ReentrancyGuard {
         );
         uint256 _voting_total = voting_escrow.totalSupply(block.timestamp);
 
-        uint256 _lim;
-        unchecked {
-            _lim = (_l * TOKENLESS_PRODUCTION) / 100;
-        }
+        uint256 _lim = (_l * TOKENLESS_PRODUCTION) / 100;
         if (
             (_voting_total > 0) &&
             (block.timestamp > period_timestamp[0] + BOOST_WARMUP)
