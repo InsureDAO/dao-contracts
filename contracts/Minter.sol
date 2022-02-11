@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title Token Minter
@@ -13,6 +13,8 @@ import "./interfaces/dao/ILiquidityGauge.sol";
 import "./interfaces/dao/IGaugeController.sol";
 import "./interfaces/dao/IEmergencyMintModule.sol";
 
+import "./interfaces/pool/IOwnership.sol";
+
 //libraries
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -20,14 +22,13 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 contract Minter is ReentrancyGuard {
     event EmergencyMint(uint256 minted);
     event Minted(address indexed recipient, address gauge, uint256 minted);
-    event SetAdmin(address admin);
     event SetConverter(address converter);
 
     IInsureToken public insure_token;
     IGaugeController public gauge_controller;
     IEmergencyMintModule public emergency_module;
 
-    address public admin;
+    
 
     // user -> gauge -> value
     mapping(address => mapping(address => uint256)) public minted; //INSURE minted amount of user from specific gauge.
@@ -35,10 +36,20 @@ contract Minter is ReentrancyGuard {
     // minter -> user -> can mint?
     mapping(address => mapping(address => bool)) public allowed_to_mint_for; // A can mint for B if [A => B => true].
 
-    constructor(address _token, address _controller) {
+    IOwnership public immutable ownership;
+
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
+
+    constructor(address _token, address _controller, address _ownership) {
         insure_token = IInsureToken(_token);
         gauge_controller = IGaugeController(_controller);
-        admin = msg.sender;
+        ownership = IOwnership(_ownership);
     }
 
     function _mint_for(address gauge_addr, address _for) internal {
@@ -77,11 +88,14 @@ contract Minter is ReentrancyGuard {
          *@dev address[8]: 8 has randomly decided and has no meaning.
          */
 
-        for (uint256 i; i < 8; i++) {
+        for (uint256 i; i < 8;) {
             if (gauge_addrs[i] == address(0)) {
                 break;
             }
             _mint_for(gauge_addrs[i], msg.sender);
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -110,19 +124,8 @@ contract Minter is ReentrancyGuard {
     }
 
     //-----------------emergency mint-----------------/
-    function set_admin(address _admin) external {
-        /***
-         *@notice Set the new admin.
-         *@dev After all is set up, admin only can change the token name
-         *@param _admin New admin address
-         */
-        require(msg.sender == admin, "dev: admin only");
-        admin = _admin;
-        emit SetAdmin(_admin);
-    }
 
-    function set_emergency_mint_module(address _emergency_module) external {
-        require(msg.sender == admin, "dev: admin only");
+    function set_emergency_mint_module(address _emergency_module) external onlyOwner{
         emergency_module = IEmergencyMintModule(_emergency_module);
     }
 

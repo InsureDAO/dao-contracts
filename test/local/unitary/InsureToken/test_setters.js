@@ -51,7 +51,7 @@ describe("InsureToken", function () {
     it("test_set_name_admin_only", async () => {
       await expect(
         Insure.connect(alice).set_name("Foo Token", "FOO")
-      ).to.revertedWith("Only admin is allowed to change name");
+      ).to.revertedWith("Only admin can change name");
     });
 
     //set test

@@ -103,7 +103,7 @@ describe("InsureToken", function () {
       //------test_overmint-----//
       let amount = rate.mul(new_timestamp.sub(creation_time)).add(1); //1 token over
       await expect(Insure.mint(alice.address, amount)).to.be.revertedWith(
-        "dev: exceeds allowable mint amount"
+        "exceeds allowable mint amount"
       ); //block mined at new_timestamp
 
       //available supply after mine

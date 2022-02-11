@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 interface IConverter {
     function swap_exact_to_insure(address _token, uint256 _amountIn, address _to)external returns(bool);

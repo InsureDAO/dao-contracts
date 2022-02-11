@@ -123,6 +123,7 @@ describe("LiquidityGauge", function () {
       await ethers.getSigners();
     accounts = [creator, alice, bob, chad, dad, eme, fangible, gg, nine, ten];
 
+    const Ownership = await ethers.getContractFactory("Ownership");
     const Token = await ethers.getContractFactory("InsureToken");
     const VotingEscrow = await ethers.getContractFactory("VotingEscrow");
     const GaugeController = await ethers.getContractFactory("GaugeController");
@@ -132,16 +133,19 @@ describe("LiquidityGauge", function () {
     const Registry = await ethers.getContractFactory("TestRegistry");
 
     //deploy
+    ownership = await Ownership.deploy();
     Insure = await Token.deploy(name, simbol);
     voting_escrow = await VotingEscrow.deploy(
       Insure.address,
       "Voting-escrowed Insure",
       "veInsure",
-      "veInsure"
+      "veInsure",
+      ownership.address
     );
     gauge_controller = await GaugeController.deploy(
       Insure.address,
-      voting_escrow.address
+      voting_escrow.address,
+      ownership.address
     );
     mock_lp_token = await TestLP.deploy(
       "InsureDAO LP token",
@@ -150,11 +154,11 @@ describe("LiquidityGauge", function () {
       ten_to_the_21
     ); //Not using the actual InsureDAO contract
     registry = await Registry.deploy();
-    minter = await Minter.deploy(Insure.address, gauge_controller.address);
+    minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
     liquidity_gauge = await LiquidityGauge.deploy(
       mock_lp_token.address,
       minter.address,
-      creator.address
+      ownership.address
     );
 
     let rdm = Math.floor(Math.random() * 5); //0~4 integer

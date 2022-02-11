@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title VotingEscrow
@@ -31,6 +31,8 @@ pragma solidity 0.8.7;
 import "./interfaces/dao/ISmartWalletChecker.sol";
 import "./interfaces/dao/ICollateralManager.sol";
 
+import "./interfaces/pool/IOwnership.sol";
+
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -55,9 +57,6 @@ contract VotingEscrow is ReentrancyGuard {
     int256 constant CREATE_LOCK_TYPE = 1;
     int256 constant INCREASE_LOCK_AMOUNT = 2;
     int256 constant INCREASE_UNLOCK_TIME = 3;
-
-    event CommitOwnership(address admin);
-    event AcceptOwnership(address admin);
 
     event Deposit(
         address indexed provider,
@@ -101,11 +100,18 @@ contract VotingEscrow is ReentrancyGuard {
     address public future_smart_wallet_checker;
     address public smart_wallet_checker;
 
-    address public admin; // Can and will be a smart contract
-    address public future_admin;
-
     address public collateral_manager;
     address public future_collateral_manager;
+
+    IOwnership public immutable ownership;
+
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
 
     modifier checkStatus() {
         if (collateral_manager != address(0)) {
@@ -117,16 +123,12 @@ contract VotingEscrow is ReentrancyGuard {
         _;
     }
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "only admin");
-        _;
-    }
-
     constructor(
         address _token_addr,
         string memory _name,
         string memory _symbol,
-        string memory _version
+        string memory _version,
+        address _ownership
     ) {
         /***
          *@notice Contract constructor
@@ -135,7 +137,7 @@ contract VotingEscrow is ReentrancyGuard {
          *@param _symbol Token symbol
          *@param _version Contract version - required for Aragon compatibility
          */
-        admin = msg.sender;
+        ownership = IOwnership(_ownership);
         token = _token_addr;
         point_history[0].blk = block.number;
         point_history[0].ts = block.timestamp;
@@ -163,7 +165,7 @@ contract VotingEscrow is ReentrancyGuard {
                     return;
                 }
             }
-            revert("Smart contract depositors not allowed");
+            revert("contract depositors not allowed");
         }
     }
 
@@ -225,13 +227,17 @@ contract VotingEscrow is ReentrancyGuard {
             // Calculate slopes and biases
             // Kept at zero when they have to
             if (_old_locked.end > block.timestamp && _old_locked.amount > 0) {
-                _u_old.slope = _old_locked.amount / int256(MAXTIME);
+                unchecked {
+                    _u_old.slope = _old_locked.amount / int256(MAXTIME);
+                }
                 _u_old.bias =
                     _u_old.slope *
                     int256(_old_locked.end - block.timestamp);
             }
             if (_new_locked.end > block.timestamp && _new_locked.amount > 0) {
-                _u_new.slope = _new_locked.amount / int256(MAXTIME);
+                unchecked {
+                    _u_new.slope = _new_locked.amount / int256(MAXTIME);
+                }
                 _u_new.bias =
                     _u_new.slope *
                     int256(_new_locked.end - block.timestamp);
@@ -273,8 +279,11 @@ contract VotingEscrow is ReentrancyGuard {
         // But that's ok b/c we know the block in such case
 
         // Go over weeks to fill history and calculate what the current point is
-        uint256 _t_i = (_last_checkpoint / WEEK) * WEEK;
-        for (uint256 i; i < 255; i++) {
+        uint256 _t_i;
+        unchecked {
+            _t_i = (_last_checkpoint / WEEK) * WEEK;
+        }
+        for (uint256 i; i < 255;) {
             // Hopefully it won't happen that this won't get used in 5 years!
             // If it does, users will be able to withdraw but vote weight will be broken
             _t_i += WEEK;
@@ -308,6 +317,9 @@ contract VotingEscrow is ReentrancyGuard {
                 break;
             } else {
                 point_history[_epoch] = _last_point;
+            }
+            unchecked {
+                ++i;
             }
         }
         epoch = _epoch;
@@ -351,7 +363,10 @@ contract VotingEscrow is ReentrancyGuard {
             }
 
             // Now handle user history
-            uint256 _user_epoch = user_point_epoch[_addr2] + 1;
+            uint256 _user_epoch;
+            unchecked {
+                _user_epoch = user_point_epoch[_addr2] + 1;
+            }
 
             user_point_epoch[_addr2] = _user_epoch;
             _u_new.ts = block.timestamp;
@@ -430,7 +445,7 @@ contract VotingEscrow is ReentrancyGuard {
         require(_locked.amount > 0, "No existing lock found");
         require(
             _locked.end > block.timestamp,
-            "Cannot add to expired lock. Withdraw"
+            "Cannot add to expired lock."
         );
 
         _deposit_for(_addr, _value, 0, locked[_addr], DEPOSIT_FOR_TYPE);
@@ -454,7 +469,7 @@ contract VotingEscrow is ReentrancyGuard {
         require(_locked.amount == 0, "Withdraw old tokens first");
         require(
             _unlock_time > block.timestamp,
-            "Can only lock until time in the future"
+            "Can lock until time in future"
         );
         require(
             _unlock_time <= block.timestamp + MAXTIME,
@@ -483,7 +498,7 @@ contract VotingEscrow is ReentrancyGuard {
         require(_locked.amount > 0, "No existing lock found");
         require(
             _locked.end > block.timestamp,
-            "Cannot add to expired lock. Withdraw"
+            "Cannot add to expired lock."
         );
 
         _deposit_for(msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
@@ -496,7 +511,9 @@ contract VotingEscrow is ReentrancyGuard {
          */
         assert_not_contract(msg.sender); //@shun: need to convert to solidity
         LockedBalance memory _locked = locked[msg.sender];
-        _unlock_time = (_unlock_time / WEEK) * WEEK; // Locktime is rounded down to weeks
+        unchecked {
+            _unlock_time = (_unlock_time / WEEK) * WEEK; // Locktime is rounded down to weeks
+        }
 
         require(_locked.end > block.timestamp, "Lock expired");
         require(_locked.amount > 0, "Nothing is locked");
@@ -569,16 +586,18 @@ contract VotingEscrow is ReentrancyGuard {
         // Binary search
         uint256 _min = 0;
         uint256 _max = _max_epoch;
-        for (uint256 i; i <= 128; i++) {
-            // Will be always enough for 128-bit numbers
-            if (_min >= _max) {
-                break;
-            }
-            uint256 _mid = (_min + _max + 1) / 2;
-            if (point_history[_mid].blk <= _block) {
-                _min = _mid;
-            } else {
-                _max = _mid - 1;
+        unchecked {
+            for (uint256 i; i <= 128; i ++) {
+                // Will be always enough for 128-bit numbers
+                if (_min >= _max) {
+                    break;
+                }
+                uint256 _mid = (_min + _max + 1) / 2;
+                if (point_history[_mid].blk <= _block) {
+                    _min = _mid;
+                } else {
+                    _max = _mid - 1;
+                }
             }
         }
         return _min;
@@ -668,16 +687,18 @@ contract VotingEscrow is ReentrancyGuard {
         // Binary search
         _st.min = 0;
         _st.max = user_point_epoch[_addr];
-        for (uint256 i; i <= 128; i++) {
-            // Will be always enough for 128-bit numbers
-            if (_st.min >= _st.max) {
-                break;
-            }
-            uint256 _mid = (_st.min + _st.max + 1) / 2;
-            if (user_point_history[_addr][_mid].blk <= _block) {
-                _st.min = _mid;
-            } else {
-                _st.max = _mid - 1;
+        unchecked {
+            for (uint256 i; i <= 128; i ++) {
+                // Will be always enough for 128-bit numbers
+                if (_st.min >= _st.max) {
+                    break;
+                }
+                uint256 _mid = (_st.min + _st.max + 1) / 2;
+                if (user_point_history[_addr][_mid].blk <= _block) {
+                    _st.min = _mid;
+                } else {
+                    _st.max = _mid - 1;
+                }
             }
         }
 
@@ -704,8 +725,6 @@ contract VotingEscrow is ReentrancyGuard {
         _upoint.bias -= _upoint.slope * int256(block_time - _upoint.ts);
         if (_upoint.bias >= 0) {
             return uint256(_upoint.bias);
-        } else {
-            return 0;
         }
     }
 
@@ -721,8 +740,11 @@ contract VotingEscrow is ReentrancyGuard {
          *@return Total voting power at that time
          */
         Point memory _last_point = point;
-        uint256 _t_i = (_last_point.ts / WEEK) * WEEK;
-        for (uint256 i; i < 255; i++) {
+        uint256 _t_i;
+        unchecked {
+            _t_i = (_last_point.ts / WEEK) * WEEK;
+        }
+        for (uint256 i; i < 255;) {
             _t_i += WEEK;
             int256 d_slope = 0;
 
@@ -740,6 +762,9 @@ contract VotingEscrow is ReentrancyGuard {
             }
             _last_point.slope += d_slope;
             _last_point.ts = _t_i;
+            unchecked {
+                ++i;
+            }
         }
 
         if (_last_point.bias < 0) {
@@ -835,7 +860,7 @@ contract VotingEscrow is ReentrancyGuard {
          */
         require(
             msg.sender == collateral_manager,
-            "only collateral manager can execute this function"
+            "only collateral manager allowed"
         );
 
         //withdraw
@@ -871,7 +896,7 @@ contract VotingEscrow is ReentrancyGuard {
     }
 
     //---------------------- Admin Only ----------------------//
-    function commit_smart_wallet_checker(address _addr) external onlyAdmin {
+    function commit_smart_wallet_checker(address _addr) external onlyOwner {
         /***
          *@notice Set an external contract to check for approved smart contract wallets
          *@param _addr Address of Smart contract checker
@@ -879,7 +904,7 @@ contract VotingEscrow is ReentrancyGuard {
         future_smart_wallet_checker = _addr;
     }
 
-    function apply_smart_wallet_checker() external onlyAdmin {
+    function apply_smart_wallet_checker() external onlyOwner {
         /***
          *@notice Apply setting external contract to check approved smart contract wallets
          */
@@ -888,7 +913,7 @@ contract VotingEscrow is ReentrancyGuard {
 
     function commit_collateral_manager(address _new_collateral_manager)
         external
-        onlyAdmin
+        onlyOwner
     {
         /***
          *@notice Commit setting external contract to check user's collateral status
@@ -896,32 +921,10 @@ contract VotingEscrow is ReentrancyGuard {
         future_collateral_manager = _new_collateral_manager;
     }
 
-    function apply_collateral_manager() external onlyAdmin {
+    function apply_collateral_manager() external onlyOwner {
         /***
          *@notice Apply setting external contract to check user's collateral status
          */
         collateral_manager = future_collateral_manager;
-    }
-
-    function commit_transfer_ownership(address _addr) external onlyAdmin {
-        /***
-         *@notice Transfer ownership of VotingEscrow contract to `_addr`
-         *@param _addr Address to have ownership transferred to
-         */
-        future_admin = _addr;
-        emit CommitOwnership(_addr);
-    }
-
-    //only future admin
-    function accept_transfer_ownership() external {
-        /***
-         *@notice Accept a transfer of ownership
-         *@return bool success
-         */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptOwnership(admin);
     }
 }

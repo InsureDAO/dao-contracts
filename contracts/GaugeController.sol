@@ -1,4 +1,4 @@
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 /***
  *@title Gauge Controller
@@ -10,6 +10,7 @@ pragma solidity 0.8.7;
 //dao-contracts
 import "./interfaces/dao/IInsureToken.sol";
 import "./interfaces/dao/IVotingEscrow.sol";
+import "./interfaces/pool/IOwnership.sol";
 
 contract GaugeController {
     // 7 * 86400 seconds - all future times are rounded by week
@@ -29,8 +30,6 @@ contract GaugeController {
         uint256 end;
     }
 
-    event CommitOwnership(address admin);
-    event AcceptOwnership(address admin);
     event AddType(string name, uint256 type_id);
     event NewTypeWeight(
         uint256 type_id,
@@ -54,9 +53,6 @@ contract GaugeController {
     event NewGauge(address addr, uint256 gauge_type, uint256 weight);
 
     uint256 constant MULTIPLIER = 10**18;
-
-    address public admin; // Can and will be a smart contract (Ownership admin)
-    address public future_admin; // Can and will be a smart contract
 
     IInsureToken public token;
     IVotingEscrow public voting_escrow;
@@ -96,7 +92,18 @@ contract GaugeController {
     mapping(uint256 => mapping(uint256 => uint256)) public points_type_weight; // type_id -> time -> type weight
     uint256[1000000000] public time_type_weight; // type_id -> last scheduled time (next week)
 
-    constructor(address _token, address _voting_escrow) {
+
+    IOwnership public immutable ownership;
+
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
+
+    constructor(address _token, address _voting_escrow, address _ownership) {
         /***
          *@notice Contract constructor
          *@param _token `InsureToken` contract address
@@ -105,7 +112,7 @@ contract GaugeController {
         assert(_token != address(0));
         assert(_voting_escrow != address(0));
 
-        admin = msg.sender;
+        ownership = IOwnership(_ownership);
         token = IInsureToken(_token);
         voting_escrow = IVotingEscrow(_voting_escrow);
         time_total = (block.timestamp / WEEK) * WEEK;
@@ -113,28 +120,6 @@ contract GaugeController {
 
     function get_voting_escrow() external view returns (address) {
         return address(voting_escrow);
-    }
-
-    function commit_transfer_ownership(address _addr) external {
-        /***
-         *@notice Transfer ownership of GaugeController to `addr`
-         *@param _addr Address to have ownership transferred to
-         */
-        require(msg.sender == admin, "dev: admin only");
-        future_admin = _addr;
-        emit CommitOwnership(_addr);
-    }
-
-    function accept_transfer_ownership() external {
-        /***
-         *@notice Accept a transfer of ownership
-         *@return bool success
-         */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptOwnership(admin);
     }
 
     function gauge_types(address _addr) external view returns (uint256) {
@@ -160,7 +145,7 @@ contract GaugeController {
         uint256 _t = time_type_weight[_gauge_type];
         if (_t > 0) {
             uint256 _w = points_type_weight[_gauge_type][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -169,10 +154,11 @@ contract GaugeController {
                 if (_t > block.timestamp) {
                     time_type_weight[_gauge_type] = _t;
                 }
+                unchecked {
+                    ++i;
+                }
             }
             return _w;
-        } else {
-            return 0;
         }
     }
 
@@ -187,7 +173,7 @@ contract GaugeController {
         uint256 _t = time_sum[_gauge_type];
         if (_t > 0) {
             Point memory _pt = points_sum[_gauge_type][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -205,10 +191,11 @@ contract GaugeController {
                 if (_t > block.timestamp) {
                     time_sum[_gauge_type] = _t;
                 }
+                unchecked {
+                    ++i;
+                }
             }
             return _pt.bias;
-        } else {
-            return 0;
         }
     }
 
@@ -226,32 +213,41 @@ contract GaugeController {
         }
         uint256 _pt = points_total[_t];
 
-        for (uint256 _gauge_type = 1; _gauge_type < 100; _gauge_type++) {
+        for (uint256 _gauge_type = 1; _gauge_type < 100;) {
             if (_gauge_type == _n_gauge_types) {
                 break;
             }
             _get_sum(_gauge_type);
             _get_type_weight(_gauge_type);
+            unchecked {
+                ++_gauge_type;
+            }
         }
-        for (uint256 i; i < 500; i++) {
+        for (uint256 i; i < 500;) {
             if (_t > block.timestamp) {
                 break;
             }
             _t += WEEK;
             _pt = 0;
             // Scales as n_types * n_unchecked_weeks (hopefully 1 at most)
-            for (uint256 _gauge_type = 1; _gauge_type < 100; _gauge_type++) {
+            for (uint256 _gauge_type = 1; _gauge_type < 100;) {
                 if (_gauge_type == _n_gauge_types) {
                     break;
                 }
                 uint256 _type_sum = points_sum[_gauge_type][_t].bias;
                 uint256 _type_weight = points_type_weight[_gauge_type][_t];
                 _pt += _type_sum * _type_weight;
+                unchecked {
+                    ++_gauge_type;
+                }
             }
             points_total[_t] = _pt;
 
             if (_t > block.timestamp) {
                 time_total = _t;
+            }
+            unchecked {
+                ++i;
             }
         }
         return _pt;
@@ -267,7 +263,7 @@ contract GaugeController {
         uint256 _t = time_weight[_gauge_addr];
         if (_t > 0) {
             Point memory _pt = points_weight[_gauge_addr][_t];
-            for (uint256 i; i < 500; i++) {
+            for (uint256 i; i < 500;) {
                 if (_t > block.timestamp) {
                     break;
                 }
@@ -285,10 +281,11 @@ contract GaugeController {
                 if (_t > block.timestamp) {
                     time_weight[_gauge_addr] = _t;
                 }
+                unchecked {
+                    ++i;
+                }
             }
             return _pt.bias;
-        } else {
-            return 0;
         }
     }
 
@@ -296,25 +293,29 @@ contract GaugeController {
         address _addr,
         uint256 _gauge_type,
         uint256 _weight
-    ) external {
+    ) external onlyOwner{
         /***
          *@notice Add gauge `addr` of type `gauge_type` with weight `weight`
          *@param _addr Gauge address
          *@param _gauge_type Gauge type
          *@param _weight Gauge weight
          */
-        assert(msg.sender == admin);
         assert((_gauge_type >= 1) && (_gauge_type < n_gauge_types)); //gauge_type 0 means unset
         require(
             gauge_types_[_addr] == 0,
-            "dev: cannot add the same gauge twice"
+            "cannot add the same gauge twice"
         ); //before adding, addr must be 0 in the mapping.
         uint256 _n = n_gauges;
-        n_gauges = _n + 1;
+        unchecked {
+            n_gauges = _n + 1;
+        }
         gauges[_n] = _addr;
 
         gauge_types_[_addr] = _gauge_type;
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         if (_weight > 0) {
             uint256 _type_weight = _get_type_weight(_gauge_type);
@@ -374,8 +375,6 @@ contract GaugeController {
             uint256 _gauge_weight = points_weight[_addr][_t].bias;
 
             return (MULTIPLIER * _type_weight * _gauge_weight) / _total_weight;
-        } else {
-            return 0;
         }
     }
 
@@ -425,7 +424,10 @@ contract GaugeController {
         uint256 _old_weight = _get_type_weight(_type_id);
         uint256 _old_sum = _get_sum(_type_id);
         uint256 _total_weight = _get_total();
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         _total_weight =
             _total_weight +
@@ -439,29 +441,29 @@ contract GaugeController {
         emit NewTypeWeight(_type_id, _next_time, _weight, _total_weight);
     }
 
-    function add_type(string memory _name, uint256 _weight) external {
+    function add_type(string memory _name, uint256 _weight) external onlyOwner{
         /***
          *@notice Add gauge type with name `_name` and weight `weight`　//ex. type=1, Liquidity, 1*1e18
          *@param _name Name of gauge type
          *@param _weight Weight of gauge type
          */
-        assert(msg.sender == admin);
         uint256 _type_id = n_gauge_types;
         gauge_type_names[_type_id] = _name;
-        n_gauge_types = _type_id + 1;
+        unchecked {
+            n_gauge_types = _type_id + 1;
+        }
         if (_weight != 0) {
             _change_type_weight(_type_id, _weight);
             emit AddType(_name, _type_id);
         }
     }
 
-    function change_type_weight(uint256 _type_id, uint256 _weight) external {
+    function change_type_weight(uint256 _type_id, uint256 _weight) external onlyOwner{
         /***
          *@notice Change gauge type `type_id` weight to `weight`
          *@param _type_id Gauge type id
          *@param _weight New Gauge weight
          */
-        assert(msg.sender == admin);
         _change_type_weight(_type_id, _weight);
     }
 
@@ -473,7 +475,10 @@ contract GaugeController {
         uint256 _type_weight = _get_type_weight(_gauge_type);
         uint256 _old_sum = _get_sum(_gauge_type);
         uint256 _total_weight = _get_total();
-        uint256 _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        uint256 _next_time;
+        unchecked {
+            _next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
 
         points_weight[_addr][_next_time].bias = _weight;
         time_weight[_addr] = _next_time;
@@ -492,13 +497,12 @@ contract GaugeController {
         emit NewGaugeWeight(_addr, block.timestamp, _weight, _total_weight);
     }
 
-    function change_gauge_weight(address _addr, uint256 _weight) external {
+    function change_gauge_weight(address _addr, uint256 _weight) external onlyOwner{
         /***
          *@notice Change weight of gauge `addr` to `weight`
          *@param _addr `GaugeController` contract address
          *@param _weight New Gauge weight
          */
-        assert(msg.sender == admin);
         _change_gauge_weight(_addr, _weight);
     }
 
@@ -526,7 +530,9 @@ contract GaugeController {
         _vp.slope = uint256(voting_escrow.get_last_user_slope(msg.sender));
         _vp.lock_end = voting_escrow.locked__end(msg.sender);
         _vp._n_gauges = n_gauges;
-        _vp.next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        unchecked {
+            _vp.next_time = ((block.timestamp + WEEK) / WEEK) * WEEK;
+        }
         require(
             _vp.lock_end > _vp.next_time,
             "Your token lock expires too soon"
@@ -535,11 +541,13 @@ contract GaugeController {
             (_user_weight >= 0) && (_user_weight <= 10000),
             "You used all your voting power"
         );
-        require(
-            block.timestamp >=
-                last_user_vote[msg.sender][_gauge_addr] + WEIGHT_VOTE_DELAY,
-            "Cannot vote so often"
-        );
+        uint256 _voteTime;
+        unchecked {
+            require(
+                block.timestamp >= last_user_vote[msg.sender][_gauge_addr] + WEIGHT_VOTE_DELAY,
+                "Cannot vote so often"
+            );
+        }
 
         _vp.gauge_type = gauge_types_[_gauge_addr];
         require(_vp.gauge_type >= 1, "Gauge not added");

@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const { BigNumber, ContractTransaction } = require('ethers');
 const { iteratee } = require("underscore");
 
-describe('LiquidityGauge', function() {
+describe('VotingEscrow', function() {
     const YEAR = BigNumber.from(86400*365);
     const WEEK = BigNumber.from(86400*7);
 
@@ -34,12 +34,14 @@ describe('LiquidityGauge', function() {
         //import
         [creator, alice, bob, chad, dad, elephant, fei, god, hecta, iloveyou] = await ethers.getSigners();
         accounts = [creator, alice, bob, chad, dad, elephant, fei, god, hecta, iloveyou];
+        const Ownership = await ethers.getContractFactory("Ownership");
         const Token = await ethers.getContractFactory('TestToken');
         const VotingEscrow = await ethers.getContractFactory('VotingEscrow');
         const CollateralManager = await ethers.getContractFactory('TestCollateralManager');
 
+        ownership = await Ownership.deploy();
         token = await Token.deploy(name, simbol, decimal);
-        voting_escrow = await VotingEscrow.deploy(token.address, "Voting-escrowed Insure", "veInsure", 'veInsure');
+        voting_escrow = await VotingEscrow.deploy(token.address, "Voting-escrowed Insure", "veInsure", 'veInsure', ownership.address);
         manager = await CollateralManager.deploy(voting_escrow.address);
 
         //init
@@ -98,7 +100,7 @@ describe('LiquidityGauge', function() {
 
         }else if(unlock_time.lte(timestamp)){
             console.log("--revert: 3" );
-            await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can only lock until time in the future");
+            await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can lock until time in future");
 
         }else if(unlock_time.gte(timestamp.add(YEAR.mul("4")))){
             console.log("--revert: 4" );
@@ -135,7 +137,7 @@ describe('LiquidityGauge', function() {
 
         }else if(voting_balances[st_account_n]["unlock_time"].lte(timestamp)){
             console.log("--revert: 3");
-            await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("Cannot add to expired lock. Withdraw");
+            await expect(voting_escrow.connect(st_account).increase_amount(st_value)).to.revertedWith("Cannot add to expired lock.");
 
         }else{
             await voting_escrow.connect(st_account).increase_amount(st_value);
@@ -265,9 +267,9 @@ describe('LiquidityGauge', function() {
 
     describe("test_votingescrow_admin", function(){
         //set arbitral number of repeats
-        for(let x=0; x<10; x++){
+        for(let x=0; x<20; x++){
             it("try "+eval("x+1"), async()=>{
-                for(let i=0;i<100;i++){
+                for(let i=0;i<1000;i++){
                     let n = await rdm_value(func.length);
                     await eval(func[n])();
                 }

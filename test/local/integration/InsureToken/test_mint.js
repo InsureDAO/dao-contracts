@@ -77,7 +77,7 @@ describe("InsureToken", function () {
       .add(BigNumber.from("2"));
 
     await expect(Insure.mint(alice.address, amount)).to.revertedWith(
-      "dev: exceeds allowable mint amount"
+      "exceeds allowable mint amount"
     );
   }
 
