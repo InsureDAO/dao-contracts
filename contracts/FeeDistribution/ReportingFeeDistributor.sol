@@ -18,6 +18,8 @@ contract ReportingFeeDistributor is ReentrancyGuard{
     event UpdateReportingMember(address _address, bool is_rpt);
     event Claim(address receiver, uint256 amount);
     event ChangeRecovery(address recovery);
+    event AllegationFeePaid(address sender);
+    event SetAllegationFee(uint256 new_allegation_fee);
     event CommitAdmin(address admin);
     event AcceptAdmin(address admin);
 
@@ -42,6 +44,8 @@ contract ReportingFeeDistributor is ReentrancyGuard{
     uint256 public bonus_total;
     uint256 public bonus_ratio; //ratio of fee goes to bonus. 100 = 100%. initially 0%;
     uint256 public constant bonus_ratio_divider = 100;
+
+    uint256 public allegation_fee; //amount of token for allegation fee.
 
     mapping(address => uint256) public claimable_fee;
 
@@ -246,6 +250,31 @@ contract ReportingFeeDistributor is ReentrancyGuard{
         uint256 amount = _claim(msg.sender);
 
         return amount;
+    }
+
+
+    function pay_allegation_fee()external{
+        /***
+        *@notice payment function for allegation fee. Paid value goes to bonus fee directly. Must be USDC.
+        */
+
+        require(IERC20(token).allowance(msg.sender, address(this)) >= allegation_fee, "allowance insufficient");
+
+        //transfer allegation_fee
+        require(IERC20(token).transferFrom(msg.sender, address(this), allegation_fee));
+
+        bonus_total += allegation_fee;
+
+        emit AllegationFeePaid(msg.sender);
+    }
+
+    function set_allegation_fee(uint256 _allegation_fee)external returns(bool){
+        require(address(msg.sender) == admin, "dev: admin only");
+
+        allegation_fee = _allegation_fee;
+
+        emit SetAllegationFee(allegation_fee);
+        return true;
     }
 
 
