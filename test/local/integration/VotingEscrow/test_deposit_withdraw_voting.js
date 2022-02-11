@@ -269,7 +269,7 @@ describe('VotingEscrow', function() {
         //set arbitral number of repeats
         for(let x=0; x<20; x++){
             it("try "+eval("x+1"), async()=>{
-                for(let i=0;i<1000;i++){
+                for(let i=0;i<100;i++){
                     let n = await rdm_value(func.length);
                     await eval(func[n])();
                 }

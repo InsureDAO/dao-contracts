@@ -28,17 +28,20 @@ describe("ReportingFeeDistributorV1", () => {
       chad.address,
       dad.address,
     ];
+
+    const Ownership = await ethers.getContractFactory("Ownership");
     const Token = await ethers.getContractFactory("TestToken");
     const Distributor = await ethers.getContractFactory(
       "ReportingFeeDistributor"
     );
 
+    ownership = await Ownership.deploy();
     fee = await Token.deploy(name, simbol, decimal);
     rpt_token = await Token.deploy(name, simbol, rpt_decimal);
     dstr = await Distributor.deploy(
       rpt_token.address,
       alice.address,
-      creator.address,
+      ownership.address,
       fee.address
     );
   });
@@ -59,8 +62,7 @@ describe("ReportingFeeDistributorV1", () => {
     });
 
     it("check parameters", async () => {
-      expect(await dstr.admin()).to.equal(creator.address);
-      expect(await dstr.future_admin()).to.equal(ZERO_ADDRESS);
+      expect(await dstr.ownership()).to.equal(ownership.address);
       expect(await dstr.recovery()).to.equal(alice.address);
       expect(await dstr.insure_reporting()).to.equal(rpt_token.address);
       expect(await dstr.token()).to.equal(fee.address);
@@ -653,7 +655,7 @@ describe("ReportingFeeDistributorV1", () => {
 
       await expect(
         dstr.connect(alice).bonus_distribution(ids, allocations)
-      ).to.revertedWith("only admin");
+      ).to.revertedWith("Caller is not allowed to operate");
     });
   });
 
@@ -696,7 +698,7 @@ describe("ReportingFeeDistributorV1", () => {
     });
     it("revert set bonus", async () => {
       await expect(dstr.connect(alice).set_bonus_ratio(100)).to.revertedWith(
-        "only admin"
+        "Caller is not allowed to operate"
       );
       await expect(dstr.set_bonus_ratio(101)).to.revertedWith("exceed max");
     });
@@ -713,7 +715,7 @@ describe("ReportingFeeDistributorV1", () => {
 
     it("revert kill_me", async () => {
       await expect(dstr.connect(alice).kill_me()).to.revertedWith(
-        "dev: admin only"
+        "Caller is not allowed to operate"
       );
 
       await dstr.change_recovery(ZERO_ADDRESS);
@@ -742,7 +744,7 @@ describe("ReportingFeeDistributorV1", () => {
     it("revert recover", async () => {
       await expect(
         dstr.connect(alice).recover_balance(fee.address)
-      ).to.revertedWith("dev: admin only");
+      ).to.revertedWith("Caller is not allowed to operate");
       await expect(dstr.recover_balance(fee.address)).to.revertedWith(
         "dev: not killed"
       );
