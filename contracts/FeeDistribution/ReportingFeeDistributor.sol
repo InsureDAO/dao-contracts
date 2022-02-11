@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../interfaces/pool/IOwnership.sol";
+
 
 contract ReportingFeeDistributor is ReentrancyGuard{
     using SafeERC20 for IERC20;
@@ -20,16 +22,12 @@ contract ReportingFeeDistributor is ReentrancyGuard{
     event ChangeRecovery(address recovery);
     event AllegationFeePaid(address sender);
     event SetAllegationFee(uint256 new_allegation_fee);
-    event CommitAdmin(address admin);
-    event AcceptAdmin(address admin);
 
     address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //mainnet USDC
     address public token;
 
     address public insure_reporting; //RPTINSURE address
 
-    address public admin; //upgradable
-    address public future_admin; 
     address public recovery; //upgradable
     bool public is_killed;
     
@@ -49,23 +47,33 @@ contract ReportingFeeDistributor is ReentrancyGuard{
 
     mapping(address => uint256) public claimable_fee;
 
+    IOwnership public immutable ownership;
+
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
+
     constructor(
         address _insure_reporting,
         address _recovery,
-        address _admin,
+        address _ownership,
         address _token
     ){
         /***
         *@notice Contract constructor
         *@param _insure_reporting InsureReportingToken conntract address(ReportingDAO)
         *@param _recovery Address to transfer `_token` balance to if this contract is killed
-        *@param _admin Admin address
+        *@param _ownership gov's Ownership contract address
         *@param _token set for test. leave this address(0) when deploying in production.
         */
 
         require(_insure_reporting != address(0), "zero-address");
         require(_recovery != address(0), "zero-address");
-        require(_admin != address(0), "zero-address");
+        require(_ownership != address(0), "zero-address");
         
         if(_token != address(0)){
             token = _token;
@@ -75,7 +83,7 @@ contract ReportingFeeDistributor is ReentrancyGuard{
         
         insure_reporting = _insure_reporting;
         recovery = _recovery;
-        admin = _admin;
+        ownership = IOwnership(_ownership);
     }
 
     //Reporter management
@@ -191,13 +199,12 @@ contract ReportingFeeDistributor is ReentrancyGuard{
         return true;
     }
 
-    function bonus_distribution(uint256[100] memory _ids, uint256[100] memory _allocations)external{
+    function bonus_distribution(uint256[100] memory _ids, uint256[100] memory _allocations)external onlyOwner{
         /***
         * @notice Distribute Bonus based
         * @param _ids Reporter IDs
         * @param _allocations allocation points
         */
-        require(address(msg.sender) == admin, "only admin");
 
         //calc total allocation point
         uint256 total_allocation; //0
@@ -268,8 +275,7 @@ contract ReportingFeeDistributor is ReentrancyGuard{
         emit AllegationFeePaid(msg.sender);
     }
 
-    function set_allegation_fee(uint256 _allegation_fee)external returns(bool){
-        require(address(msg.sender) == admin, "dev: admin only");
+    function set_allegation_fee(uint256 _allegation_fee)external onlyOwner returns(bool){
 
         allegation_fee = _allegation_fee;
 
@@ -279,31 +285,28 @@ contract ReportingFeeDistributor is ReentrancyGuard{
 
 
 //Config & Emergency
-    function set_bonus_ratio(uint256 _ratio)external{
-        require(address(msg.sender) == admin, "only admin");
+    function set_bonus_ratio(uint256 _ratio)external onlyOwner{
         require(_ratio <= 100, "exceed max");
 
         bonus_ratio = _ratio;
     }
 
-    function kill_me()external{
+    function kill_me()external onlyOwner{
         /***
         *@notice Kill the contract
         *@dev claim() and recover_balance() are possible after the kill. CANNOT BE UNKILLED
         */
-        require(address(msg.sender) == admin, "dev: admin only");
         require(recovery != address(0), "dev: recovery address is ZERO_ADDRESS");
         is_killed = true;
     }
 
-    function recover_balance(address _coin)external returns(bool){
+    function recover_balance(address _coin)external onlyOwner returns(bool){
         /***
         *@notice Recover any ERC20 tokens from this contract
         *@dev Tokens are sent to the recovery address.
         *@param _coin Token address
         *@return bool success
         */
-        require(address(msg.sender) == admin, "dev: admin only");
         require(recovery != address(0), "recovery to ZERO_ADDRESS");
         require(is_killed, "dev: not killed");
 
@@ -315,44 +318,16 @@ contract ReportingFeeDistributor is ReentrancyGuard{
         return true;
     }
 
-    function change_recovery(address _recovery)external returns(bool){
+    function change_recovery(address _recovery)external onlyOwner returns(bool){
         /***
         *@notice Change the recovery address.
         *@param _recovery new recovery address
         *@return bool success
         */
 
-        require(address(msg.sender) == admin, "dev: admin only");
         recovery = _recovery;
 
         emit ChangeRecovery(recovery);
-        return true;
-    }
-    
-    function commit_transfer_ownership(address _future_admin)external returns(bool){
-        /***
-        *@notice Commit a transfer of ownership.
-        *@dev Must be accept by the future_owner via `accept_transfer_ownership`
-        *@param _future_admin new admin address
-        *@return bool success
-        */
-        require(address(msg.sender) == admin, "dev: admin only");
-        future_admin = _future_admin;
-
-        emit CommitAdmin(future_admin);
-        return true;
-    }
-
-    function accept_transfer_ownership()external returns(bool){
-        /***
-        *@notice Accept a transfer of ownership
-        *@return bool success
-        */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptAdmin(admin);
         return true;
     }
 
