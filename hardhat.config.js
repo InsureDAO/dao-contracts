@@ -38,7 +38,7 @@ module.exports = {
   },
   paths: {
     sources: "./contracts",
-    tests: "./test/local",
+    tests: "./test/local/unitary/InsureToken",
     //tests: "./test/mainnet_fork",
     //tests: "./test",
     cache: "./cache",

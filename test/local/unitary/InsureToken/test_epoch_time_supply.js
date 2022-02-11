@@ -166,6 +166,82 @@ describe("InsureToken", function () {
 
     });
 
+    it("test_mintable_in_timeframe_this_epoch", async () => {
+      let creation_time = await Insure.start_epoch_time();
+      
+      await moveForwardPeriods(1) //INFURATION_DELAY
+      await Insure.update_mining_parameters()
+      expect(await Insure.mining_epoch()).to.equal("0");
+
+      let time = await now()
+
+      let mintable = await Insure.mintable_in_timeframe(
+        time,
+        time.add(WEEK)
+      );
+      let expection = (await Insure.RATES(0)).mul(WEEK)
+
+      expect(mintable).to.equal(expection);
+
+    });
+
+    it("test_mintable_in_timeframe_next_epoch", async () => {
+      let creation_time = await Insure.start_epoch_time();
+      
+      await moveForwardPeriods(1) //INFURATION_DELAY
+      await Insure.update_mining_parameters()
+      expect(await Insure.mining_epoch()).to.equal("0");
+
+      let time = await now()
+
+      let mintable = await Insure.mintable_in_timeframe(
+        time.add(YEAR),
+        time.add(YEAR).add(WEEK)
+      );
+      let expection = (await Insure.RATES(1)).mul(WEEK)
+
+      expect(mintable).to.equal(expection);
+
+    });
+
+    it("test_mintable_in_timeframe_over_epoch", async () => {
+      await moveForwardPeriods(1) //INFURATION_DELAY
+      await Insure.update_mining_parameters()
+      expect(await Insure.mining_epoch()).to.equal("0");
+
+      let zero_start = await Insure.start_epoch_time();
+      let next_epoch = zero_start.add(YEAR)
+      await moveForwardPeriods(363);
+
+      let time = await now()
+
+      expect(next_epoch).gt(time)
+
+      let diff = next_epoch.sub(time)
+      let time2 = time.add(diff).add(diff)
+
+      /**
+       * epoch0        epoch1
+       * ----|--------|--------|-------
+       *        diff     diff
+       *   time1              time2
+       * 
+       */
+
+      let mintable = await Insure.mintable_in_timeframe(
+        time,
+        time2
+      );
+
+      let expect1 = (await Insure.RATES(0)).mul(diff)
+      let expect2 = (await Insure.RATES(1)).mul(diff)
+      let expection = expect1.add(expect2)
+
+      expect(mintable).to.equal(expection);
+    });
+
+
+
     it("test_available_supply", async () => {
       //within the epoch
       await ethers.provider.send("evm_increaseTime", [DAY.toNumber()]);

@@ -248,17 +248,16 @@ contract InsureToken is IERC20 {
                     break;
                 }
             }
+
             _current_epoch_time -= RATE_REDUCTION_TIME;
+
             if(_current_epoch == 0){
-                _current_epoch -= 1;
                 _current_rate = 0;
-            }else if (_current_epoch < 5) {
-                _current_epoch -= 1;
-                _current_rate = RATES[uint256(_current_epoch)];
-            } else {
-                _current_epoch -= 1;
-                _current_rate = RATES[5];
+            }else{
+                _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch)-1] : RATES[5];
             }
+            
+            _current_epoch -= 1;
             assert(_current_rate <= RATES[0]); // This should never happen
         }
         return _to_mint;
