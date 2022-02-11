@@ -100,7 +100,7 @@ describe('VotingEscrow', function() {
 
         }else if(unlock_time.lte(timestamp)){
             console.log("--revert: 3" );
-            await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can lock until time in the future");
+            await expect(voting_escrow.connect(st_account).create_lock(st_value, unlock_time)).to.revertedWith("Can lock until time in future");
 
         }else if(unlock_time.gte(timestamp.add(YEAR.mul("4")))){
             console.log("--revert: 4" );
@@ -267,9 +267,9 @@ describe('VotingEscrow', function() {
 
     describe("test_votingescrow_admin", function(){
         //set arbitral number of repeats
-        for(let x=0; x<10; x++){
+        for(let x=0; x<20; x++){
             it("try "+eval("x+1"), async()=>{
-                for(let i=0;i<100;i++){
+                for(let i=0;i<1000;i++){
                     let n = await rdm_value(func.length);
                     await eval(func[n])();
                 }
