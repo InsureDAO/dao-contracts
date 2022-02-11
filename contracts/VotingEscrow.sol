@@ -376,7 +376,8 @@ contract VotingEscrow is ReentrancyGuard {
     }
 
     function _deposit_for(
-        address _addr,
+        address _depositor,
+        address _beneficiary,
         uint256 _value,
         uint256 _unlock_time,
         LockedBalance memory _locked_balance,
@@ -384,7 +385,8 @@ contract VotingEscrow is ReentrancyGuard {
     ) internal {
         /***
          *@notice Deposit and lock tokens for a user
-         *@param _addr User's wallet address
+         *@param _depositor Spender's wallet address
+         *@param _beneficiary Beneficiary's wallet address
          *@param _value Amount to deposit
          *@param _unlock_time New time when to unlock the tokens, or 0 if unchanged
          *@param _locked_balance Previous locked amount / timestamp
@@ -405,20 +407,20 @@ contract VotingEscrow is ReentrancyGuard {
         if (_unlock_time != 0) {
             _locked.end = _unlock_time;
         }
-        locked[_addr] = _locked;
+        locked[_beneficiary] = _locked;
 
         // Possibilities
         // Both _old_locked.end could be current or expired (>/< block.timestamp)
         // value == 0 (extend lock) or value > 0 (add to lock or extend lock)
         // _locked.end > block.timestamp (always)
 
-        _checkpoint(_addr, _old_locked, _locked);
+        _checkpoint(_beneficiary, _old_locked, _locked);
 
         if (_value != 0) {
-            assert(IERC20(token).transferFrom(_addr, address(this), _value));
+            assert(IERC20(token).transferFrom(_depositor, address(this), _value));
         }
 
-        emit Deposit(_addr, _value, _locked.end, _type, block.timestamp);
+        emit Deposit(_beneficiary, _value, _locked.end, _type, block.timestamp);
         emit Supply(_supply_before, _supply_before + _value);
     }
 
@@ -448,7 +450,7 @@ contract VotingEscrow is ReentrancyGuard {
             "Cannot add to expired lock."
         );
 
-        _deposit_for(_addr, _value, 0, locked[_addr], DEPOSIT_FOR_TYPE);
+        _deposit_for(msg.sender, _addr, _value, 0, locked[_addr], DEPOSIT_FOR_TYPE);
     }
 
     function create_lock(uint256 _value, uint256 _unlock_time)
@@ -478,6 +480,7 @@ contract VotingEscrow is ReentrancyGuard {
 
         _deposit_for(
             msg.sender,
+            msg.sender,
             _value,
             _unlock_time,
             _locked,
@@ -501,7 +504,7 @@ contract VotingEscrow is ReentrancyGuard {
             "Cannot add to expired lock."
         );
 
-        _deposit_for(msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
+        _deposit_for(msg.sender, msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
     }
 
     function increase_unlock_time(uint256 _unlock_time) external nonReentrant {
@@ -524,6 +527,7 @@ contract VotingEscrow is ReentrancyGuard {
         );
 
         _deposit_for(
+            msg.sender,
             msg.sender,
             0,
             _unlock_time,
