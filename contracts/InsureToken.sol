@@ -58,12 +58,12 @@ contract InsureToken is IERC20 {
     uint256 constant INITIAL_SUPPLY = 126_000_000; //will be vested
     uint256 constant RATE_REDUCTION_TIME = YEAR;
     uint256[6] public RATES = [
-        (28_000_000 * 10**18) / YEAR, //INITIAL_RATE
-        (22_400_000 * 10**18) / YEAR,
-        (16_800_000 * 10**18) / YEAR,
-        (11_200_000 * 10**18) / YEAR,
-        (5_600_000 * 10**18) / YEAR,
-        (2_800_000 * 10**18) / YEAR
+        (28_000_000 * 10**18) / YEAR, //epoch 0
+        (22_400_000 * 10**18) / YEAR, //epoch 1
+        (16_800_000 * 10**18) / YEAR, //epoch 2
+        (11_200_000 * 10**18) / YEAR, //epoch 3
+        (5_600_000 * 10**18) / YEAR, //epoch 4
+        (2_800_000 * 10**18) / YEAR //epoch 5~
     ];
 
     uint256 constant RATE_DENOMINATOR = 10**18;
@@ -208,16 +208,20 @@ contract InsureToken is IERC20 {
          */
         require(start <= end, "dev: start > end");
         uint256 _to_mint = 0;
+
         uint256 _current_epoch_time = start_epoch_time;
         uint256 _current_rate = rate;
         int256 _current_epoch = mining_epoch;
 
         // Special case if end is in future (not yet minted) epoch
         if (end > _current_epoch_time + RATE_REDUCTION_TIME) {
+
             _current_epoch_time += RATE_REDUCTION_TIME;
             if (_current_epoch < 5) {
-                _current_rate = RATES[uint256(mining_epoch + int256(1))];
+                _current_epoch += 1;
+                _current_rate = RATES[uint256(_current_epoch)];
             } else {
+                _current_epoch += 1;
                 _current_rate = RATES[5];
             }
         }
@@ -248,9 +252,17 @@ contract InsureToken is IERC20 {
                     break;
                 }
             }
+
             _current_epoch_time -= RATE_REDUCTION_TIME;
-            _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch + int256(1))] : RATES[5];
-            _current_epoch += 1;
+
+            if(_current_epoch == 0){
+                _current_rate = 0;
+            }else{
+                _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch)-1] : RATES[5];
+            }
+            
+            _current_epoch -= 1;
+
             assert(_current_rate <= RATES[0]); // This should never happen
             unchecked {
                 ++i;
