@@ -67,6 +67,22 @@ describe("InsureToken", function () {
       it("revert when not admin", async () => {
         await expect(Insure.connect(alice).set_rate(0)).to.revertedWith("Caller is not allowed to operate")
       });
+
+      it("set RATES[5] correctlly", async () => {
+        let rate = BigNumber.from("2799999").mul("1000000000000000000") //10**18
+
+        await Insure.set_rate(rate)
+
+        expect(await Insure.RATES(5)).to.equal(rate.div(YEAR))
+      });
+
+      it("revert when same or equal", async () => {
+        let rate = BigNumber.from("2800000").mul("1000000000000000000") //10**18
+        await expect(Insure.set_rate(rate)).to.revertedWith("Decrease Only")
+
+        rate = BigNumber.from("2800001").mul("1000000000000000000") //10**18
+        await expect(Insure.set_rate(rate)).to.revertedWith("Decrease Only")
+      });
     });
   });
 });
