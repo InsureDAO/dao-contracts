@@ -620,13 +620,14 @@ contract PoolProxy is ReentrancyGuard {
 
     function index_set(
         address _index_address,
-        uint256 _index,
+        uint256 _indexA,
+        uint256 _indexB,
         address _pool,
         uint256 _allocPoint
     ) external {
         require(msg.sender == parameter_admin, "Access denied");
 
-        IIndexTemplate(_index_address).set(_index, _pool, _allocPoint);
+        IIndexTemplate(_index_address).set(_indexA, _indexB, _pool, _allocPoint);
     }
 
     //CDS
