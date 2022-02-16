@@ -20,6 +20,7 @@ contract InsureToken is IERC20 {
     );
     event SetMinter(address minter);
     event SetAdmin(address admin);
+    event SetRate(uint256 rate);
 
     string public name;
     string public symbol;
@@ -483,14 +484,14 @@ contract InsureToken is IERC20 {
     function set_rate(uint256 _rate)external onlyOwner{
         /***
          *@notice Set the new rate for the infration after 5 years.
-         *@dev input must be the number of INSURE to be minted for year.
-         *@param _rate yearly mint amount
+         *@dev input must be the number of INSURE to be minted per second.
+         *@param _rate mint amount per second
          */
-
-        _rate /= YEAR;
         require(_rate < RATES[5], "Decrease Only");
 
         RATES[5] = _rate;
+
+        emit SetRate(_rate);
     }
 
 
