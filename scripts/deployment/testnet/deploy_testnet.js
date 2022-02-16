@@ -28,7 +28,7 @@ async function main() {
 
     //config
     const name = "InsureToken";
-    const simbol = "Insure";
+    const symbol = "Insure";
     const decimal = 18;
 
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -72,7 +72,7 @@ async function main() {
     console.log("deployer:", deployer.address);
 
     //InsureToken
-    const token = await InsureToken.deploy(name, simbol, decimal);
+    const token = await InsureToken.deploy(name, symbol, decimal);
     console.log("InsureToken deployed to:", token.address);
 
     //VotingEscrow

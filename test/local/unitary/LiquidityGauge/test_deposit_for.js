@@ -15,7 +15,7 @@ describe("LiquidityGauge", function () {
   const WEEK = BigNumber.from(86400 * 7);
 
   const name = "InsureToken";
-  const simbol = "Insure";
+  const symbol = "Insure";
   const decimal = 18;
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -44,7 +44,7 @@ describe("LiquidityGauge", function () {
 
     //deploy
     ownership = await Ownership.deploy();
-    Insure = await Token.deploy(name, simbol);
+    Insure = await Token.deploy(name, symbol, ownership.address);
     voting_escrow = await VotingEscrow.deploy(
       Insure.address,
       "Voting-escrowed Insure",

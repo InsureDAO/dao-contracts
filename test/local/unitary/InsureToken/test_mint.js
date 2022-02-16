@@ -14,7 +14,7 @@ describe("InsureToken", function () {
   let owner;
   let Insure;
   const name = "InsureToken";
-  const simbol = "Insure";
+  const symbol = "Insure";
   const decimal = 18;
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -27,7 +27,10 @@ describe("InsureToken", function () {
     [creator, alice, bob] = await ethers.getSigners();
 
     const Token = await ethers.getContractFactory("InsureToken");
-    Insure = await Token.deploy(name, simbol);
+    const Ownership = await ethers.getContractFactory("Ownership");
+
+    ownership = await Ownership.deploy();
+    Insure = await Token.deploy(name, symbol, ownership.address);
 
     let latestBlock = await ethers.provider.getBlock("latest");
     let old_timestamp = latestBlock.timestamp;

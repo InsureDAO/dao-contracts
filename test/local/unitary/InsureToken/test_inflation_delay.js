@@ -13,7 +13,7 @@ async function restore(snapshotId) {
 describe("InsureToken", function () {
   describe("test_inflation_delay", function () {
     const name = "InsureToken";
-    const simbol = "Insure";
+    const symbol = "Insure";
     const decimal = 18;
     const INITIAL_SUPPLY = BigNumber.from("126000000000000000000000000");
     const INITIAL_RATE = BigNumber.from("28000000000000000000000000");
@@ -24,7 +24,10 @@ describe("InsureToken", function () {
     before(async () => {
       [creator, alice, bob] = await ethers.getSigners();
       const Token = await ethers.getContractFactory("InsureToken");
-      Insure = await Token.deploy(name, simbol);
+      const Ownership = await ethers.getContractFactory("Ownership");
+
+      ownership = await Ownership.deploy();
+      Insure = await Token.deploy(name, symbol, ownership.address);
     });
     beforeEach(async () => {
       snapshotId = await snapshot();

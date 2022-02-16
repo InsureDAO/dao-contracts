@@ -8,7 +8,7 @@ describe('VotingEscrow', function() {
     const WEEK = BigNumber.from(86400*7);
 
     const name = "InsureToken";
-    const simbol = "Insure";
+    const symbol = "Insure";
     const decimal = 18;
 
     const MAX_TIME = YEAR.mul("4");
@@ -40,7 +40,7 @@ describe('VotingEscrow', function() {
         const CollateralManager = await ethers.getContractFactory('TestCollateralManager');
 
         ownership = await Ownership.deploy();
-        token = await Token.deploy(name, simbol, decimal);
+        token = await Token.deploy(name, symbol, decimal);
         voting_escrow = await VotingEscrow.deploy(token.address, "Voting-escrowed Insure", "veInsure", 'veInsure', ownership.address);
         manager = await CollateralManager.deploy(voting_escrow.address);
 

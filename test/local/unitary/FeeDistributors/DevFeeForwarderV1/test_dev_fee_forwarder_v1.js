@@ -12,7 +12,7 @@ async function restore(snapshotId) {
 
 describe("DevFeeForwarder", () => {
   const name = "Fee Token";
-  const simbol = "FT";
+  const symbol = "FT";
   const decimal = 18;
   const rpt_decimal = 0;
 
@@ -31,7 +31,7 @@ describe("DevFeeForwarder", () => {
     const Token = await ethers.getContractFactory("TestToken");
     const Distributor = await ethers.getContractFactory("DevFeeForwarder");
 
-    token = await Token.deploy(name, simbol, decimal);
+    token = await Token.deploy(name, symbol, decimal);
     dstr = await Distributor.deploy(alice.address);
   });
 

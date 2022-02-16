@@ -4,7 +4,7 @@ const { BigNumber } = require("ethers");
 
 describe("InsureToken", function () {
   const name = "InsureToken";
-  const simbol = "Insure";
+  const symbol = "Insure";
   const decimal = 18;
 
   const DAY = BigNumber.from(86400);
@@ -30,8 +30,11 @@ describe("InsureToken", function () {
     beforeEach(async () => {
       //import
       [creator, alice, bob] = await ethers.getSigners();
+
+      const Ownership = await ethers.getContractFactory("Ownership");
       const Token = await ethers.getContractFactory("InsureToken");
-      Insure = await Token.deploy(name, simbol);
+      ownership = await Ownership.deploy();
+      Insure = await Token.deploy(name, symbol, ownership.address);
 
       //* from: initial_setup
       await ethers.provider.send("evm_increaseTime", [DAY.toNumber()]);
