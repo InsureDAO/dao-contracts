@@ -1,85 +1,154 @@
+//distribute vested token
 const hre = require("hardhat");
+const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const { BigNumber } = require('ethers');
+const fs = require("fs");
+
+/***
+ *  deploy VestingEscrow and vest
+ */
 
 async function main() {
-    await hre.run('compile');
+  await hre.run('compile');
 
-    const [deployer] = await ethers.getSigners();
+  //addresses
+  const {
+    InsureToken
+  } = require("./deployments.js");
+
+  const {
+    ZERO_ADDRESS,
+    DAOAddress,
+    decimals,
+
+    INITIAL_SUPPLY,
+    RATE_DENOMINATOR,
+
+    VESTING_START,
+    YEAR,
+    TEAM_AMOUNT,
+    TEAM_ADDRESSES,
+    INVESTOR_ADVISOR_AMOUNT,
+    INVESTOR_ADVISOR_ADDRESSES,
+
+    FUND_ADMINS,
+  } = require("./config.js");
+
+  const [deployer] = await ethers.getSigners();
+  const Insure = await hre.ethers.getContractFactory("InsureToken");
+  const insure = await Insure.attach(InsureToken);
+
+  /*** TODO
+   * 1. deploy
+   * 2. vest for team
+   *  a. add_token()
+   *  b. fund()
+   * 3. vest for investors
+   * 4. vest for advisors
+   * 5. commit_transfer_ownership => gnosis
+   * 
+   * 6. gnosis: VestingEscrow.acceptTransferOwnership()
+   */
+
+  /**
+   * sanity check
+   */
+  //team
+  let temp = BigNumber.from("0");
+  for(let i=0; i<TEAM_ADDRESSES; i++){
+    temp = temp.add(TEAM_ADDRESSES[i][1])
+  }
+  expect(temp).to.equal(TEAM_AMOUNT)
+  
+
+  //invester and advisor
+  temp = BigNumber.from("0");
+  for(let i=0; i<INVESTOR_ADVISOR_ADDRESSES; i++){
+    temp = temp.add(INVESTOR_ADVISOR_ADDRESSES[i][1])
+  }
+  expect(temp).to.equal(INVESTOR_ADVISOR_AMOUNT)
 
 
-    // We get the contract to deploy
-    const InsureToken = await hre.ethers.getContractFactory("InsureToken");
-    const VestingEscrow = await hre.ethers.getContractFactory("VestingEscrow");
-
-    const it_address = "0x";
-
-    const fund_admins = [
-        "0x",
-        "0x",
-        "0x",
-        "0x"
-    ]
-
-    const TOTAL_AMOUNT = 0;
-    const VESTING_PERIOD = 86400 * 365 * 2;
-
-    const VESTING = [
-        ["0x", 0], //investors
-        ["0x", 0], 
-        ["0x", 0],
-        ["0x", 0],
-        ["0x", 0],
-    ]
-
-    const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+  //initial mint
+  let init_mint = await insure.balanceOf(deployer.address)
+  expect(init_mint.gte(TEAM_AMOUNT.add(INVESTOR_ADVISOR_AMOUNT))).to.equal(true)
 
 
+  /**
+   * Vesting
+   */
 
-    //start
-    console.log("deployer:", deployer.address);
+  //1. vest for team
+  const VestingEscrow = await hre.ethers.getContractFactory("VestingEscrow");
+  const vesting_team = await VestingEscrow.deploy(
+    InsureToken,
+    VESTING_START,
+    VESTING_START.add(YEAR.mul(3)),
+    true,
+    FUND_ADMINS
+  );
+  //admin = deployer
+  console.log("VestingEscrow deployed to:", vesting_team.address)
+  let totalAmount  = TEAM_AMOUNT.mul(decimals)
 
-    //deploy
-    const insure_token = await InsureToken.attach();
+  await insure.approve(vesting_team.address, totalAmount);
+  console.log("INSURE approved for team")
 
-    const start_time = await insure_token.future_epoch_time_write.call();
 
-    const vesting_escrow = await VestingEscrow.deploy(
-        it_address,
-        start_time,
-        start_time + VESTING_PERIOD,
-        false,
-        fund_admins
-    )
+  await vesting_team.add_tokens(totalAmount);
+  console.log("INSURE token added to team")
 
-    let vesting_addresses = [];
-    for(i=0; i<100; i++){
-        if(i<VESTING.length){
-            vesting_addresses.push(VESTING[i][0]);
-        }else{
-            vesting_addresses.push(ZERO_ADDRESS);
-        }
+  let addresses = []
+  let amounts = []
+  for(let i=0; i<100; i++){
+    if(i<TEAM_ADDRESSES.length){
+      addresses.push(TEAM_ADDRESSES[i][0])
+      amounts.push(TEAM_ADDRESSES[i][1].mul(decimals))
+    }else{
+      addresses.push(ZERO_ADDRESS) 
+      amounts.push(BigNumber.from("0"))
     }
+  }
 
-    let vesting_amounts = [];
-    for(i=0; i<100; i++){
-        if(i<VESTING.length){
-            vesting_amounts.push(VESTING[i][1]);
-        }else{
-            vesting_amounts.push(0);
-        }
+  await vesting_team.fund(addresses, amounts);
+  console.log("team funded")
+
+
+  //2. vest for investors and advisors
+  const vesting_investors = await VestingEscrow.deploy(
+    InsureToken,
+    VESTING_START,
+    VESTING_START.add(YEAR.mul(2)),
+    true,
+    FUND_ADMINS
+  );
+  //admin = deployer
+  console.log("VestingEscrow deployed to:", vesting_investors.address)
+
+  totalAmount  = INVESTOR_ADVISOR_ADDRESSES.mul(decimals)
+
+  await insure.approve(vesting_investors.address, totalAmount);
+  console.log("INSURE approved for investors")
+
+
+  await vesting_investors.add_tokens(totalAmount);
+  console.log("INSURE token added to investors")
+
+  let addresses = []
+  let amounts = []
+  for(let i=0; i<100; i++){
+    if(i<INVESTOR_ADVISOR_ADDRESSES.length){
+      addresses.push(INVESTOR_ADVISOR_ADDRESSES[i][0])
+      amounts.push(INVESTOR_ADVISOR_ADDRESSES[i][1].mul(decimals))
+    }else{
+      addresses.push(ZERO_ADDRESS) 
+      amounts.push(BigNumber.from("0"))
     }
+  }
 
-    let tx = await InsureToken.approve(vesting_escrow.address, TOTAL_AMOUNT);
-    await tx.wait();
-
-    tx = await VestingEscrow.add_token(TOTAL_AMOUNT);
-    await tx.wait();
-
-    await VestingEscrow.fund(vesting_addresses, vesting_amounts);
-
-    await VestingEscrow.commit_transfer_ownership(ZERO_ADDRESS);
-    await VestingEscrow.apply_transfer_ownership();
+  await vesting_team.fund(addresses, amounts);
+  console.log("investor/advisors funded")
 
 
 }

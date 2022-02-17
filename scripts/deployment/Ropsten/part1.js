@@ -21,7 +21,17 @@ const fs = require("fs");
 async function main() {
   await hre.run('compile');
 
-  //addresses
+  //----- IMPORT -----//
+  const [deployer] = await ethers.getSigners();
+
+  const {
+    ZERO_ADDRESS,
+    POOL_PROXY_ADMINS,
+    name,
+    symbol,
+    GAUGE_TYPES,
+  } = require("./config.js");
+
   const {
     USDCAddress,
     OwnershipAddress,
@@ -33,14 +43,10 @@ async function main() {
     PoolTemplateAddress,
     IndexTemplateAddress,
     CDSTemplateAddress,
-    Market1,
-    Market2,
-    Market3,
-    Index,
-    CDS,
+    Pools,
+    Indicies,
+    CDS
   } = require("./deployments.js");
-
-  const [deployer] = await ethers.getSigners();
 
 
   // We get the contract to deploy
@@ -51,40 +57,6 @@ async function main() {
   const Minter = await hre.ethers.getContractFactory("Minter");
   const LiquidityGauge = await hre.ethers.getContractFactory("LiquidityGauge");
 
-  //config
-  const name = "InsureToken";
-  const symbol = "Insure";
-
-  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-  let VESTING_ADDRESSES = ["0x9c56673F8446d8B982054dAD1C19D3098dB0716A"];
-  let VESTING_ALLOCATION = [BigNumber.from("1000").mul("1000000000000000000")];//1000e18
-  const ARAGON_AGENT = "0x1000000000000000000000000000000000000000";
-
-  const GAUGE_TYPES = [
-      ["Liquidity", BigNumber.from("1000000000000000000")], //10**18
-  ]
-
-  const POOL_TOKENS = [
-    ["Pool1", Market1, 50],
-    ["Pool2", Market2, 50],
-    ["Pool3", Market3, 50],
-    ["Index1", Index, 200],
-    ["CDS", CDS, 100]
-  ]
-
-  const POOL_PROXY_ADMINS = {
-      "Ownership": deployer.address,
-      "Params": deployer.address,
-      "Emergency": deployer.address 
-  }
-
-  const FUNDING_ADMINS = [
-      deployer.address,
-      ZERO_ADDRESS,
-      ZERO_ADDRESS,
-      ZERO_ADDRESS
-  ];
 
   //===deploy start===
   console.log("========== Basic Deployment START ==========");
@@ -127,34 +99,80 @@ async function main() {
   );
   console.log("Minter deployed to:", minter.address);
 
+
   //setup
   let tx = await token.set_minter(minter.address);
-  await tx.wait();
+  console.log("set minter")
 
   //set Gauge type 1 == Liquidity
   for(let el in GAUGE_TYPES){
       let name = GAUGE_TYPES[el][0];
       let weight = GAUGE_TYPES[el][1];
+      console.log(name)
+      console.log(weight)
       tx = await gauge_controller.add_type(name, weight);
       await tx.wait();
   };
+  console.log("add_type")
 
-  //LiquidityGauge x5 for pools
-  for(let el in POOL_TOKENS){
-      let name = POOL_TOKENS[el][0];
-      let lp_token = POOL_TOKENS[el][1];
-      let weight = POOL_TOKENS[el][2];
+  //LiquidityGauge for Pools
+  let markets = Pools.concat(Indicies).concat(CDS)
+  let POOL_TOKENS = []
+
+  for(let i=0;i < markets.length; i++){
+    let temp = [markets[i], 0]
+    if(i < Pools.length){
+      temp[1] = 50 //Single Pool Reward weight
+    }else if(i < Pools.length + Indicies.length){
+      temp[1] = 300 //Index Pool Reward weight
+    }else{
+      temp[1] = 150 //CDS Pool Reward weight
+    }
+    POOL_TOKENS.push(temp)
+  }
+  console.log(POOL_TOKENS)
+
+  for(let el of POOL_TOKENS){
+      let lp_token = el[0];
+      let weight = el[1];
+      console.log("lp_token:", lp_token)
+      console.log("weight:", weight)
       let liquidity_gauge = await LiquidityGauge.deploy(lp_token, minter.address, ownership.address);
 
-      await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
+      console.log("liquidity_gauge.address:", liquidity_gauge.address)
+      tx = await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
+      await tx.wait()
 
-      console.log("LiquidityGauge deployed to:", liquidity_gauge.address, "{",name, lp_token, weight,"}");
-      POOL_TOKENS[el].push(liquidity_gauge.address)
+      console.log("LiquidityGauge deployed to:", liquidity_gauge.address, "{",lp_token, weight,"}");
+      el.push(liquidity_gauge.address)
   }
 
   console.log("========== Basic Deployment END ==========");
 
-  //write deployments.js
+
+  //----- WRITE -----//
+  let gauges = []
+  for(let i=0; i<POOL_TOKENS.length; i++){
+    let text = `\n       ["` + POOL_TOKENS[i][2] + `", "` + POOL_TOKENS[i][0] + `", "` + POOL_TOKENS[i][1] + `"]`
+    gauges.push(text)
+  }
+
+  let pools = []
+  let indicies = []
+  let cds = []
+
+  for(let i=0; i<markets.length; i++){
+    let text = `\n       "` + markets[i] + `"`
+
+    if(i < Pools.length){
+      pools.push(text)
+    }else if(i < Indicies.length + Pools.length){
+      indicies.push(text)
+    }else{
+      cds.push(text)
+    }
+  }
+
   let text = 
     `
     const USDCAddress = "${USDCAddress}" 
@@ -164,26 +182,15 @@ async function main() {
     const PremiumModelAddress = "${PremiumModelAddress}"  
     const ParametersAddress = "${ParametersAddress}"  
     const VaultAddress = "${VaultAddress}"
-
     const PoolTemplateAddress = "${PoolTemplateAddress}" 
     const IndexTemplateAddress = "${IndexTemplateAddress}"  
     const CDSTemplateAddress = "${CDSTemplateAddress}"
-
-    const Market1 = "${Market1}"
-    const Market2 = "${Market2}" 
-    const Market3 = "${Market3}" 
-    const Index = "${Index}"
-    const CDS = "${CDS}" 
+    const Pools= [${pools}\n      ]\n
+    const Indicies = [${indicies}\n      ]\n
+    const CDS = [${cds}\n      ]\n
 
     //DAO contracts
-    const LiquidityGauges = {
-      //market: gauge
-      '${POOL_TOKENS[0][1]}': '${POOL_TOKENS[0][3]}',
-      '${POOL_TOKENS[1][1]}': '${POOL_TOKENS[1][3]}',
-      '${POOL_TOKENS[2][1]}': '${POOL_TOKENS[2][3]}',
-      '${POOL_TOKENS[3][1]}': '${POOL_TOKENS[3][3]}',
-      '${POOL_TOKENS[4][1]}': '${POOL_TOKENS[4][3]}',
-    }
+    const LiquidityGauges = [${gauges}\n      ]\n
 
     const GovOwnershipAddress = "${ownership.address}"  
     const InsureToken = "${token.address}" 
@@ -204,15 +211,14 @@ async function main() {
       PoolTemplateAddress,
       IndexTemplateAddress,
       CDSTemplateAddress,
-      Market1,
-      Market2,
-      Market3,
-      Index,
+      Pools,
+      Indicies,
       CDS,
+      InsureToken
     })
     `
   try {
-    fs.writeFileSync("./scripts/deployment/Ropsten/deployments.js", text);
+    fs.writeFileSync("./scripts/deployment/Rinkeby/deployments.js", text);
     console.log('write end');
   }catch(e){
     console.log(e);
