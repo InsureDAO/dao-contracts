@@ -9,6 +9,7 @@ pragma solidity 0.8.10;
 
 //libraries
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/pool/IOwnership.sol";
 
 contract InsureToken is IERC20 {
     event UpdateMiningParameters(
@@ -19,6 +20,7 @@ contract InsureToken is IERC20 {
     );
     event SetMinter(address minter);
     event SetAdmin(address admin);
+    event SetRate(uint256 rate);
 
     string public name;
     string public symbol;
@@ -29,7 +31,7 @@ contract InsureToken is IERC20 {
     uint256 public total_supply;
 
     address public minter;
-    address public admin;
+    IOwnership public immutable ownership;
 
     //General constants
     uint256 constant YEAR = 86400 * 365;
@@ -78,7 +80,15 @@ contract InsureToken is IERC20 {
 
     uint256 public emergency_minted;
 
-    constructor(string memory _name, string memory _symbol) {
+    modifier onlyOwner() {
+        require(
+            ownership.owner() == msg.sender,
+            "Caller is not allowed to operate"
+        );
+        _;
+    }
+
+    constructor(string memory _name, string memory _symbol, address _ownership) {
         /***
          * @notice Contract constructor
          * @param _name Token full name
@@ -90,7 +100,7 @@ contract InsureToken is IERC20 {
         symbol = _symbol;
         balanceOf[msg.sender] = _init_supply;
         total_supply = _init_supply;
-        admin = msg.sender;
+        ownership = IOwnership(_ownership);
         emit Transfer(address(0), msg.sender, _init_supply);
 
         unchecked {
@@ -269,32 +279,6 @@ contract InsureToken is IERC20 {
             }
         }
         return _to_mint;
-    }
-
-    function set_minter(address _minter) external {
-        /***
-         *@notice Set the minter address
-         *@dev Only callable once, when minter has not yet been set
-         *@param _minter Address of the minter
-         */
-        require(msg.sender == admin, "dev: admin only");
-        require(
-            minter == address(0),
-            "can set the minter at creation"
-        );
-        minter = _minter;
-        emit SetMinter(_minter);
-    }
-
-    function set_admin(address _admin) external {
-        /***
-         *@notice Set the new admin.
-         *@dev After all is set up, admin only can change the token name
-         *@param _admin New admin address
-         */
-        require(msg.sender == admin, "dev: admin only");
-        admin = _admin;
-        emit SetAdmin(_admin);
     }
 
     function totalSupply() external view override returns (uint256) {
@@ -484,17 +468,45 @@ contract InsureToken is IERC20 {
         return true;
     }
 
-    function set_name(string memory _name, string memory _symbol) external {
+    function set_name(string memory _name, string memory _symbol) external onlyOwner{
         /***
          *@notice Change the token name and symbol to `_name` and `_symbol`
          *@dev Only callable by the admin account
          *@param _name New token name
          *@param _symbol New token symbol
          */
-        require(msg.sender == admin, "Only admin can change name");
         name = _name;
         symbol = _symbol;
     }
+
+    function set_minter(address _minter) external onlyOwner{
+        /***
+         *@notice Set the minter address
+         *@dev Only callable once, when minter has not yet been set
+         *@param _minter Address of the minter
+         */
+        require(
+            minter == address(0),
+            "can set the minter at creation"
+        );
+        minter = _minter;
+        emit SetMinter(_minter);
+    }
+
+    function set_rate(uint256 _rate)external onlyOwner{
+        /***
+         *@notice Set the new rate for the infration after 5 years.
+         *@dev input must be the number of INSURE to be minted per second.
+         *@param _rate mint amount per second
+         */
+        require(_rate < RATES[5], "Decrease Only");
+
+        RATES[5] = _rate;
+
+        emit SetRate(_rate);
+    }
+
+
 
     function emergency_mint(uint256 _amount, address _to)
         external

@@ -36,7 +36,7 @@ const getMaxTick = (tickSpacing) => Math.floor(887272 / tickSpacing) * tickSpaci
 
 describe('Converter', () => {
     const name = "Fee Token";
-    const simbol = "FT";
+    const symbol = "FT";
     const decimal = 18;
     const rpt_decimal = 0;
 
@@ -67,8 +67,8 @@ describe('Converter', () => {
         * 2. put liquidity on the pool
         */
 
-        tokenA = await Token.deploy(name, simbol, decimal);
-        tokenB = await Token.deploy(name, simbol, decimal);
+        tokenA = await Token.deploy(name, symbol, decimal);
+        tokenB = await Token.deploy(name, symbol, decimal);
 
         if (tokenA.address.toLowerCase() > tokenB.address.toLowerCase()) {
             [tokenA, tokenB] = [tokenB, tokenA];

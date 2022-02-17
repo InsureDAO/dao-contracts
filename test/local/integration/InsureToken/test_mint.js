@@ -4,7 +4,7 @@ const { BigNumber } = require("ethers");
 
 describe("InsureToken", function () {
   const name = "InsureToken";
-  const simbol = "Insure";
+  const symbol = "Insure";
   const decimal = 18;
 
   const INITIAL_SUPPLY = BigNumber.from("126000000000000000000000000");
@@ -22,8 +22,12 @@ describe("InsureToken", function () {
   async function test_mint() {
     //import
     [creator, alice, bob] = await ethers.getSigners();
+
+    const Ownership = await ethers.getContractFactory("Ownership");
     const Token = await ethers.getContractFactory("InsureToken");
-    Insure = await Token.deploy(name, simbol);
+
+    ownership = await Ownership.deploy();
+    Insure = await Token.deploy(name, symbol, ownership.address);
 
     //* from: initial_setup
     await ethers.provider.send("evm_increaseTime", [DAY.toNumber()]);
@@ -55,7 +59,10 @@ describe("InsureToken", function () {
     //import
     [creator, alice, bob] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("InsureToken");
-    Insure = await Token.deploy(name, simbol);
+    const Ownership = await ethers.getContractFactory("Ownership");
+
+    ownership = await Ownership.deploy();
+    Insure = await Token.deploy(name, symbol, ownership.address);
 
     //* from: initial_setup
     await ethers.provider.send("evm_increaseTime", [DAY.toNumber()]);
@@ -97,7 +104,10 @@ describe("InsureToken", function () {
     //import
     [creator, alice, bob] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("InsureToken");
-    Insure = await Token.deploy(name, simbol);
+    const Ownership = await ethers.getContractFactory("Ownership");
+
+    ownership = await Ownership.deploy();
+    Insure = await Token.deploy(name, symbol, ownership.address);
     console.log(1);
     //* from: initial_setup
     await ethers.provider.send("evm_increaseTime", [DAY.toNumber()]);

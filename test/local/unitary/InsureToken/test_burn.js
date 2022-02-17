@@ -19,7 +19,10 @@ describe("InsureToken", () => {
   before(async () => {
     [creator, alice, bob] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("InsureToken");
-    Insure = await Token.deploy(name, symbol);
+    const Ownership = await ethers.getContractFactory("Ownership");
+
+    ownership = await Ownership.deploy();
+    Insure = await Token.deploy(name, symbol, ownership.address);
   });
   beforeEach(async () => {
     snapshotId = await snapshot();

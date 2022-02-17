@@ -12,7 +12,7 @@ async function restore(snapshotId) {
 
 describe("FeeDistributorV1", () => {
   const name = "Fee Token";
-  const simbol = "FT";
+  const symbol = "FT";
   const decimal = 18;
   const rpt_decimal = 0;
 
@@ -32,8 +32,8 @@ describe("FeeDistributorV1", () => {
     const Converter = await ethers.getContractFactory("TestConverter");
     const Distributor = await ethers.getContractFactory("FeeDistributorV1");
 
-    insure = await Token.deploy(name, simbol, decimal);
-    token = await Token.deploy(name, simbol, decimal);
+    insure = await Token.deploy(name, symbol, decimal);
+    token = await Token.deploy(name, symbol, decimal);
     converter = await Converter.deploy(insure.address);
     dstr = await Distributor.deploy(insure.address, converter.address);
   });

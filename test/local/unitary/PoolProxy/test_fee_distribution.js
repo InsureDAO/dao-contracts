@@ -12,7 +12,7 @@ async function restore (snapshotId) {
 
 describe('PoolProxy', () => {
     const name = "InsureToken";
-    const simbol = "Insure";
+    const symbol = "Insure";
     const decimal = 18;
     const INITIAL_SUPPLY = 1303030303000000000000000000;
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";

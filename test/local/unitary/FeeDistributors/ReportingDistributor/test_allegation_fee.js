@@ -4,7 +4,7 @@ const { BigNumber } = require('ethers');
 
 describe('ReportingFeeDistributor', () => {
     const name = "Fee Token";
-    const simbol = "FT";
+    const symbol = "FT";
     const decimal = 18;
     const rpt_decimal = 0;
 
@@ -20,8 +20,8 @@ describe('ReportingFeeDistributor', () => {
       const Distributor = await ethers.getContractFactory('ReportingFeeDistributor');
 
       ownership = await Ownership.deploy();
-      fee = await Token.deploy(name, simbol, decimal);
-      rpt_token = await Token.deploy(name, simbol, rpt_decimal);
+      fee = await Token.deploy(name, symbol, decimal);
+      rpt_token = await Token.deploy(name, symbol, rpt_decimal);
       dstr = await Distributor.deploy(
         rpt_token.address,
         alice.address,
