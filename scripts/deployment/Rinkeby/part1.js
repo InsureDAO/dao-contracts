@@ -13,9 +13,6 @@ const fs = require("fs");
  * This script does
  *  - deploy 
  *    - Token, Gauges, VotingEscrow
- * not deploy 
- *  - Vesting
- *  - PoolProxy
  */
 
 async function main() {
@@ -30,6 +27,7 @@ async function main() {
     name,
     symbol,
     GAUGE_TYPES,
+    INITIAL_WEIGHT,
   } = require("./config.js");
 
   const {
@@ -56,6 +54,7 @@ async function main() {
   const GaugeController = await hre.ethers.getContractFactory("GaugeController");
   const Minter = await hre.ethers.getContractFactory("Minter");
   const LiquidityGauge = await hre.ethers.getContractFactory("LiquidityGauge");
+  const Registry = await hre.ethers.getContractFactory("TestRegistry");
 
 
   //===deploy start===
@@ -67,7 +66,7 @@ async function main() {
   console.log("Ownership deployed to:", ownership.address);
 
   //InsureToken
-  const token = await InsureToken.deploy(name, symbol);
+  const token = await InsureToken.deploy(name, symbol, ownership.address);
   console.log("InsureToken deployed to:", token.address);
 
 
@@ -117,16 +116,19 @@ async function main() {
 
   //LiquidityGauge for Pools
   let markets = Pools.concat(Indicies).concat(CDS)
+
+  //const registry = await Registry.attach(RegistryAddress)
+  //let markets = await registry.getAllMarkets()
   let POOL_TOKENS = []
 
   for(let i=0;i < markets.length; i++){
     let temp = [markets[i], 0]
     if(i < Pools.length){
-      temp[1] = 50 //Single Pool Reward weight
+      temp[1] = INITIAL_WEIGHT[0] //Single Pool Reward weight
     }else if(i < Pools.length + Indicies.length){
-      temp[1] = 300 //Index Pool Reward weight
+      temp[1] = INITIAL_WEIGHT[1] //Index Pool Reward weight
     }else{
-      temp[1] = 150 //CDS Pool Reward weight
+      temp[1] = INITIAL_WEIGHT[2] //CDS Pool Reward weight
     }
     POOL_TOKENS.push(temp)
   }

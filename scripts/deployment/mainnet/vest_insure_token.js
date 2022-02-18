@@ -31,6 +31,7 @@ async function main() {
     TEAM_ADDRESSES,
     INVESTOR_ADVISOR_AMOUNT,
     INVESTOR_ADVISOR_ADDRESSES,
+    INVESTOR_ADVISOR_RATE_ADJUSTER,
 
     FUND_ADMINS,
   } = require("./config.js");
@@ -55,26 +56,34 @@ async function main() {
    * sanity check
    */
   //team
-  let temp = BigNumber.from("0");
+  let teamTotal = BigNumber.from("0");
   for(let i=0; i<TEAM_ADDRESSES; i++){
-    temp = temp.add(TEAM_ADDRESSES[i][1])
+    teamTotal = teamTotal.add(TEAM_ADDRESSES[i][1])
   }
-  expect(temp).to.equal(TEAM_AMOUNT)
+  expect(teamTotal).to.equal(TEAM_AMOUNT)
   
 
   //invester and advisor
-  temp = BigNumber.from("0");
+  let investorTotal = BigNumber.from("0");
   for(let i=0; i<INVESTOR_ADVISOR_ADDRESSES; i++){
-    temp = temp.add(INVESTOR_ADVISOR_ADDRESSES[i][1])
+    investorTotal = investorTotal.add(INVESTOR_ADVISOR_ADDRESSES[i][1])
   }
-  expect(temp).to.equal(INVESTOR_ADVISOR_AMOUNT)
+  expect(investorTotal).to.equal(INVESTOR_ADVISOR_AMOUNT)
 
+  teamTotal = teamTotal.mul(decimals)
+  investorTotal = investorTotal.mul(decimals).div(INVESTOR_ADVISOR_RATE_ADJUSTER)
+  let total = teamTotal.add(investorTotal)
 
   //initial mint
   let init_mint = await insure.balanceOf(deployer.address)
-  expect(init_mint.gte(TEAM_AMOUNT.add(INVESTOR_ADVISOR_AMOUNT))).to.equal(true)
+  expect(init_mint.gte(total)).to.equal(true)
 
-
+  //check%
+  /**
+   * team = 18.218%
+   * investor(3 years) = 0.25%
+   * investor(2 years) = 12.483% 
+   */
   /**
    * Vesting
    */
@@ -126,7 +135,7 @@ async function main() {
   //admin = deployer
   console.log("VestingEscrow deployed to:", vesting_investors.address)
 
-  totalAmount  = INVESTOR_ADVISOR_ADDRESSES.mul(decimals)
+  totalAmount  = INVESTOR_ADVISOR_ADDRESSES.mul(decimals).div(INVESTOR_ADVISOR_RATE_ADJUSTER)
 
   await insure.approve(vesting_investors.address, totalAmount);
   console.log("INSURE approved for investors")
@@ -140,7 +149,7 @@ async function main() {
   for(let i=0; i<100; i++){
     if(i<INVESTOR_ADVISOR_ADDRESSES.length){
       addresses.push(INVESTOR_ADVISOR_ADDRESSES[i][0])
-      amounts.push(INVESTOR_ADVISOR_ADDRESSES[i][1].mul(decimals))
+      amounts.push(INVESTOR_ADVISOR_ADDRESSES[i][1].mul(decimals).div(INVESTOR_ADVISOR_RATE_ADJUSTER))
     }else{
       addresses.push(ZERO_ADDRESS) 
       amounts.push(BigNumber.from("0"))

@@ -30,6 +30,7 @@ async function main() {
     name,
     symbol,
     GAUGE_TYPES,
+    INITIAL_WEIGHT,
   } = require("./config.js");
 
   const {
@@ -67,7 +68,7 @@ async function main() {
   console.log("Ownership deployed to:", ownership.address);
 
   //InsureToken
-  const token = await InsureToken.deploy(name, symbol);
+  const token = await InsureToken.deploy(name, symbol, ownership.address);
   console.log("InsureToken deployed to:", token.address);
 
 
@@ -122,11 +123,11 @@ async function main() {
   for(let i=0;i < markets.length; i++){
     let temp = [markets[i], 0]
     if(i < Pools.length){
-      temp[1] = 50 //Single Pool Reward weight
+      temp[1] = INITIAL_WEIGHT[0] //Single Pool Reward weight
     }else if(i < Pools.length + Indicies.length){
-      temp[1] = 300 //Index Pool Reward weight
+      temp[1] = INITIAL_WEIGHT[1] //Index Pool Reward weight
     }else{
-      temp[1] = 150 //CDS Pool Reward weight
+      temp[1] = INITIAL_WEIGHT[2] //CDS Pool Reward weight
     }
     POOL_TOKENS.push(temp)
   }

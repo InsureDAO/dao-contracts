@@ -43,10 +43,12 @@ async function main() {
     POOL_PROXY_ADMINS,
   } = require("./config.js");
 
-
-  // We get the contract to deploy
   const Ownership = await ethers.getContractFactory("Ownership");
   const PoolProxy = await hre.ethers.getContractFactory("PoolProxy");
+
+  const ownership = await Ownership.attach(OwnershipAddress);
+  const govOwnership = await Ownership.attach(GovOwnershipAddress);
+
 
   //===deploy start===
   //PoolProxy
@@ -57,31 +59,17 @@ async function main() {
   ); //PoolProxy => Deployer
   console.log("PoolProxy deployed to:", pool_proxy.address)
 
-  await pool_proxy.commit_set_default_reporting_admin(ReportingAddress) //Reporting Default
+  
 
   //===transfer ownership start===
-  const ownership = await Ownership.attach(OwnershipAddress);
-  const govOwnership = await Ownership.attach(GovOwnershipAddress);
+  await pool_proxy.commit_set_default_reporting_admin(ReportingAddress) //Reporting Default
+  //need to accept by ReportingDAO
 
-  await ownership.commitTransferOwnership(pool_proxy.address); //Pool => PoolProxy
-  //await govOwnership.commitTransferOwnership(DAOAddress); //DAO => Gnosis
-
-
-  /**
-  await pool_proxy.commit_set_admins(
-    POOL_PROXY_ADMINS['Ownership'], 
-    POOL_PROXY_ADMINS['Params'], 
-    POOL_PROXY_ADMINS['Emergency']
-  )
-   */
-  //PoolProxy => Gnosis
+  await ownership.commitTransferOwnership(pool_proxy.address); //Pool => PoolProxy commit
+  await pool_proxy.ownership_accept_transfer_ownership(); //Pool => PoolProxy accept
 
 
-
-/*** TODO
- * - ReportingDAO => accept
- * - Gnosis wallet => accept on PoolProxy, govOwnership
- */
+  //we will change admin address to the DAO executer address after confirming "solidity"
 }
 
 main()
