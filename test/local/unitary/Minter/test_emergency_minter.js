@@ -72,7 +72,6 @@ describe("Minter", function () {
       ownership.address
     );
 
-    registry = await Registry.deploy();
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 
     emrg_minter = await TestEmergencyModule.deploy(minter.address);

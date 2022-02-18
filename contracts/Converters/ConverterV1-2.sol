@@ -17,8 +17,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
-import "hardhat/console.sol";
-
 
 contract ConverterV1_2 is IConverter{
     using SafeERC20 for IERC20;
@@ -54,13 +52,10 @@ contract ConverterV1_2 is IConverter{
         uint256 amountOutMinimum = 1;
         uint160 sqrtPriceLimitX96 = 0;
 
-        console.log("swap start");
                 
         //setup for swap
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
-        console.log("transfer done");
         IERC20(tokenIn).safeApprove(address(UniswapV3), _amountIn);
-        console.log("approval done");
         
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams(
             tokenIn,
@@ -74,7 +69,6 @@ contract ConverterV1_2 is IConverter{
         );               
         
         require(UniswapV3.exactInputSingle(params)>0, "return 0 token");
-        console.log("swap done");
         return true;
     }
 

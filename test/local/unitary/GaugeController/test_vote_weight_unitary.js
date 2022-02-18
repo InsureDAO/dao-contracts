@@ -81,7 +81,6 @@ describe("GaugeController", function () {
       decimal,
       ten_to_the_9
     ); //Not using the actual InsureDAO contract
-    registry = await Registry.deploy();
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 
     lg1 = await LiquidityGauge.deploy(

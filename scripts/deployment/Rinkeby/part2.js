@@ -51,6 +51,7 @@ async function main() {
 
 
   //===deploy start===
+
   //PoolProxy
   const pool_proxy = await PoolProxy.deploy(
     deployer.address,
@@ -58,6 +59,16 @@ async function main() {
     deployer.address
   ); //PoolProxy => Deployer
   console.log("PoolProxy deployed to:", pool_proxy.address)
+
+  //Fee Distributors
+
+
+
+  //setup parameter and fee distributors
+  await pool_proxy.set_parameters(ParametersAddress)
+
+
+  
 
   
 

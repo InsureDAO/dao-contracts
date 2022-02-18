@@ -23,8 +23,10 @@ describe('PoolProxy', () => {
         [creator, alice, bob] = await ethers.getSigners();
         const PoolProxy = await ethers.getContractFactory('PoolProxy');
         const Token = await ethers.getContractFactory('TestToken');
-
+        const Ownership = await ethers.getContractFactory('Ownership');
+        const Vault = await ethers.getContractFactory('TestVault');
         const Distributor = await ethers.getContractFactory('TestDistributor');
+        const Parameters = await ethers.getContractFactory('Parameters');
 
         //deploy
         /**
@@ -42,22 +44,19 @@ describe('PoolProxy', () => {
         dstrC = await Distributor.deploy(fee_token.address);
         dstrD = await Distributor.deploy(fee_token.address);
 
-        //setup for withdraw_admin_fee
-        const Registry = await ethers.getContractFactory('TestRegistry');
-        const Vault = await ethers.getContractFactory('TestVault');
-
-        //registry deploy
-        registry = await Registry.deploy();
-        await pool_proxy.set_parameters(registry.address); // function get_vault() was moved from Registry.sol to Parameters.sol. Still uses TestRegistry.sol since the function is totally same.
         
-        //vault deploy
+        //pool contracts deploy
+        ownership = await Ownership.deploy()
         vault = await Vault.deploy(fee_token.address);
         vault_A = await Vault.deploy(tokenA.address);
+        
+        parameter = await Parameters.deploy(ownership.address);
+        await ownership.commitTransferOwnership(pool_proxy.address);
+        await pool_proxy.ownership_accept_transfer_ownership(ownership.address)
 
-        //Registry: setVault
-        await registry.setVault(fee_token.address, vault.address);
-
-
+        await pool_proxy.parameters_set_vault(parameter.address, fee_token.address, vault.address);
+        await pool_proxy.set_parameters(parameter.address)
+        expect(await parameter.getVault(fee_token.address)).to.equal(vault.address)
     });
 
     beforeEach(async () => {
@@ -273,7 +272,7 @@ describe('PoolProxy', () => {
             //add_distributor
             await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //fee_token, ID = 0
             await pool_proxy.add_distributor(tokenA.address, "fee dstrC", dstrC.address); //tokenA, ID = 0
-            await registry.setVault(tokenA.address, vault_A.address);
+            await pool_proxy.parameters_set_vault(parameter.address, tokenA.address, vault_A.address);
 
             //set weight (any#)
             await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 10);
@@ -307,7 +306,7 @@ describe('PoolProxy', () => {
             //add_distributor
             await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //fee_token, ID = 0
             await pool_proxy.add_distributor(tokenA.address, "fee dstrC", dstrC.address); //tokenA, ID = 0
-            await registry.setVault(tokenA.address, vault_A.address);
+            await pool_proxy.parameters_set_vault(parameter.address, tokenA.address, vault_A.address);
 
             //set weight (any#)
             await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 10);

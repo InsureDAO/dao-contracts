@@ -67,7 +67,6 @@ describe("LiquidityGauge", function () {
       decimal,
       ten_to_the_21
     ); //Not using the actual InsureDAO contract
-    registry = await Registry.deploy();
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
     liquidity_gauge = await LiquidityGauge.deploy(
       mock_lp_token.address,
