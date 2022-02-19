@@ -95,8 +95,8 @@ contract LiquidityGauge is ReentrancyGuard {
         address _minter,
         address _ownership
     ) {
-        assert(_lp_addr != address(0));
-        assert(_minter != address(0));
+        require(_lp_addr != address(0));
+        require(_minter != address(0));
 
         template = IERC20(_lp_addr);
         minter = IMinter(_minter);
@@ -364,7 +364,7 @@ contract LiquidityGauge is ReentrancyGuard {
 
             _update_liquidity_limit(_addr, _balance, _supply);
 
-            assert(template.transferFrom(msg.sender, address(this), _value));
+            require(template.transferFrom(msg.sender, address(this), _value));
         }
         emit Deposit(_addr, _value);
     }

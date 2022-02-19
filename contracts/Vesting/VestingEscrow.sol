@@ -62,8 +62,8 @@ contract VestingEscrow is ReentrancyGuard {
         bool _can_disable,
         address[4] memory _fund_admins
     ) {
-        assert(_start_time >= block.timestamp);
-        assert(_end_time > _start_time);
+        require(_start_time >= block.timestamp);
+        require(_end_time > _start_time);
 
         token = _token;
         admin = msg.sender;
@@ -141,7 +141,7 @@ contract VestingEscrow is ReentrancyGuard {
 
         rugged_amount += raggable;
 
-        assert(IERC20(token).transfer(admin, raggable));
+        require(IERC20(token).transfer(admin, raggable));
 
         emit RugPull(admin, raggable);
     }
@@ -277,7 +277,7 @@ contract VestingEscrow is ReentrancyGuard {
         uint256 claimable = _total_vested_of(addr, t) - total_claimed[addr];
 
         total_claimed[addr] += claimable;
-        assert(IERC20(token).transfer(addr, claimable));
+        require(IERC20(token).transfer(addr, claimable));
 
         emit Claim(addr, claimable);
     }

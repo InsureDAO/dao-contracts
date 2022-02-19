@@ -109,8 +109,8 @@ contract GaugeController {
      *@param _voting_escrow `VotingEscrow` contract address
      */
     constructor(address _token, address _voting_escrow, address _ownership) {
-        assert(_token != address(0));
-        assert(_voting_escrow != address(0));
+        require(_token != address(0));
+        require(_voting_escrow != address(0));
 
         ownership = IOwnership(_ownership);
         token = IInsureToken(_token);
@@ -130,7 +130,6 @@ contract GaugeController {
     function gauge_types(address _addr) external view returns(uint256) {
 
         uint256 _gauge_type = gauge_types_[_addr];
-        //assert (gauge_type != 0);
 
         return _gauge_type; //LG = 1
     }
@@ -306,7 +305,7 @@ contract GaugeController {
         uint256 _gauge_type,
         uint256 _weight
     ) external onlyOwner {
-        assert((_gauge_type >= 1) && (_gauge_type < n_gauge_types)); //gauge_type 0 means unset
+        require((_gauge_type >= 1) && (_gauge_type < n_gauge_types)); //gauge_type 0 means unset
         require(
             gauge_types_[_addr] == 0,
             "cannot add the same gauge twice"

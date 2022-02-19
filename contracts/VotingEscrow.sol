@@ -416,7 +416,7 @@ contract VotingEscrow is ReentrancyGuard {
         _checkpoint(_beneficiary, _old_locked, _locked);
 
         if (_value != 0) {
-            assert(IERC20(token).transferFrom(_depositor, address(this), _value));
+            require(IERC20(token).transferFrom(_depositor, address(this), _value));
         }
 
         emit Deposit(_beneficiary, _value, _locked.end, _type, block.timestamp);
@@ -492,7 +492,7 @@ contract VotingEscrow is ReentrancyGuard {
         assert_not_contract(msg.sender);
         LockedBalance memory _locked = locked[msg.sender];
 
-        assert(_value > 0);
+        require(_value > 0);
         require(_locked.amount > 0, "No existing lock found");
         require(
             _locked.end > block.timestamp,
@@ -560,7 +560,7 @@ contract VotingEscrow is ReentrancyGuard {
         // Both can have >= 0 amount
         _checkpoint(msg.sender, _old_locked, _locked);
 
-        assert(IERC20(token).transfer(msg.sender, _value));
+        require(IERC20(token).transfer(msg.sender, _value));
 
         emit Withdraw(msg.sender, _value, block.timestamp);
         emit Supply(_supply_before, _supply_before - _value);
@@ -665,7 +665,7 @@ contract VotingEscrow is ReentrancyGuard {
     function balanceOfAt(address _addr, uint256 _block) external view returns(uint256) {
         // Copying and pasting totalSupply code because Vyper cannot pass by
         // reference yet
-        assert(_block <= block.number);
+        require(_block <= block.number);
 
         Parameters memory _st;
 
@@ -789,7 +789,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@return Total voting power at `_block`
      */
     function totalSupplyAt(uint256 _block) external view returns(uint256) {
-        assert(_block <= block.number);
+        require(_block <= block.number);
         uint256 _epoch = epoch;
         uint256 _target_epoch = find_block_epoch(_block, _epoch);
 
@@ -818,7 +818,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@dev Dummy method required for Aragon compatibility
      */
     function changeController(address _newController) external {
-        assert(msg.sender == controller);
+        require(msg.sender == controller);
         controller = _newController;
     }
 
@@ -866,7 +866,7 @@ contract VotingEscrow is ReentrancyGuard {
         _checkpoint(_target, _old_locked, _locked);
 
         //transfer INSURE to collateral_manager
-        assert(IERC20(token).transfer(collateral_manager, value));
+        require(IERC20(token).transfer(collateral_manager, value));
 
         emit ForceUnlock(_target, value, block.timestamp);
         emit Supply(_supply_before, _supply_before - value);

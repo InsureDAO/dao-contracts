@@ -323,7 +323,7 @@ contract PoolProxy is ReentrancyGuard {
      *@param _id distributor id
      */
     function distribute(address _token, uint256 _id) external nonReentrant {
-        assert(tx.origin == msg.sender); //only EOA
+        require(tx.origin == msg.sender); //only EOA
         require(!distributor_kill, "distributor is killed");
 
         _distribute(_token, _id);
@@ -339,7 +339,7 @@ contract PoolProxy is ReentrancyGuard {
         uint256[20] memory _ids
     ) external nonReentrant {
         //any EOA
-        assert(tx.origin == msg.sender);
+        require(tx.origin == msg.sender);
         require(!distributor_kill, "distribution killed");
 
         for (uint256 i; i < 20;) {
