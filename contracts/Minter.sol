@@ -28,8 +28,6 @@ contract Minter is ReentrancyGuard {
     IGaugeController public gauge_controller;
     IEmergencyMintModule public emergency_module;
 
-    
-
     // user -> gauge -> value
     mapping(address => mapping(address => uint256)) public minted; //INSURE minted amount of user from specific gauge.
 
@@ -72,21 +70,20 @@ contract Minter is ReentrancyGuard {
         }
     }
 
+    /***
+     *@notice Mint everything which belongs to `msg.sender` and send to them
+     *@param gauge_addr `LiquidityGauge` address to get mintable amount from
+     */
     function mint(address gauge_addr) external nonReentrant {
-        /***
-         *@notice Mint everything which belongs to `msg.sender` and send to them
-         *@param gauge_addr `LiquidityGauge` address to get mintable amount from
-         */
-
         _mint_for(gauge_addr, msg.sender);
     }
 
+    /***
+     *@notice Mint everything which belongs to `msg.sender` across multiple gauges
+     *@param gauge_addrs List of `LiquidityGauge` addresses
+     *@dev address[8]: 8 has randomly decided and has no meaning.
+     */
     function mint_many(address[8] memory gauge_addrs) external nonReentrant {
-        /***
-         *@notice Mint everything which belongs to `msg.sender` across multiple gauges
-         *@param gauge_addrs List of `LiquidityGauge` addresses
-         *@dev address[8]: 8 has randomly decided and has no meaning.
-         */
 
         for (uint256 i; i < 8;) {
             if (gauge_addrs[i] == address(0)) {
@@ -99,25 +96,23 @@ contract Minter is ReentrancyGuard {
         }
     }
 
+    /***
+     *@notice Mint tokens for `_for`
+     *@dev Only possible when `msg.sender` has been approved via `toggle_approve_mint`
+     *@param gauge_addr `LiquidityGauge` address to get mintable amount from
+     *@param _for Address to mint to
+     */
     function mint_for(address gauge_addr, address _for) external nonReentrant {
-        /***
-         *@notice Mint tokens for `_for`
-         *@dev Only possible when `msg.sender` has been approved via `toggle_approve_mint`
-         *@param gauge_addr `LiquidityGauge` address to get mintable amount from
-         *@param _for Address to mint to
-         */
-
         if (allowed_to_mint_for[msg.sender][_for]) {
             _mint_for(gauge_addr, _for);
         }
     }
 
+    /***
+     *@notice allow `minting_user` to mint for `msg.sender`
+     *@param minting_user Address to toggle permission for
+     */
     function toggle_approve_mint(address minting_user) external {
-        /***
-         *@notice allow `minting_user` to mint for `msg.sender`
-         *@param minting_user Address to toggle permission for
-         */
-
         allowed_to_mint_for[minting_user][msg.sender] = !allowed_to_mint_for[
             minting_user
         ][msg.sender];
@@ -125,14 +120,14 @@ contract Minter is ReentrancyGuard {
 
     //-----------------emergency mint-----------------/
 
-    function set_emergency_mint_module(address _emergency_module) external onlyOwner{
+    function set_emergency_mint_module(address _emergency_module) external onlyOwner {
         emergency_module = IEmergencyMintModule(_emergency_module);
     }
 
+    /***
+     *@param mint_amount amount of INSURE to be minted
+     */
     function emergency_mint(uint256 _mint_amount) external {
-        /**
-         *@param mint_amount amount of INSURE to be minted
-         */
         require(msg.sender == address(emergency_module), "onlyOwner");
 
         //mint

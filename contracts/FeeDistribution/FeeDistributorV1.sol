@@ -1,4 +1,4 @@
-pragma solidity 0.8.10;
+pragma solidity 0.8 .10;
 
 /***
  *@title FeeDistributorV1
@@ -16,7 +16,7 @@ import "../Converters/ConverterV1-2.sol";
 import "../interfaces/dao/IDistributor.sol";
 
 interface BURN {
-    function burn(uint256 _value) external returns (bool);
+    function burn(uint256 _value) external returns(bool);
 }
 
 contract FeeDistributorV1 is IDistributor {
@@ -34,11 +34,11 @@ contract FeeDistributorV1 is IDistributor {
         converter = ConverterV1_2(_converter);
     }
 
-    function distribute(address _token) external override returns (bool) {
-        /***
-         *@notice Buy back INSURE by arbitrary token and burn.
-         *@param _token address of token to be used for exchange
-         */
+    /***
+     *@notice Buy back INSURE by arbitrary token and burn.
+     *@param _token address of token to be used for exchange
+     */
+    function distribute(address _token) external override returns(bool) {
 
         //collect _token.
         uint256 claimable = IERC20(_token).allowance(msg.sender, address(this));

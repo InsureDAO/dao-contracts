@@ -84,18 +84,17 @@ contract LiquidityGauge is ReentrancyGuard {
         _;
     }
 
+    /***
+     *@notice Contract constructor
+     *@param _lp_addr Liquidity Pool contract address
+     *@param _minter Minter contract address
+     *@param _admin Admin who can kill the gauge
+     */
     constructor(
         address _lp_addr,
         address _minter,
         address _ownership
     ) {
-        /***
-         *@notice Contract constructor
-         *@param _lp_addr Liquidity Pool contract address
-         *@param _minter Minter contract address
-         *@param _admin Admin who can kill the gauge
-         */
-
         assert(_lp_addr != address(0));
         assert(_minter != address(0));
 
@@ -111,19 +110,19 @@ contract LiquidityGauge is ReentrancyGuard {
         ownership = IOwnership(_ownership);
     }
 
+    /***
+     *@notice Calculate limits which depend on the amount of INSURE Token per-user.
+     *        Effectively it calculates working balances to apply amplification
+     *        of INSURE production by INSURE
+     *@param _addr User address
+     *@param _l User's amount of liquidity (LP tokens)
+     *@param _L Total amount of liquidity (LP tokens)
+     */
     function _update_liquidity_limit(
         address _addr,
         uint256 _l,
         uint256 _L
     ) internal {
-        /***
-         *@notice Calculate limits which depend on the amount of INSURE Token per-user.
-         *        Effectively it calculates working balances to apply amplification
-         *        of INSURE production by INSURE
-         *@param _addr User address
-         *@param _l User's amount of liquidity (LP tokens)
-         *@param _L Total amount of liquidity (LP tokens)
-         */
         // To be called after totalSupply is updated
         uint256 _voting_balance = voting_escrow.balanceOf(
             _addr,
@@ -171,18 +170,18 @@ contract LiquidityGauge is ReentrancyGuard {
         uint256 working_supply;
     }
 
+    /***
+     *@notice Checkpoint for a user
+     *@param _addr User address
+     *
+     *This function does,
+     *1. Calculate Iis for All: Calc and add Iis for every week. Iis only increses over time.
+     *2. Calculate Iu for _addr: Calc by (defferece between Iis(last time) and Iis(this time))* LP deposit amount of _addr(include INSURE locking boost)
+     *
+     * working_supply & working_balance = total_supply & total_balance with INSURE locking boost。
+     * Check whitepaper about Iis and Iu.
+     */
     function _checkpoint(address _addr) internal {
-        /***
-         *@notice Checkpoint for a user
-         *@param _addr User address
-         *
-         *This function does,
-         *1. Calculate Iis for All: Calc and add Iis for every week. Iis only increses over time.
-         *2. Calculate Iu for _addr: Calc by (defferece between Iis(last time) and Iis(this time))* LP deposit amount of _addr(include INSURE locking boost)
-         *
-         * working_supply & working_balance = total_supply & total_balance with INSURE locking boost。
-         * Check whitepaper about Iis and Iu.
-         */
         CheckPointParameters memory _st;
 
         _st.period = period;
@@ -278,17 +277,17 @@ contract LiquidityGauge is ReentrancyGuard {
         integrate_fraction[_addr] +=
             (_working_balance *
                 (_st.integrate_inv_supply - integrate_inv_supply_of[_addr])) /
-            10**18;
+            10 ** 18;
         integrate_inv_supply_of[_addr] = _st.integrate_inv_supply;
         integrate_checkpoint_of[_addr] = block.timestamp;
     }
 
-    function user_checkpoint(address _addr) external returns (bool) {
-        /***
-         *@notice Record a checkpoint for `_addr`
-         *@param _addr User address
-         *@return bool success
-         */
+    /***
+     *@notice Record a checkpoint for `_addr`
+     *@param _addr User address
+     *@return bool success
+     */
+    function user_checkpoint(address _addr) external returns(bool) {
         require(
             (msg.sender == _addr) || (msg.sender == address(minter)),
             "dev: unauthorized"
@@ -298,23 +297,23 @@ contract LiquidityGauge is ReentrancyGuard {
         return true;
     }
 
-    function claimable_tokens(address _addr) external returns (uint256) {
-        /***
-         *@notice Get the number of claimable tokens per user
-         *@dev This function should be manually changed to "view" in the ABI
-         *@return uint256 number of claimable tokens per user
-         */
+    /***
+     *@notice Get the number of claimable tokens per user
+     *@dev This function should be manually changed to "view" in the ABI
+     *@return uint256 number of claimable tokens per user
+     */
+    function claimable_tokens(address _addr) external returns(uint256) {
         _checkpoint(_addr);
         return (integrate_fraction[_addr] -
             minter.minted(_addr, address(this)));
     }
 
+    /***
+     *@notice Kick `_addr` for abusing their boost
+     *@dev Only if either they had another voting event, or their voting escrow lock expired
+     *@param _addr Address to kick
+     */
     function kick(address _addr) external {
-        /***
-         *@notice Kick `_addr` for abusing their boost
-         *@dev Only if either they had another voting event, or their voting escrow lock expired
-         *@param _addr Address to kick
-         */
         uint256 _t_last = integrate_checkpoint_of[_addr];
         uint256 _t_ve = voting_escrow.user_point_history__ts(
             _addr,
@@ -324,7 +323,7 @@ contract LiquidityGauge is ReentrancyGuard {
 
         require(
             voting_escrow.balanceOf(_addr, block.timestamp) == 0 ||
-                _t_ve > _t_last,
+            _t_ve > _t_last,
             "dev: kick not allowed"
         );
         require(
@@ -336,21 +335,21 @@ contract LiquidityGauge is ReentrancyGuard {
         _update_liquidity_limit(_addr, balanceOf[_addr], totalSupply);
     }
 
+    /***
+     *@notice Set whether `_addr` can deposit tokens for `msg.sender`
+     *@param _addr Address to set approval on
+     *@param can_deposit bool - can this account deposit for `msg.sender`?
+     */
     function set_approve_deposit(address _addr, bool can_deposit) external {
-        /***
-         *@notice Set whether `_addr` can deposit tokens for `msg.sender`
-         *@param _addr Address to set approval on
-         *@param can_deposit bool - can this account deposit for `msg.sender`?
-         */
         approved_to_deposit[_addr][msg.sender] = can_deposit;
     }
 
+    /***
+     *@notice Deposit `_value` LP tokens
+     *@param _value Number of tokens to deposit
+     *@param _addr Address to deposit for
+     */
     function deposit(uint256 _value, address _addr) external nonReentrant {
-        /***
-         *@notice Deposit `_value` LP tokens
-         *@param _value Number of tokens to deposit
-         *@param _addr Address to deposit for
-         */
         if (_addr != msg.sender) {
             require(approved_to_deposit[msg.sender][_addr], "Not approved");
         }
@@ -370,11 +369,11 @@ contract LiquidityGauge is ReentrancyGuard {
         emit Deposit(_addr, _value);
     }
 
+    /***
+     *@notice Withdraw `_value` LP tokens
+     *@param _value Number of tokens to withdraw
+     */
     function withdraw(uint256 _value) external nonReentrant {
-        /***
-         *@notice Withdraw `_value` LP tokens
-         *@param _value Number of tokens to withdraw
-         */
         _checkpoint(msg.sender);
 
         uint256 _balance = balanceOf[msg.sender] - _value;
@@ -389,15 +388,15 @@ contract LiquidityGauge is ReentrancyGuard {
         emit Withdraw(msg.sender, _value);
     }
 
-    function integrate_checkpoint() external view returns (uint256) {
+    function integrate_checkpoint() external view returns(uint256) {
         return period_timestamp[period];
     }
 
-    function kill_me() external onlyOwner{
+    function kill_me() external onlyOwner {
         is_killed = !is_killed;
     }
 
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+    function min(uint256 a, uint256 b) internal pure returns(uint256) {
         return a < b ? a : b;
     }
 }

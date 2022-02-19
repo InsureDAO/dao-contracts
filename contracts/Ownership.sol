@@ -49,23 +49,23 @@ contract Ownership is IOwnership {
         _;
     }
 
+        /***
+         *@notice Transfer ownership of GaugeController to `newOwner`
+         *@param newOwner Address to have ownership transferred to
+         */
     function commitTransferOwnership(address newOwner)
         external
         override
         onlyOwner
     {
-        /***
-         *@notice Transfer ownership of GaugeController to `newOwner`
-         *@param newOwner Address to have ownership transferred to
-         */
         _futureOwner = newOwner;
         emit CommitNewOwnership(newOwner);
     }
 
-    function acceptTransferOwnership() external override onlyFutureOwner {
         /***
          *@notice Accept a transfer of ownership
          */
+    function acceptTransferOwnership() external override onlyFutureOwner {
         _owner = msg.sender;
         _futureOwner = address(0);
         emit AcceptNewOwnership(msg.sender);
