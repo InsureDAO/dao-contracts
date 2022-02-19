@@ -317,7 +317,7 @@ contract InsureToken is IERC20 {
         uint256 _fromBalance = balanceOf[msg.sender];
         require(_fromBalance >= _value, "transfer amount exceeds balance");
         unchecked {
-            balanceOf[msg.sender] -= _value;
+            balanceOf[msg.sender] = _fromBalance - _value;
         }
         balanceOf[_to] += _value;
         emit Transfer(msg.sender, _to, _value);

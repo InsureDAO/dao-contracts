@@ -449,7 +449,7 @@ contract VotingEscrow is ReentrancyGuard {
             "Cannot add to expired lock."
         );
 
-        _deposit_for(msg.sender, _addr, _value, 0, locked[_addr], DEPOSIT_FOR_TYPE);
+        _deposit_for(msg.sender, _addr, _value, 0, _locked, DEPOSIT_FOR_TYPE);
     }
 
     /***
