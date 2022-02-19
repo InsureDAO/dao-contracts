@@ -133,7 +133,7 @@ contract Minter is ReentrancyGuard {
         /**
          *@param mint_amount amount of INSURE to be minted
          */
-        require(msg.sender == address(emergency_module), "dev: admin only");
+        require(msg.sender == address(emergency_module), "onlyOwner");
 
         //mint
         insure_token.emergency_mint(_mint_amount, address(emergency_module));

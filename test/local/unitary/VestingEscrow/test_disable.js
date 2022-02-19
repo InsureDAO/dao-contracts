@@ -65,7 +65,7 @@ describe('VestingEscrow', function() {
 
     describe("test_disable", function(){
         it("test_toggle_admin_only", async()=> {
-            await expect(vesting.connect(alice).toggle_disable(bob.address)).to.revertedWith("dev: admin only");
+            await expect(vesting.connect(alice).toggle_disable(bob.address)).to.revertedWith("onlyOwner");
         });
 
         it("test_disable_can_disable_admin_only", async()=> {

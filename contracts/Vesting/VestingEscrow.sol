@@ -130,7 +130,7 @@ contract VestingEscrow is ReentrancyGuard{
         /***
         *@notice Disable further flow of tokens and clawback the unvested part to admin
         */
-        require (msg.sender == admin, "dev: admin only");
+        require (msg.sender == admin, "onlyOwner");
     
         uint256 raggable = initial_locked[_target] - _total_vested_of(_target, block.timestamp); //all unvested token
  
@@ -154,7 +154,7 @@ contract VestingEscrow is ReentrancyGuard{
         *    of tokens which have already vested.
         *@param _recipient Address to disable or enable
         */
-        require (msg.sender == admin, "dev: admin only");
+        require (msg.sender == admin, "onlyOwner");
         require (can_disable, "Cannot disable");
         require (!is_ragged[_recipient], "is rugged");
 
@@ -292,7 +292,7 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Transfer ownership of GaugeController to `addr`
         *@param addr Address to have ownership transferred to
         */
-        require (msg.sender == admin, "dev: admin only");
+        require (msg.sender == admin, "onlyOwner");
         future_admin = addr;
         emit CommitOwnership(addr);
 
@@ -304,11 +304,10 @@ contract VestingEscrow is ReentrancyGuard{
         *@notice Accept a transfer of ownership
         *@return bool success
         */
-        require(address(msg.sender) == future_admin, "dev: future_admin only");
-
-        admin = future_admin;
-
-        emit AcceptOwnership(admin);
+        address _future_admin = future_admin;
+        require(address(msg.sender) == _future_admin, "onlyFutureOwner");
+        admin = _future_admin;
+        emit AcceptOwnership(_future_admin);
     }
 
     function min(uint256 a, uint256 b) internal pure returns (uint256) {
