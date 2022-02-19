@@ -70,6 +70,11 @@ contract VotingEscrow is ReentrancyGuard {
 
     event Supply(uint256 prevSupply, uint256 supply);
 
+    event commitWallet(address newSmartWalletChecker);
+    event applyWallet(address newSmartWalletChecker);
+    event commitCollateralManager(address newCollateralManager);
+    event applyCollateralManager(address newCollateralManager);
+
     uint256 constant WEEK = 7 * 86400; // all future times are rounded by week
     uint256 constant MAXTIME = 4 * 365 * 86400; // 4 years
     uint256 constant MULTIPLIER = 10 ** 18;
@@ -876,13 +881,18 @@ contract VotingEscrow is ReentrancyGuard {
      */
     function commit_smart_wallet_checker(address _addr) external onlyOwner {
         future_smart_wallet_checker = _addr;
+
+        emit commitWallet(_addr);
     }
 
     /***
      *@notice Apply setting external contract to check approved smart contract wallets
      */
     function apply_smart_wallet_checker() external onlyOwner {
-        smart_wallet_checker = future_smart_wallet_checker;
+        address _future_smart_wallet_checker = future_smart_wallet_checker;
+        smart_wallet_checker = _future_smart_wallet_checker;
+
+        emit commitWallet(_future_smart_wallet_checker);
     }
 
     /***
@@ -890,12 +900,17 @@ contract VotingEscrow is ReentrancyGuard {
      */
     function commit_collateral_manager(address _new_collateral_manager) external onlyOwner {
         future_collateral_manager = _new_collateral_manager;
+
+        emit commitCollateralManager(_new_collateral_manager);
     }
 
     /***
      *@notice Apply setting external contract to check user's collateral status
      */
     function apply_collateral_manager() external onlyOwner {
-        collateral_manager = future_collateral_manager;
+        address _future_collateral_manager = future_collateral_manager;
+        collateral_manager = _future_collateral_manager;
+
+        emit applyCollateralManager(_future_collateral_manager);
     }
 }
