@@ -640,10 +640,10 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     //CDS
-    function defund(address _cds, uint256 _amount) external {
+    function defund(address _cds, address _to, uint256 _amount) external {
         require(msg.sender == ownership_admin, "Access denied");
 
-        ICDSTemplate(_cds).defund(_amount);
+        ICDSTemplate(_cds).defund(_to, _amount);
     }
 
     //Vault
