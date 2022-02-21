@@ -605,6 +605,21 @@ contract PoolProxy is ReentrancyGuard {
         );
     }
 
+    function pool_apply_bounty(
+        address _pool,
+        uint256 _amount,
+        address _contributor,
+        uint256[] calldata _ids
+    ) external {
+        require(msg.sender == default_reporting_admin || msg.sender == reporting_admin[_pool], "Access denied");
+
+        IPoolTemplate(_pool).applyBounty(
+            _amount,
+            _contributor,
+            _ids
+        );
+    }
+
     //Index
     function index_set_leverage(address _index, uint256 _target) external {
         require(msg.sender == parameter_admin, "Access denied");
