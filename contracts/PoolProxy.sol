@@ -90,18 +90,18 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     //==================================[Fee Distributor]==================================//
+    /***
+     *@notice add new distributor.
+     *@dev distributor weight is 0 at the moment of addition.
+     *@param _token address of fee token
+     *@param _name FeeDistributor name
+     *@param _addr FeeDistributor address
+     */
     function add_distributor(
         address _token,
         string memory _name,
         address _addr
-    ) external returns (bool) {
-        /***
-         *@notice add new distributor.
-         *@dev distributor weight is 0 at the moment of addition.
-         *@param _token address of fee token
-         *@param _name FeeDistributor name
-         *@param _addr FeeDistributor address
-         */
+    ) external returns(bool) {
         require(msg.sender == ownership_admin, "only ownership admin");
         require(_token != address(0), "_token cannot be zero address");
 
@@ -116,15 +116,15 @@ contract PoolProxy is ReentrancyGuard {
         return true;
     }
 
+    /***
+     *@notice overwrites new distributor to distributor already existed;
+     *@dev new distributor takes over the old distributor's weight and distributable state;
+     */
     function _set_distributor(
         address _token,
         uint256 _id,
         Distributor memory _distributor
     ) internal {
-        /***
-         *@notice overwrites new distributor to distributor already existed;
-         *@dev new distributor takes over the old distributor's weight and distributable state;
-         */
         require(_id < n_distributors[_token], "distributor not added yet");
 
         //if Distributor set to ZERO_ADDRESS, set the weight to 0.
@@ -135,20 +135,20 @@ contract PoolProxy is ReentrancyGuard {
         distributors[_token][_id] = _distributor;
     }
 
+    /***
+     *@notice Set new distributor or name or both.
+     *@dev id has to be added already.
+     *@param _token Fee Token address
+     *@param _id Distributor id
+     *@param _name Distributor name
+     *@param _distributor Distributor address
+     */
     function set_distributor(
         address _token,
         uint256 _id,
         string memory _name,
         address _distributor
     ) external {
-        /***
-         *@notice Set new distributor or name or both.
-         *@dev id has to be added already.
-         *@param _token Fee Token address
-         *@param _id Distributor id
-         *@param _name Distributor name
-         *@param _distributor Distributor address
-         */
         require(msg.sender == ownership_admin, "only ownership admin");
 
         Distributor memory new_distributor = Distributor(_name, _distributor);
@@ -156,17 +156,17 @@ contract PoolProxy is ReentrancyGuard {
         _set_distributor(_token, _id, new_distributor);
     }
 
+    /***
+     *@notice set new weight to a distributor
+     *@param _token fee token address
+     *@param _id distributor id
+     *@param _weight new weight of the distributor
+     */
     function _set_distributor_weight(
         address _token,
         uint256 _id,
         uint256 _weight
     ) internal {
-        /***
-         *@notice set new weight to a distributor
-         *@param _token fee token address
-         *@param _id distributor id
-         *@param _weight new weight of the distributor
-         */
         require(_id < n_distributors[_token], "distributor not added yet");
         require(
             distributors[_token][_id].addr != address(0),
@@ -181,17 +181,17 @@ contract PoolProxy is ReentrancyGuard {
         total_weights[_token] = total_weights[_token] + new_weight - old_weight;
     }
 
+    /***
+     *@notice set new weight to a distributor
+     *@param _token fee token address
+     *@param _id distributor id
+     *@param _weight new weight of the distributor
+     */
     function set_distributor_weight(
         address _token,
         uint256 _id,
         uint256 _weight
-    ) external returns (bool) {
-        /***
-         *@notice set new weight to a distributor
-         *@param _token fee token address
-         *@param _id distributor id
-         *@param _weight new weight of the distributor
-         */
+    ) external returns(bool) {
         require(msg.sender == parameter_admin, "only parameter admin");
 
         _set_distributor_weight(_token, _id, _weight);
@@ -199,18 +199,18 @@ contract PoolProxy is ReentrancyGuard {
         return true;
     }
 
+    /***
+     *@notice set new weights to distributors[20]
+     *@param _tokens fee token addresses[20]
+     *@param _ids distributor ids[20]
+     *@param _weights new weights of the distributors[20]
+     *@dev [20] 20 is ramdomly decided and has no meaning.
+     */
     function set_distributor_weight_many(
         address[20] memory _tokens,
         uint256[20] memory _ids,
         uint256[20] memory _weights
     ) external {
-        /***
-         *@notice set new weights to distributors[20]
-         *@param _tokens fee token addresses[20]
-         *@param _ids distributor ids[20]
-         *@param _weights new weights of the distributors[20]
-         *@dev [20] 20 is ramdomly decided and has no meaning.
-         */
         require(msg.sender == parameter_admin, "only parameter admin");
 
         for (uint256 i; i < 20;) {
@@ -224,39 +224,37 @@ contract PoolProxy is ReentrancyGuard {
         }
     }
 
+    /***
+     *@notice Get Function for distributor's name
+     *@param _token fee token address
+     *@param _id distributor id
+     */
     function get_distributor_name(address _token, uint256 _id)
-        external
-        view
-        returns (string memory)
-    {
-        /***
-         *@notice Get Function for distributor's name
-         *@param _token fee token address
-         *@param _id distributor id
-         */
+    external
+    view
+    returns(string memory) {
         return distributors[_token][_id].name;
     }
 
+    /***
+     *@notice Get Function for distributor's address
+     *@param _token fee token address
+     *@param _id distributor id
+     */
     function get_distributor_address(address _token, uint256 _id)
-        external
-        view
-        returns (address)
-    {
-        /***
-         *@notice Get Function for distributor's address
-         *@param _token fee token address
-         *@param _id distributor id
-         */
+    external
+    view
+    returns(address) {
         return distributors[_token][_id].addr;
     }
 
     //==================================[Fee Distribution]==================================//
+    /***
+     *@notice Withdraw admin fees from `_vault`
+     *@dev any account can execute this function
+     *@param _token fee token address to withdraw and allocate to the token's distributors
+     */
     function withdraw_admin_fee(address _token) external nonReentrant {
-        /***
-         *@notice Withdraw admin fees from `_vault`
-         *@dev any account can execute this function
-         *@param _token fee token address to withdraw and allocate to the token's distributors
-         */
         require(_token != address(0), "_token cannot be zero address");
 
         address _vault = IParameters(parameters).getVault(_token); //dev: revert when parameters not set
@@ -299,12 +297,12 @@ contract PoolProxy is ReentrancyGuard {
     }
     */
 
+    /***
+     *@notice distribute accrued `_token` via a preset distributor
+     *@param _token fee token to be distributed
+     *@param _id distributor id
+     */
     function _distribute(address _token, uint256 _id) internal {
-        /***
-         *@notice distribute accrued `_token` via a preset distributor
-         *@param _token fee token to be distributed
-         *@param _id distributor id
-         */
         require(_id < n_distributors[_token], "distributor not added yet");
 
         address _addr = distributors[_token][_id].addr;
@@ -318,31 +316,30 @@ contract PoolProxy is ReentrancyGuard {
         );
     }
 
+    /***
+     *@notice distribute accrued `_token` via a preset distributor
+     *@dev Only callable by an EOA to prevent
+     *@param _token fee token to be distributed
+     *@param _id distributor id
+     */
     function distribute(address _token, uint256 _id) external nonReentrant {
-        /***
-         *@notice distribute accrued `_token` via a preset distributor
-         *@dev Only callable by an EOA to prevent
-         *@param _token fee token to be distributed
-         *@param _id distributor id
-         */
-        assert(tx.origin == msg.sender); //only EOA
+        require(tx.origin == msg.sender); //only EOA
         require(!distributor_kill, "distributor is killed");
 
         _distribute(_token, _id);
     }
 
+    /***
+     *@notice distribute accrued admin fees from multiple coins
+     *@dev Only callable by an EOA to prevent flashloan exploits
+     *@param _id List of distributor id
+     */
     function distribute_many(
         address[20] memory _tokens,
         uint256[20] memory _ids
     ) external nonReentrant {
         //any EOA
-        /***
-         *@notice distribute accrued admin fees from multiple coins
-         *@dev Only callable by an EOA to prevent flashloan exploits
-         *@param _id List of distributor id
-         */
-
-        assert(tx.origin == msg.sender);
+        require(tx.origin == msg.sender);
         require(!distributor_kill, "distribution killed");
 
         for (uint256 i; i < 20;) {
@@ -356,11 +353,11 @@ contract PoolProxy is ReentrancyGuard {
         }
     }
 
+    /***
+    @notice Kill or unkill `distribute` functionality
+    @param _is_killed Distributor kill status
+    */
     function set_distributor_kill(bool _is_killed) external {
-        /***
-        @notice Kill or unkill `distribute` functionality
-        @param _is_killed Distributor kill status
-        */
         require(
             msg.sender == emergency_admin || msg.sender == ownership_admin,
             "Access denied"
@@ -390,10 +387,10 @@ contract PoolProxy is ReentrancyGuard {
         emit CommitAdmins(_o_admin, _p_admin, _e_admin);
     }
 
+    /***
+     *@notice Accept the effects of `commit_set_admins`
+     */
     function accept_set_admins() external {
-        /***
-         *@notice Accept the effects of `commit_set_admins`
-         */
         require(msg.sender == future_ownership_admin, "Access denied");
 
         ownership_admin = future_ownership_admin;
@@ -404,12 +401,12 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     //==================================[Reporting Module]==================================//
+    /***
+     *@notice Set reporting admin to `_r_admin`
+     *@param _pool Target address
+     *@param _r_admin Reporting admin
+     */
     function commit_set_default_reporting_admin(address _r_admin) external {
-        /***
-         *@notice Set reporting admin to `_r_admin`
-         *@param _pool Target address
-         *@param _r_admin Reporting admin
-         */
         require(msg.sender == ownership_admin, "Access denied");
 
         future_default_reporting_admin = _r_admin;
@@ -417,10 +414,10 @@ contract PoolProxy is ReentrancyGuard {
         emit CommitDefaultReportingAdmin(future_default_reporting_admin);
     }
 
+    /***
+     *@notice Accept the effects of `commit_set_default_reporting_admin`
+     */
     function accept_set_default_reporting_admin() external {
-        /***
-         *@notice Accept the effects of `commit_set_default_reporting_admin`
-         */
         require(msg.sender == future_default_reporting_admin, "Access denied");
 
         default_reporting_admin = future_default_reporting_admin;
@@ -428,17 +425,16 @@ contract PoolProxy is ReentrancyGuard {
         emit AcceptDefaultReportingAdmin(default_reporting_admin);
     }
 
+    /***
+     *@notice set arbitrary reporting module for specific _pool.
+     *@notice "ownership_admin" or "default_reporting_admin" can execute this function.
+     */
     function set_reporting_admin(address _pool, address _reporter)
-        external
-        returns (bool)
-    {
-        /***
-         *@notice set arbitrary reporting module for specific _pool.
-         *@notice "ownership_admin" or "default_reporting_admin" can execute this function.
-         */
+    external
+    returns(bool) {
         require(
             address(msg.sender) == ownership_admin ||
-                address(msg.sender) == default_reporting_admin,
+            address(msg.sender) == default_reporting_admin,
             "Access denied"
         );
 
@@ -449,15 +445,15 @@ contract PoolProxy is ReentrancyGuard {
         return true;
     }
 
-    function get_reporter(address _pool) public view returns (address) {
-        /***
-         *@notice get reporting module set for the _pool. If none is set, default_reporting_admin will be returned.
-         *@dev public function
-         */
+    /***
+     *@notice get reporting module set for the _pool. If none is set, default_reporting_admin will be returned.
+     *@dev public function
+     */
+    function get_reporter(address _pool) public view returns(address) {
 
-        address reporter = reporting_admin[_pool] != address(0)
-            ? reporting_admin[_pool]
-            : default_reporting_admin;
+        address reporter = reporting_admin[_pool] != address(0) ?
+            reporting_admin[_pool] :
+            default_reporting_admin;
 
         return reporter;
     }
@@ -469,8 +465,7 @@ contract PoolProxy is ReentrancyGuard {
      */
     //ownership
     function ownership_accept_transfer_ownership(address _ownership_contract)
-        external
-    {
+    external {
         require(msg.sender == ownership_admin, "Access denied");
 
         IOwnership(_ownership_contract).acceptTransferOwnership();
@@ -540,7 +535,7 @@ contract PoolProxy is ReentrancyGuard {
         string memory _metaData,
         uint256[] memory _conditions,
         address[] memory _references
-    ) external returns (address) {
+    ) external returns(address) {
         require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
@@ -581,8 +576,7 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     function pm_change_metadata(address _pool, string calldata _metadata)
-        external
-    {
+    external {
         require(msg.sender == parameter_admin, "Access denied");
         IUniversalMarket(_pool).changeMetadata(_metadata);
     }
@@ -653,8 +647,7 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     function vault_set_controller(address _vault, address _controller)
-        external
-    {
+    external {
         require(msg.sender == ownership_admin, "Access denied");
         IVault(_vault).setController(_controller);
     }
@@ -781,16 +774,14 @@ contract PoolProxy is ReentrancyGuard {
 
     //Registry
     function registry_set_factory(address _registry, address _factory)
-        external
-    {
+    external {
         require(msg.sender == ownership_admin, "Access denied");
 
         IRegistry(_registry).setFactory(_factory);
     }
 
     function registry_support_market(address _registry, address _market)
-        external
-    {
+    external {
         require(msg.sender == ownership_admin, "Access denied");
 
         IRegistry(_registry).supportMarket(_market);

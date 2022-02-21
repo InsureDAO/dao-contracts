@@ -60,15 +60,15 @@ contract InsureToken is IERC20 {
     uint256 constant INITIAL_SUPPLY = 126_000_000; //will be vested
     uint256 constant RATE_REDUCTION_TIME = YEAR;
     uint256[6] public RATES = [
-        (28_000_000 * 10**18) / YEAR, //epoch 0
-        (22_400_000 * 10**18) / YEAR, //epoch 1
-        (16_800_000 * 10**18) / YEAR, //epoch 2
-        (11_200_000 * 10**18) / YEAR, //epoch 3
-        (5_600_000 * 10**18) / YEAR, //epoch 4
-        (2_800_000 * 10**18) / YEAR //epoch 5~
+        (28_000_000 * 10 ** 18) / YEAR, //epoch 0
+        (22_400_000 * 10 ** 18) / YEAR, //epoch 1
+        (16_800_000 * 10 ** 18) / YEAR, //epoch 2
+        (11_200_000 * 10 ** 18) / YEAR, //epoch 3
+        (5_600_000 * 10 ** 18) / YEAR, //epoch 4
+        (2_800_000 * 10 ** 18) / YEAR //epoch 5~
     ];
 
-    uint256 constant RATE_DENOMINATOR = 10**18;
+    uint256 constant RATE_DENOMINATOR = 10 ** 18;
     uint256 constant INFLATION_DELAY = 86400;
 
     // Supply variables
@@ -88,13 +88,13 @@ contract InsureToken is IERC20 {
         _;
     }
 
-    constructor(string memory _name, string memory _symbol, address _ownership) {
-        /***
-         * @notice Contract constructor
-         * @param _name Token full name
-         * @param _symbol Token symbol
-         */
 
+    /***
+     * @notice Contract constructor
+     * @param _name Token full name
+     * @param _symbol Token symbol
+     */
+    constructor(string memory _name, string memory _symbol, address _ownership) {
         uint256 _init_supply = INITIAL_SUPPLY * RATE_DENOMINATOR;
         name = _name;
         symbol = _symbol;
@@ -114,11 +114,11 @@ contract InsureToken is IERC20 {
         start_epoch_supply = _init_supply;
     }
 
+    /***
+     *@dev Update mining rate and supply at the start of the epoch
+     *     Any modifying mining call must also call this
+     */
     function _update_mining_parameters() internal {
-        /***
-         *@dev Update mining rate and supply at the start of the epoch
-         *     Any modifying mining call must also call this
-         */
         uint256 _rate = rate;
         uint256 _start_epoch_supply = start_epoch_supply;
 
@@ -147,12 +147,12 @@ contract InsureToken is IERC20 {
         );
     }
 
+    /***
+     * @notice Update mining rate and supply at the start of the epoch
+     * @dev Callable by any address, but only once per epoch
+     *     Total supply becomes slightly larger if this function is called late
+     */
     function update_mining_parameters() external {
-        /***
-         * @notice Update mining rate and supply at the start of the epoch
-         * @dev Callable by any address, but only once per epoch
-         *     Total supply becomes slightly larger if this function is called late
-         */
         require(
             block.timestamp >= start_epoch_time + RATE_REDUCTION_TIME,
             "dev: too soon!"
@@ -160,12 +160,13 @@ contract InsureToken is IERC20 {
         _update_mining_parameters();
     }
 
-    function start_epoch_time_write() external returns (uint256) {
-        /***
-         *@notice Get timestamp of the current mining epoch start
-         *        while simultaneously updating mining parameters
-         *@return Timestamp of the epoch
-         */
+    /***
+     *@notice Get timestamp of the current mining epoch start
+     *        while simultaneously updating mining parameters
+     *@return Timestamp of the epoch
+     */
+    function start_epoch_time_write() external returns(uint256) {
+
         uint256 _start_epoch_time = start_epoch_time;
         if (block.timestamp >= _start_epoch_time + RATE_REDUCTION_TIME) {
             _update_mining_parameters();
@@ -175,13 +176,12 @@ contract InsureToken is IERC20 {
         }
     }
 
-    function future_epoch_time_write() external returns (uint256) {
-        /***
-         *@notice Get timestamp of the next mining epoch start
-         *        while simultaneously updating mining parameters
-         *@return Timestamp of the next epoch
-         */
-
+    /***
+     *@notice Get timestamp of the next mining epoch start
+     *        while simultaneously updating mining parameters
+     *@return Timestamp of the next epoch
+     */
+    function future_epoch_time_write() external returns(uint256) {
         uint256 _start_epoch_time = start_epoch_time;
         if (block.timestamp >= _start_epoch_time + RATE_REDUCTION_TIME) {
             _update_mining_parameters();
@@ -191,31 +191,30 @@ contract InsureToken is IERC20 {
         }
     }
 
-    function _available_supply() internal view returns (uint256) {
+    function _available_supply() internal view returns(uint256) {
         return
-            start_epoch_supply +
+        start_epoch_supply +
             ((block.timestamp - start_epoch_time) * rate) +
             emergency_minted;
     }
 
-    function available_supply() external view returns (uint256) {
-        /***
-         *@notice Current number of tokens in existence (claimed or unclaimed)
-         */
+    /***
+     *@notice Current number of tokens in existence (claimed or unclaimed)
+     */
+    function available_supply() external view returns(uint256) {
         return _available_supply();
     }
 
+    /***
+     *@notice How much supply is mintable from start timestamp till end timestamp
+     *@param start Start of the time interval (timestamp)
+     *@param end End of the time interval (timestamp)
+     *@return Tokens mintable from `start` till `end`
+     */
     function mintable_in_timeframe(uint256 start, uint256 end)
-        external
-        view
-        returns (uint256)
-    {
-        /***
-         *@notice How much supply is mintable from start timestamp till end timestamp
-         *@param start Start of the time interval (timestamp)
-         *@param end End of the time interval (timestamp)
-         *@return Tokens mintable from `start` till `end`
-         */
+    external
+    view
+    returns(uint256) {
         require(start <= end, "dev: start > end");
         uint256 _to_mint = 0;
 
@@ -265,12 +264,12 @@ contract InsureToken is IERC20 {
 
             _current_epoch_time -= RATE_REDUCTION_TIME;
 
-            if(_current_epoch == 0){
+            if (_current_epoch == 0) {
                 _current_rate = 0;
-            }else{
-                _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch)-1] : RATES[5];
+            } else {
+                _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch) - 1] : RATES[5];
             }
-            
+
             _current_epoch -= 1;
 
             assert(_current_rate <= RATES[0]); // This should never happen
@@ -281,68 +280,65 @@ contract InsureToken is IERC20 {
         return _to_mint;
     }
 
-    function totalSupply() external view override returns (uint256) {
-        /***
-         *@notice Total number of tokens in existence.
-         */
+    /***
+     *@notice Total number of tokens in existence.
+     */
+    function totalSupply() external view override returns(uint256) {
         return total_supply;
     }
 
+    /***
+     *@notice Check the amount of tokens that an owner allowed to a spender
+     *@param _owner The address which owns the funds
+     *@param _spender The address which will spend the funds
+     *@return uint256 specifying the amount of tokens still available for the spender
+     */
     function allowance(address _owner, address _spender)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        /***
-         *@notice Check the amount of tokens that an owner allowed to a spender
-         *@param _owner The address which owns the funds
-         *@param _spender The address which will spend the funds
-         *@return uint256 specifying the amount of tokens still available for the spender
-         */
+    external
+    view
+    override
+    returns(uint256) {
         return allowances[_owner][_spender];
     }
 
+    /***
+     *@notice Transfer `_value` tokens from `msg.sender` to `_to`
+     *@dev Vyper does not allow underflows, so the subtraction in
+     *     this function will revert on an insufficient balance
+     *@param _to The address to transfer to
+     *@param _value The amount to be transferred
+     *@return bool success
+     */
     function transfer(address _to, uint256 _value)
-        external
-        override
-        returns (bool)
-    {
-        /***
-         *@notice Transfer `_value` tokens from `msg.sender` to `_to`
-         *@dev Vyper does not allow underflows, so the subtraction in
-         *     this function will revert on an insufficient balance
-         *@param _to The address to transfer to
-         *@param _value The amount to be transferred
-         *@return bool success
-         */
+    external
+    override
+    returns(bool) {
         require(_to != address(0), "transfers to 0x0 are not allowed");
         uint256 _fromBalance = balanceOf[msg.sender];
         require(_fromBalance >= _value, "transfer amount exceeds balance");
         unchecked {
-            balanceOf[msg.sender] -= _value;
+            balanceOf[msg.sender] = _fromBalance - _value;
         }
         balanceOf[_to] += _value;
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
+    /***
+     * @notice Transfer `_value` tokens from `_from` to `_to`
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     * @return bool success
+     */
     function transferFrom(
         address _from,
         address _to,
         uint256 _value
-    ) external override returns (bool) {
-        /***
-         * @notice Transfer `_value` tokens from `_from` to `_to`
-         * @param _from address The address which you want to send tokens from
-         * @param _to address The address which you want to transfer to
-         * @param _value uint256 the amount of tokens to be transferred
-         * @return bool success
-         */
-         
+    ) external override returns(bool) {
         require(_from != address(0), "transfer from the zero address");
         require(_to != address(0), "transfer to the zero address");
-        
+
         uint256 currentAllowance = allowances[_from][msg.sender];
         require(currentAllowance >= _value, "transfer amount exceeds allow");
         unchecked {
@@ -371,25 +367,23 @@ contract InsureToken is IERC20 {
         emit Approval(owner, spender, amount);
     }
 
+    /**
+     *@notice Approve `_spender` to transfer `_value` tokens on behalf of `msg.sender`
+     *@param _spender The address which will spend the funds
+     *@param _value The amount of tokens to be spent
+     *@return bool success
+     */
     function approve(address _spender, uint256 _value)
-        external
-        override
-        returns (bool)
-    {
-        /**
-         *@notice Approve `_spender` to transfer `_value` tokens on behalf of `msg.sender`
-         *@param _spender The address which will spend the funds
-         *@param _value The amount of tokens to be spent
-         *@return bool success
-         */
+    external
+    override
+    returns(bool) {
         _approve(msg.sender, _spender, _value);
         return true;
     }
 
     function increaseAllowance(address _spender, uint256 addedValue)
-        external
-        returns (bool)
-    {
+    external
+    returns(bool) {
         _approve(
             msg.sender,
             _spender,
@@ -400,9 +394,8 @@ contract InsureToken is IERC20 {
     }
 
     function decreaseAllowance(address _spender, uint256 subtractedValue)
-        external
-        returns (bool)
-    {
+    external
+    returns(bool) {
         uint256 currentAllowance = allowances[msg.sender][_spender];
         require(
             currentAllowance >= subtractedValue,
@@ -415,14 +408,14 @@ contract InsureToken is IERC20 {
         return true;
     }
 
-    function mint(address _to, uint256 _value) external returns (bool) {
-        /***
-         *@notice Mint `_value` tokens and assign them to `_to`
-         *@dev Emits a Transfer event originating from 0x00
-         *@param _to The account that will receive the created tokens
-         *@param _value The amount that will be created
-         *@return bool success
-         */
+    /***
+     *@notice Mint `_value` tokens and assign them to `_to`
+     *@dev Emits a Transfer event originating from 0x00
+     *@param _to The account that will receive the created tokens
+     *@param _value The amount that will be created
+     *@return bool success
+     */
+    function mint(address _to, uint256 _value) external returns(bool) {
         require(msg.sender == minter, "dev: minter only");
         require(_to != address(0), "dev: zero address");
 
@@ -447,13 +440,13 @@ contract InsureToken is IERC20 {
         emit Transfer(address(0), _to, _value);
     }
 
-    function burn(uint256 _value) external returns (bool) {
-        /**
-         *@notice Burn `_value` tokens belonging to `msg.sender`
-         *@dev Emits a Transfer event with a destination of 0x00
-         *@param _value The amount that will be burned
-         *@return bool success
-         */
+    /**
+     *@notice Burn `_value` tokens belonging to `msg.sender`
+     *@dev Emits a Transfer event with a destination of 0x00
+     *@param _value The amount that will be burned
+     *@return bool success
+     */
+    function burn(uint256 _value) external returns(bool) {
         require(
             balanceOf[msg.sender] >= _value,
             "_value > balanceOf[msg.sender]"
@@ -468,23 +461,23 @@ contract InsureToken is IERC20 {
         return true;
     }
 
-    function set_name(string memory _name, string memory _symbol) external onlyOwner{
-        /***
-         *@notice Change the token name and symbol to `_name` and `_symbol`
-         *@dev Only callable by the admin account
-         *@param _name New token name
-         *@param _symbol New token symbol
-         */
+    /***
+     *@notice Change the token name and symbol to `_name` and `_symbol`
+     *@dev Only callable by the admin account
+     *@param _name New token name
+     *@param _symbol New token symbol
+     */
+    function set_name(string memory _name, string memory _symbol) external onlyOwner {
         name = _name;
         symbol = _symbol;
     }
 
-    function set_minter(address _minter) external onlyOwner{
-        /***
-         *@notice Set the minter address
-         *@dev Only callable once, when minter has not yet been set
-         *@param _minter Address of the minter
-         */
+    /***
+     *@notice Set the minter address
+     *@dev Only callable once, when minter has not yet been set
+     *@param _minter Address of the minter
+     */
+    function set_minter(address _minter) external onlyOwner {
         require(
             minter == address(0),
             "can set the minter at creation"
@@ -493,12 +486,12 @@ contract InsureToken is IERC20 {
         emit SetMinter(_minter);
     }
 
-    function set_rate(uint256 _rate)external onlyOwner{
-        /***
-         *@notice Set the new rate for the infration after 5 years.
-         *@dev input must be the number of INSURE to be minted per second.
-         *@param _rate mint amount per second
-         */
+    /***
+     *@notice Set the new rate for the infration after 5 years.
+     *@dev input must be the number of INSURE to be minted per second.
+     *@param _rate mint amount per second
+     */
+    function set_rate(uint256 _rate) external onlyOwner {
         require(_rate < RATES[5], "Decrease Only");
 
         RATES[5] = _rate;
@@ -506,18 +499,15 @@ contract InsureToken is IERC20 {
         emit SetRate(_rate);
     }
 
-
-
+    /***
+     * @notice Emergency minting only when CDS couldn't afford the insolvency.
+     * @dev
+     * @param _amountOut token amount needed. token is defiend whithin converter.
+     * @param _to CDS address
+     */
     function emergency_mint(uint256 _amount, address _to)
-        external
-        returns (bool)
-    {
-        /***
-         * @notice Emergency minting only when CDS couldn't afford the insolvency.
-         * @dev
-         * @param _amountOut token amount needed. token is defiend whithin converter.
-         * @param _to CDS address
-         */
+    external
+    returns(bool) {
         require(msg.sender == minter, "dev: minter only");
         //mint
         emergency_minted += _amount;

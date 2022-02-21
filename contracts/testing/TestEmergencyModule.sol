@@ -18,14 +18,14 @@ contract TestEmergencyModule{
 
   function mint(uint256 mint_amount) external{
     //mint INSURE token
-    require (msg.sender == admin, "dev: admin only");
+    require (msg.sender == admin, "onlyOwner");
 
     Minter(minter).emergency_mint(mint_amount);
   }
 
   function repayDebt(uint256 amount)external{
     //repay with USDC
-    require (msg.sender == admin, "dev: admin only");
+    require (msg.sender == admin, "onlyOwner");
 
     IVault(vault).repayDebt(amount, address(0));
   }

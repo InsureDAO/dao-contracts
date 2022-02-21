@@ -48,7 +48,7 @@ contract TestToken is IERC20{
         *@param _value The amount to be transferred
         *@return bool success
         */
-        assert(_to != address(0)); // dev: transfers to 0x0 are not allowed
+        require(_to != address(0)); // dev: transfers to 0x0 are not allowed
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
         emit Transfer(msg.sender, _to, _value);
@@ -90,7 +90,7 @@ contract TestToken is IERC20{
     }
 
     function _burn(address _to, uint256 _value)internal {
-        assert(_to != address(0));
+        require(_to != address(0));
 
         total_supply = total_supply.sub(_value);
         balanceOf[_to] = balanceOf[_to].sub(_value);

@@ -109,7 +109,7 @@ describe('VestingEscrow', function() {
         });
 
         it("test_rugpull_admin_only", async()=> {
-            await expect(vesting.connect(alice).rug_pull(alice.address)).to.revertedWith("dev: admin only");
+            await expect(vesting.connect(alice).rug_pull(alice.address)).to.revertedWith("onlyOwner");
         });
 
         it("test_cannot_toggle_disable_after_rugpull", async()=> {
