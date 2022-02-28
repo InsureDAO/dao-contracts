@@ -121,7 +121,7 @@ describe("GaugeController", function () {
 
   describe("test_gauges_weights", function () {
 
-    it("test_add_type_afterword", async() => {
+    it.skip("test_add_type_afterword", async() => {
       await gauge_controller.add_gauge(lg1.address, 1, ten_to_the_19);
 
       //1: 0
@@ -154,6 +154,55 @@ describe("GaugeController", function () {
       console.log((await gauge_controller.gauge_relative_weight(lg1.address, 0)).toString())
       //Single Staking: 800000000000000000
       console.log((await gauge_controller.gauge_relative_weight(lg2.address, 0)).toString())
+
+      await lg1.kill_me();
+      await gauge_controller.checkpoint_gauge(lg1.address)
+
+      console.log("killed")
+
+      console.log((await gauge_controller.gauge_relative_weight(lg1.address, 0)).toString())
+    })
+
+    it("pause_and_start", async() => {
+      await gauge_controller.add_gauge(lg1.address, 1, ten_to_the_19);
+
+      //deposit
+      let deposit_amount = BigNumber.from("1000000")
+      await mock_lp_token.transfer(alice.address, deposit_amount)
+      await mock_lp_token.connect(alice).approve(lg1.address, deposit_amount)
+      await lg1.connect(alice).deposit(deposit_amount, alice.address)
+
+      moveForwardPeriods(5)
+
+      await lg1.connect(alice).user_checkpoint(alice.address)
+      console.log((await lg1.integrate_fraction(alice.address)).toString())
+
+      //pause
+      await lg1.kill_me()
+
+      await lg1.connect(alice).user_checkpoint(alice.address)
+      let current = await lg1.integrate_fraction(alice.address)
+      console.log("current", current.toString())
+
+      moveForwardPeriods(2)
+
+      await lg1.connect(alice).user_checkpoint(alice.address)
+      let later = await lg1.integrate_fraction(alice.address)
+      console.log("later", later.toString())
+
+      //un-pause
+      await lg1.kill_me()
+
+      await lg1.connect(alice).user_checkpoint(alice.address)
+      let unpaused = await lg1.integrate_fraction(alice.address)
+      console.log(unpaused.toString())
+
+      moveForwardPeriods(10)
+
+      await lg1.connect(alice).user_checkpoint(alice.address)
+      let unpaused_later = await lg1.integrate_fraction(alice.address)
+      console.log(unpaused_later.toString())
+
     })
   });
 });
