@@ -216,7 +216,7 @@ contract LiquidityGauge is ReentrancyGuard {
                 );
             }
 
-            for (uint256 i; i < 500;) {
+            for (uint256 i; i < 500; ) {
                 uint256 _dt = _week_time - _prev_week_time;
                 uint256 _w = controller.gauge_relative_weight(
                     address(this),
@@ -277,7 +277,7 @@ contract LiquidityGauge is ReentrancyGuard {
         integrate_fraction[_addr] +=
             (_working_balance *
                 (_st.integrate_inv_supply - integrate_inv_supply_of[_addr])) /
-            10 ** 18;
+            10**18;
         integrate_inv_supply_of[_addr] = _st.integrate_inv_supply;
         integrate_checkpoint_of[_addr] = block.timestamp;
     }
@@ -287,7 +287,7 @@ contract LiquidityGauge is ReentrancyGuard {
      *@param _addr User address
      *@return bool success
      */
-    function user_checkpoint(address _addr) external returns(bool) {
+    function user_checkpoint(address _addr) external returns (bool) {
         require(
             (msg.sender == _addr) || (msg.sender == address(minter)),
             "dev: unauthorized"
@@ -302,7 +302,7 @@ contract LiquidityGauge is ReentrancyGuard {
      *@dev This function should be manually changed to "view" in the ABI
      *@return uint256 number of claimable tokens per user
      */
-    function claimable_tokens(address _addr) external returns(uint256) {
+    function claimable_tokens(address _addr) external returns (uint256) {
         _checkpoint(_addr);
         return (integrate_fraction[_addr] -
             minter.minted(_addr, address(this)));
@@ -323,7 +323,7 @@ contract LiquidityGauge is ReentrancyGuard {
 
         require(
             voting_escrow.balanceOf(_addr, block.timestamp) == 0 ||
-            _t_ve > _t_last,
+                _t_ve > _t_last,
             "dev: kick not allowed"
         );
         require(
@@ -388,7 +388,7 @@ contract LiquidityGauge is ReentrancyGuard {
         emit Withdraw(msg.sender, _value);
     }
 
-    function integrate_checkpoint() external view returns(uint256) {
+    function integrate_checkpoint() external view returns (uint256) {
         return period_timestamp[period];
     }
 
@@ -396,7 +396,7 @@ contract LiquidityGauge is ReentrancyGuard {
         is_killed = !is_killed;
     }
 
-    function min(uint256 a, uint256 b) internal pure returns(uint256) {
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
 }

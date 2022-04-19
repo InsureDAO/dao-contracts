@@ -23,13 +23,7 @@ describe("DevFeeForwarder", () => {
 
   before(async () => {
     [creator, alice, bob, chad, dad] = await ethers.getSigners();
-    addresses = [
-      creator.address,
-      alice.address,
-      bob.address,
-      chad.address,
-      dad.address,
-    ];
+    addresses = [creator.address, alice.address, bob.address, chad.address, dad.address];
     const Token = await ethers.getContractFactory("TestToken");
     const Distributor = await ethers.getContractFactory("CDSFeeForwarder");
 
@@ -56,16 +50,12 @@ describe("DevFeeForwarder", () => {
   describe("constructor()", function () {
     it("deploy should be reverted", async () => {
       const Distributor = await ethers.getContractFactory("CDSFeeForwarder");
-      await expect(
-        Distributor.deploy(ZERO_ADDRESS, alice.address)
-      ).to.revertedWith("zero address");
+      await expect(Distributor.deploy(ZERO_ADDRESS, alice.address)).to.revertedWith("zero address");
     });
 
     it("deploy should be reverted 2", async () => {
       const Distributor = await ethers.getContractFactory("CDSFeeForwarder");
-      await expect(
-        Distributor.deploy(token.address, ZERO_ADDRESS)
-      ).to.revertedWith("zero address");
+      await expect(Distributor.deploy(token.address, ZERO_ADDRESS)).to.revertedWith("zero address");
     });
   });
 
@@ -76,9 +66,7 @@ describe("DevFeeForwarder", () => {
 
       //creator has 1000, and approve 1000 to the dstr
       expect(await token.balanceOf(creator.address)).to.equal(1000);
-      expect(await token.allowance(creator.address, dstr.address)).to.equal(
-        1000
-      );
+      expect(await token.allowance(creator.address, dstr.address)).to.equal(1000);
       expect(await token.balanceOf(dstr.address)).to.equal(0);
       expect(await token.balanceOf(alice.address)).to.equal(0);
 
@@ -142,9 +130,7 @@ describe("DevFeeForwarder", () => {
     });
 
     it("test_distribute_success_no_claimable", async () => {
-      await expect(dstr.salvage(ZERO_ADDRESS, alice.address)).to.revertedWith(
-        "zero address"
-      );
+      await expect(dstr.salvage(ZERO_ADDRESS, alice.address)).to.revertedWith("zero address");
     });
   });
 });

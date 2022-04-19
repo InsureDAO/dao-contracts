@@ -34,25 +34,19 @@ contract Ownership is IOwnership {
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(
-            _owner == msg.sender,
-            "Caller is not allowed to operate"
-        );
+        require(_owner == msg.sender, "Caller is not allowed to operate");
         _;
     }
 
     modifier onlyFutureOwner() {
-        require(
-            _futureOwner == msg.sender,
-            "Caller is not allowed to operate"
-        );
+        require(_futureOwner == msg.sender, "Caller is not allowed to operate");
         _;
     }
 
-        /***
-         *@notice Transfer ownership of GaugeController to `newOwner`
-         *@param newOwner Address to have ownership transferred to
-         */
+    /***
+     *@notice Transfer ownership of GaugeController to `newOwner`
+     *@param newOwner Address to have ownership transferred to
+     */
     function commitTransferOwnership(address newOwner)
         external
         override
@@ -62,9 +56,9 @@ contract Ownership is IOwnership {
         emit CommitNewOwnership(newOwner);
     }
 
-        /***
-         *@notice Accept a transfer of ownership
-         */
+    /***
+     *@notice Accept a transfer of ownership
+     */
     function acceptTransferOwnership() external override onlyFutureOwner {
         _owner = msg.sender;
         _futureOwner = address(0);

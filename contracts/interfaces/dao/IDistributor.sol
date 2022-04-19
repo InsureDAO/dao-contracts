@@ -3,6 +3,5 @@
 pragma solidity 0.8.10;
 
 interface IDistributor {
-    function distribute(address _coin) external returns(bool);
-
+    function distribute(address _coin) external returns (bool);
 }

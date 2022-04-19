@@ -22,12 +22,8 @@ describe("Minter", function () {
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-  const MAX_UINT256 = BigNumber.from(
-    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-  );
-  const two_to_the_256_minus_1 = BigNumber.from("2")
-    .pow(BigNumber.from("256"))
-    .sub(BigNumber.from("1"));
+  const MAX_UINT256 = BigNumber.from("115792089237316195423570985008687907853269984665640564039457584007913129639935");
+  const two_to_the_256_minus_1 = BigNumber.from("2").pow(BigNumber.from("256")).sub(BigNumber.from("1"));
   const ten_to_the_21 = BigNumber.from("1000000000000000000000");
   const ten_to_the_20 = BigNumber.from("100000000000000000000");
   const ten_to_the_19 = BigNumber.from("10000000000000000000");
@@ -64,35 +60,14 @@ describe("Minter", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
 
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "iToken",
-      decimal,
-      ten_to_the_21
-    ); //Not using the actual InsureDAO contract
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "iToken", decimal, ten_to_the_21); //Not using the actual InsureDAO contract
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 
-    lg1 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
-    lg2 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
-    lg3 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    lg1 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
+    lg2 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
+    lg3 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
 
     three_gauges_contracts = [lg1, lg2, lg3];
     three_gauges = [lg1.address, lg2.address, lg3.address];
@@ -108,11 +83,7 @@ describe("Minter", function () {
 
     //add gauges
     for (let i = 0; i < 3; i++) {
-      await gauge_controller.add_gauge(
-        three_gauges[i],
-        GAUGE_TYPES[i],
-        GAUGE_WEIGHTS[i]
-      );
+      await gauge_controller.add_gauge(three_gauges[i], GAUGE_TYPES[i], GAUGE_WEIGHTS[i]);
     }
 
     //token transfer
@@ -123,9 +94,7 @@ describe("Minter", function () {
     //approve gauge
     for (let i = 0; i < 3; i++) {
       for (let t = 0; t < 3; t++) {
-        await mock_lp_token
-          .connect(accounts[i + 1])
-          .approve(three_gauges[t], ten_to_the_18);
+        await mock_lp_token.connect(accounts[i + 1]).approve(three_gauges[t], ten_to_the_18);
       }
     }
   });
@@ -149,24 +118,16 @@ describe("Minter", function () {
 
       expect(expected.gt(BigNumber.from("0"))).to.be.equal(true);
       expect(await Insure.balanceOf(alice.address)).to.equal(expected);
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        expected
-      );
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(expected);
     });
 
     it("test_mint_immediate", async () => {
       //setup
-      await three_gauges_contracts[0]
-        .connect(alice)
-        .deposit(ten_to_the_18, alice.address);
+      await three_gauges_contracts[0].connect(alice).deposit(ten_to_the_18, alice.address);
 
-      let t0 = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let t0 = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
       let moment = t0.add(WEEK).div(WEEK).mul(WEEK).add("5");
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        moment.toNumber(),
-      ]);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [moment.toNumber()]);
 
       //mint
       expect(await minter.minted(alice.address, three_gauges[0])).to.equal("0");
@@ -174,9 +135,7 @@ describe("Minter", function () {
 
       //check
       let balance = await Insure.balanceOf(alice.address);
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        balance
-      );
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(balance);
     });
 
     it("test_mint_multiple_same_gauge", async () => {
@@ -193,9 +152,7 @@ describe("Minter", function () {
 
       expect(final_balance.gt(balance)).to.be.equal(true); //2nd mint success
       expect(final_balance).to.equal(expected); //2nd mint works fine
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        expected
-      ); //tracks fine
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(expected); //tracks fine
     });
 
     it("test_mint_multiple_gauges", async () => {
@@ -227,16 +184,12 @@ describe("Minter", function () {
     it("test_mint_after_withdraw", async () => {
       await lg1.connect(alice).deposit(ten_to_the_18, alice.address);
 
-      await ethers.provider.send("evm_increaseTime", [
-        WEEK.mul(BigNumber.from("2")).toNumber(),
-      ]);
+      await ethers.provider.send("evm_increaseTime", [WEEK.mul(BigNumber.from("2")).toNumber()]);
 
       await lg1.connect(alice).withdraw(ten_to_the_18);
       await minter.connect(alice).mint(three_gauges[0]);
 
-      expect(
-        (await Insure.balanceOf(alice.address)).gt(BigNumber.from("0"))
-      ).to.equal(true);
+      expect((await Insure.balanceOf(alice.address)).gt(BigNumber.from("0"))).to.equal(true);
     });
 
     it("test_mint_multiple_after_withdraw", async () => {
@@ -257,9 +210,7 @@ describe("Minter", function () {
     it("test_no_deposit", async () => {
       await minter.connect(alice).mint(three_gauges[0]);
       expect(await Insure.balanceOf(alice.address)).to.equal(zero);
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        zero
-      );
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(zero);
     });
 
     it("test_mint_wrong_gauge", async () => {
@@ -270,18 +221,12 @@ describe("Minter", function () {
 
       //check
       expect(await Insure.balanceOf(alice.address)).to.equal(zero);
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        zero
-      );
-      expect(await minter.minted(alice.address, three_gauges[1])).to.equal(
-        zero
-      );
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(zero);
+      expect(await minter.minted(alice.address, three_gauges[1])).to.equal(zero);
     });
 
     it("test_mint_not_a_gauge", async () => {
-      await expect(minter.mint(alice.address)).to.revertedWith(
-        "dev: gauge is not added"
-      );
+      await expect(minter.mint(alice.address)).to.revertedWith("dev: gauge is not added");
     });
 
     it("test_mint_before_inflation_begins", async () => {
@@ -289,12 +234,8 @@ describe("Minter", function () {
       expect(await Insure.mining_epoch()).to.equal(BigNumber.from("-1"));
 
       await minter.connect(alice).mint(three_gauges[0]);
-      expect(await Insure.balanceOf(alice.address)).to.equal(
-        BigNumber.from("0")
-      );
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        zero
-      );
+      expect(await Insure.balanceOf(alice.address)).to.equal(BigNumber.from("0"));
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(zero);
     });
 
     it("test_mint_many_multiple_gauges", async () => {
@@ -332,14 +273,10 @@ describe("Minter", function () {
 
     it("test_toggle_approve_mint", async () => {
       await minter.connect(alice).toggle_approve_mint(bob.address);
-      expect(
-        await minter.allowed_to_mint_for(bob.address, alice.address)
-      ).to.equal(true);
+      expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(true);
 
       await minter.connect(alice).toggle_approve_mint(bob.address);
-      expect(
-        await minter.allowed_to_mint_for(bob.address, alice.address)
-      ).to.equal(false);
+      expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(false);
     });
 
     it("test_mint_for", async () => {
@@ -348,18 +285,14 @@ describe("Minter", function () {
       await ethers.provider.send("evm_increaseTime", [MONTH.toNumber()]);
 
       await minter.connect(alice).toggle_approve_mint(bob.address);
-      expect(
-        await minter.allowed_to_mint_for(bob.address, alice.address)
-      ).to.equal(true);
+      expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(true);
 
       await minter.connect(bob).mint_for(lg1.address, alice.address);
 
       let expected = await lg1.integrate_fraction(alice.address);
       expect(expected.gt(BigNumber.from("0"))).to.be.equal(true);
       expect(await Insure.balanceOf(alice.address)).to.equal(expected);
-      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(
-        expected
-      );
+      expect(await minter.minted(alice.address, three_gauges[0])).to.equal(expected);
     });
 
     it("test_mint_for_fail", async () => {
@@ -367,9 +300,7 @@ describe("Minter", function () {
 
       await ethers.provider.send("evm_increaseTime", [MONTH.toNumber()]);
 
-      expect(
-        await minter.allowed_to_mint_for(bob.address, alice.address)
-      ).to.equal(false);
+      expect(await minter.allowed_to_mint_for(bob.address, alice.address)).to.equal(false);
 
       await minter.connect(bob).mint_for(lg1.address, alice.address);
 

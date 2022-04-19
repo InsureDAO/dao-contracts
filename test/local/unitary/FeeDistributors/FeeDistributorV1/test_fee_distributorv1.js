@@ -21,13 +21,7 @@ describe("FeeDistributorV1", () => {
 
   before(async () => {
     [creator, alice, bob, chad, dad] = await ethers.getSigners();
-    addresses = [
-      creator.address,
-      alice.address,
-      bob.address,
-      chad.address,
-      dad.address,
-    ];
+    addresses = [creator.address, alice.address, bob.address, chad.address, dad.address];
     const Token = await ethers.getContractFactory("TestToken");
     const Converter = await ethers.getContractFactory("TestConverter");
     const Distributor = await ethers.getContractFactory("FeeDistributorV1");
@@ -57,12 +51,8 @@ describe("FeeDistributorV1", () => {
   describe("constructor()", function () {
     it("deploy should be reverted", async () => {
       const Distributor = await ethers.getContractFactory("FeeDistributorV1");
-      await expect(
-        Distributor.deploy(ZERO_ADDRESS, converter.address)
-      ).to.revertedWith("zero-address");
-      await expect(
-        Distributor.deploy(insure.address, ZERO_ADDRESS)
-      ).to.revertedWith("zero-address");
+      await expect(Distributor.deploy(ZERO_ADDRESS, converter.address)).to.revertedWith("zero-address");
+      await expect(Distributor.deploy(insure.address, ZERO_ADDRESS)).to.revertedWith("zero-address");
     });
   });
 
@@ -73,9 +63,7 @@ describe("FeeDistributorV1", () => {
 
       //creator has 1000, and approve 1000 to the dstr
       expect(await insure.balanceOf(creator.address)).to.equal(1000);
-      expect(await insure.allowance(creator.address, dstr.address)).to.equal(
-        1000
-      );
+      expect(await insure.allowance(creator.address, dstr.address)).to.equal(1000);
       expect(await insure.balanceOf(dstr.address)).to.equal(0);
 
       await dstr.distribute(insure.address);
@@ -94,9 +82,7 @@ describe("FeeDistributorV1", () => {
 
       //creator:1000, approve:1000. dstr:500
       expect(await insure.balanceOf(creator.address)).to.equal(1000);
-      expect(await insure.allowance(creator.address, dstr.address)).to.equal(
-        1000
-      );
+      expect(await insure.allowance(creator.address, dstr.address)).to.equal(1000);
       expect(await insure.balanceOf(dstr.address)).to.equal(500);
 
       await dstr.distribute(insure.address);
@@ -133,9 +119,7 @@ describe("FeeDistributorV1", () => {
       expect(await insure.allowance(creator.address, dstr.address)).to.equal(0);
       expect(await insure.balanceOf(dstr.address)).to.equal(0);
 
-      await expect(dstr.distribute(insure.address)).to.revertedWith(
-        "no distributable amount"
-      );
+      await expect(dstr.distribute(insure.address)).to.revertedWith("no distributable amount");
     });
   });
 });

@@ -23,12 +23,8 @@ describe("Minter", function () {
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
   const FAKE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-  const MAX_UINT256 = BigNumber.from(
-    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-  );
-  const two_to_the_256_minus_1 = BigNumber.from("2")
-    .pow(BigNumber.from("256"))
-    .sub(BigNumber.from("1"));
+  const MAX_UINT256 = BigNumber.from("115792089237316195423570985008687907853269984665640564039457584007913129639935");
+  const two_to_the_256_minus_1 = BigNumber.from("2").pow(BigNumber.from("256")).sub(BigNumber.from("1"));
   const ten_to_the_21 = BigNumber.from("1000000000000000000000");
   const ten_to_the_20 = BigNumber.from("100000000000000000000");
   const ten_to_the_19 = BigNumber.from("10000000000000000000");
@@ -52,9 +48,7 @@ describe("Minter", function () {
     const GaugeController = await ethers.getContractFactory("GaugeController");
     const Registry = await ethers.getContractFactory("TestRegistry");
     const Minter = await ethers.getContractFactory("Minter");
-    const TestEmergencyModule = await ethers.getContractFactory(
-      "TestEmergencyModule"
-    );
+    const TestEmergencyModule = await ethers.getContractFactory("TestEmergencyModule");
 
     //deploy
     ownership = await Ownership.deploy();
@@ -66,11 +60,7 @@ describe("Minter", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
 
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 

@@ -21,12 +21,8 @@ describe("LiquidityGauge", function () {
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-  const MAX_UINT256 = BigNumber.from(
-    "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-  );
-  const two_to_the_256_minus_1 = BigNumber.from("2")
-    .pow(BigNumber.from("256"))
-    .sub(BigNumber.from("1"));
+  const MAX_UINT256 = BigNumber.from("115792089237316195423570985008687907853269984665640564039457584007913129639935");
+  const two_to_the_256_minus_1 = BigNumber.from("2").pow(BigNumber.from("256")).sub(BigNumber.from("1"));
   const ten_to_the_21 = BigNumber.from("1000000000000000000000");
   const ten_to_the_20 = BigNumber.from("100000000000000000000");
   const ten_to_the_19 = BigNumber.from("10000000000000000000");
@@ -56,23 +52,10 @@ describe("LiquidityGauge", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "indexSURE",
-      decimal,
-      ten_to_the_21
-    ); //Not using the actual InsureDAO contract
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "indexSURE", decimal, ten_to_the_21); //Not using the actual InsureDAO contract
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
-    liquidity_gauge = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    liquidity_gauge = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
   });
 
   beforeEach(async () => {
@@ -90,36 +73,24 @@ describe("LiquidityGauge", function () {
       ]); //2weeks and 5sec //for BOOST_WARMUP
 
       await Insure.approve(voting_escrow.address, MAX_UINT256);
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
 
       await voting_escrow.create_lock(ten_to_the_20, now.add(WEEK.mul("4")));
 
       await mock_lp_token.approve(liquidity_gauge.address, MAX_UINT256);
       await liquidity_gauge.deposit(ten_to_the_21, creator.address);
 
-      expect(await liquidity_gauge.working_balances(creator.address)).to.equal(
-        ten_to_the_21
-      );
+      expect(await liquidity_gauge.working_balances(creator.address)).to.equal(ten_to_the_21);
 
       await ethers.provider.send("evm_increaseTime", [WEEK.toNumber()]);
 
-      await expect(
-        liquidity_gauge.connect(alice).kick(creator.address)
-      ).to.revertedWith("dev: kick not allowed");
+      await expect(liquidity_gauge.connect(alice).kick(creator.address)).to.revertedWith("dev: kick not allowed");
 
-      await ethers.provider.send("evm_increaseTime", [
-        WEEK.mul("4").toNumber(),
-      ]);
+      await ethers.provider.send("evm_increaseTime", [WEEK.mul("4").toNumber()]);
       await liquidity_gauge.connect(alice).kick(creator.address);
-      expect(await liquidity_gauge.working_balances(creator.address)).to.equal(
-        ten_to_the_20.mul("4")
-      );
+      expect(await liquidity_gauge.working_balances(creator.address)).to.equal(ten_to_the_20.mul("4"));
 
-      await expect(
-        liquidity_gauge.connect(alice).kick(creator.address)
-      ).to.revertedWith("dev: kick not needed");
+      await expect(liquidity_gauge.connect(alice).kick(creator.address)).to.revertedWith("dev: kick not needed");
     });
   });
 });

@@ -40,12 +40,8 @@ describe("InsureToken", function () {
     it("test_rate", async () => {
       expect(await Insure.rate()).to.equal("0");
 
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        now.add(86401).toNumber(),
-      ]); //Tomorrow+1
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [now.add(86401).toNumber()]); //Tomorrow+1
 
       await Insure.update_mining_parameters(); //mining_epoch: -1 => 0 / Rate: 0 => initial_rate
 
@@ -58,14 +54,10 @@ describe("InsureToken", function () {
 
     it("test_start_epoch_time", async () => {
       let creation_time = await Insure.start_epoch_time();
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
       expect(creation_time).to.equal(now.add("86400").sub(YEAR)); //epoch -1 begins since Last year's tomorrow with the infration_interval of 1YEAR which means that epoch_time 0 starts since tomorrow. After that, infration rate decrease every year.
 
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        now.add("86400").toNumber(),
-      ]);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [now.add("86400").toNumber()]);
 
       await Insure.update_mining_parameters();
 
@@ -75,12 +67,8 @@ describe("InsureToken", function () {
     it("test_mining_epoch", async () => {
       expect(await Insure.mining_epoch()).to.equal("-1");
 
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        now.add("86400").toNumber(),
-      ]); //proceed time to tomorrow because of inflation_delay = 1DAY
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [now.add("86400").toNumber()]); //proceed time to tomorrow because of inflation_delay = 1DAY
 
       await Insure.update_mining_parameters(); //mining_epoch -1 => 0
 
@@ -90,12 +78,8 @@ describe("InsureToken", function () {
     it("test_available_supply", async () => {
       expect(await Insure.available_supply()).to.equal(INITIAL_SUPPLY); //1_303_030_303 * 10**18 //ok
 
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        now.add("86401").toNumber(),
-      ]);
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [now.add("86401").toNumber()]);
 
       await Insure.update_mining_parameters();
 

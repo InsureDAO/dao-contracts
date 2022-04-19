@@ -101,7 +101,7 @@ contract PoolProxy is ReentrancyGuard {
         address _token,
         string memory _name,
         address _addr
-    ) external returns(bool) {
+    ) external returns (bool) {
         require(msg.sender == ownership_admin, "only ownership admin");
         require(_token != address(0), "_token cannot be zero address");
 
@@ -191,7 +191,7 @@ contract PoolProxy is ReentrancyGuard {
         address _token,
         uint256 _id,
         uint256 _weight
-    ) external returns(bool) {
+    ) external returns (bool) {
         require(msg.sender == parameter_admin, "only parameter admin");
 
         _set_distributor_weight(_token, _id, _weight);
@@ -213,7 +213,7 @@ contract PoolProxy is ReentrancyGuard {
     ) external {
         require(msg.sender == parameter_admin, "only parameter admin");
 
-        for (uint256 i; i < 20;) {
+        for (uint256 i; i < 20; ) {
             if (_tokens[i] == address(0)) {
                 break;
             }
@@ -230,9 +230,10 @@ contract PoolProxy is ReentrancyGuard {
      *@param _id distributor id
      */
     function get_distributor_name(address _token, uint256 _id)
-    external
-    view
-    returns(string memory) {
+        external
+        view
+        returns (string memory)
+    {
         return distributors[_token][_id].name;
     }
 
@@ -242,9 +243,10 @@ contract PoolProxy is ReentrancyGuard {
      *@param _id distributor id
      */
     function get_distributor_address(address _token, uint256 _id)
-    external
-    view
-    returns(address) {
+        external
+        view
+        returns (address)
+    {
         return distributors[_token][_id].addr;
     }
 
@@ -263,7 +265,7 @@ contract PoolProxy is ReentrancyGuard {
         if (amount != 0) {
             //allocate the fee to corresponding distributors
             uint256 _distributors = n_distributors[_token];
-            for (uint256 id; id < _distributors;) {
+            for (uint256 id; id < _distributors; ) {
                 uint256 aloc_point = distributor_weight[_token][id];
 
                 uint256 aloc_amount = (amount * aloc_point) /
@@ -342,7 +344,7 @@ contract PoolProxy is ReentrancyGuard {
         require(tx.origin == msg.sender);
         require(!distributor_kill, "distribution killed");
 
-        for (uint256 i; i < 20;) {
+        for (uint256 i; i < 20; ) {
             if (_tokens[i] == address(0)) {
                 break;
             }
@@ -430,11 +432,12 @@ contract PoolProxy is ReentrancyGuard {
      *@notice "ownership_admin" or "default_reporting_admin" can execute this function.
      */
     function set_reporting_admin(address _pool, address _reporter)
-    external
-    returns(bool) {
+        external
+        returns (bool)
+    {
         require(
             address(msg.sender) == ownership_admin ||
-            address(msg.sender) == default_reporting_admin,
+                address(msg.sender) == default_reporting_admin,
             "Access denied"
         );
 
@@ -449,11 +452,10 @@ contract PoolProxy is ReentrancyGuard {
      *@notice get reporting module set for the _pool. If none is set, default_reporting_admin will be returned.
      *@dev public function
      */
-    function get_reporter(address _pool) public view returns(address) {
-
-        address reporter = reporting_admin[_pool] != address(0) ?
-            reporting_admin[_pool] :
-            default_reporting_admin;
+    function get_reporter(address _pool) public view returns (address) {
+        address reporter = reporting_admin[_pool] != address(0)
+            ? reporting_admin[_pool]
+            : default_reporting_admin;
 
         return reporter;
     }
@@ -465,7 +467,8 @@ contract PoolProxy is ReentrancyGuard {
      */
     //ownership
     function ownership_accept_transfer_ownership(address _ownership_contract)
-    external {
+        external
+    {
         require(msg.sender == ownership_admin, "Access denied");
 
         IOwnership(_ownership_contract).acceptTransferOwnership();
@@ -535,7 +538,7 @@ contract PoolProxy is ReentrancyGuard {
         string memory _metaData,
         uint256[] memory _conditions,
         address[] memory _references
-    ) external returns(address) {
+    ) external returns (address) {
         require(msg.sender == ownership_admin, "Access denied");
         IUniversalMarket _template = IUniversalMarket(_template_addr);
 
@@ -576,7 +579,8 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     function pm_change_metadata(address _pool, string calldata _metadata)
-    external {
+        external
+    {
         require(msg.sender == parameter_admin, "Access denied");
         IUniversalMarket(_pool).changeMetadata(_metadata);
     }
@@ -592,7 +596,11 @@ contract PoolProxy is ReentrancyGuard {
         string calldata _rawdata,
         string calldata _memo
     ) external {
-        require(msg.sender == default_reporting_admin || msg.sender == reporting_admin[_pool], "Access denied");
+        require(
+            msg.sender == default_reporting_admin ||
+                msg.sender == reporting_admin[_pool],
+            "Access denied"
+        );
 
         IPoolTemplate(_pool).applyCover(
             _pending,
@@ -611,13 +619,13 @@ contract PoolProxy is ReentrancyGuard {
         address _contributor,
         uint256[] calldata _ids
     ) external {
-        require(msg.sender == default_reporting_admin || msg.sender == reporting_admin[_pool], "Access denied");
-
-        IPoolTemplate(_pool).applyBounty(
-            _amount,
-            _contributor,
-            _ids
+        require(
+            msg.sender == default_reporting_admin ||
+                msg.sender == reporting_admin[_pool],
+            "Access denied"
         );
+
+        IPoolTemplate(_pool).applyBounty(_amount, _contributor, _ids);
     }
 
     //Index
@@ -636,11 +644,20 @@ contract PoolProxy is ReentrancyGuard {
     ) external {
         require(msg.sender == parameter_admin, "Access denied");
 
-        IIndexTemplate(_index_address).set(_indexA, _indexB, _pool, _allocPoint);
+        IIndexTemplate(_index_address).set(
+            _indexA,
+            _indexB,
+            _pool,
+            _allocPoint
+        );
     }
 
     //CDS
-    function defund(address _cds, address _to, uint256 _amount) external {
+    function defund(
+        address _cds,
+        address _to,
+        uint256 _amount
+    ) external {
         require(msg.sender == ownership_admin, "Access denied");
 
         ICDSTemplate(_cds).defund(_to, _amount);
@@ -662,7 +679,8 @@ contract PoolProxy is ReentrancyGuard {
     }
 
     function vault_set_controller(address _vault, address _controller)
-    external {
+        external
+    {
         require(msg.sender == ownership_admin, "Access denied");
         IVault(_vault).setController(_controller);
     }
@@ -789,14 +807,16 @@ contract PoolProxy is ReentrancyGuard {
 
     //Registry
     function registry_set_factory(address _registry, address _factory)
-    external {
+        external
+    {
         require(msg.sender == ownership_admin, "Access denied");
 
         IRegistry(_registry).setFactory(_factory);
     }
 
     function registry_support_market(address _registry, address _market)
-    external {
+        external
+    {
         require(msg.sender == ownership_admin, "Access denied");
 
         IRegistry(_registry).supportMarket(_market);

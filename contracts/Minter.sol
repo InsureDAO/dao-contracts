@@ -44,7 +44,11 @@ contract Minter is ReentrancyGuard {
         _;
     }
 
-    constructor(address _token, address _controller, address _ownership) {
+    constructor(
+        address _token,
+        address _controller,
+        address _ownership
+    ) {
         insure_token = IInsureToken(_token);
         gauge_controller = IGaugeController(_controller);
         ownership = IOwnership(_ownership);
@@ -84,8 +88,7 @@ contract Minter is ReentrancyGuard {
      *@dev address[8]: 8 has randomly decided and has no meaning.
      */
     function mint_many(address[8] memory gauge_addrs) external nonReentrant {
-
-        for (uint256 i; i < 8;) {
+        for (uint256 i; i < 8; ) {
             if (gauge_addrs[i] == address(0)) {
                 break;
             }
@@ -120,7 +123,10 @@ contract Minter is ReentrancyGuard {
 
     //-----------------emergency mint-----------------/
 
-    function set_emergency_mint_module(address _emergency_module) external onlyOwner {
+    function set_emergency_mint_module(address _emergency_module)
+        external
+        onlyOwner
+    {
         emergency_module = IEmergencyMintModule(_emergency_module);
     }
 

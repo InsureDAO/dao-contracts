@@ -55,13 +55,9 @@ describe("InsureToken", function () {
       let rate = await Insure.rate();
 
       await ethers.provider.send("evm_increaseTime", [WEEK]);
-      let new_timestamp = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let new_timestamp = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
 
-      let expected = initial_supply.add(
-        rate.mul(new_timestamp.sub(creation_time))
-      );
+      let expected = initial_supply.add(rate.mul(new_timestamp.sub(creation_time)));
       expect(await Insure.available_supply()).to.equal(expected);
     });
 
@@ -73,9 +69,7 @@ describe("InsureToken", function () {
       let rate = await Insure.rate();
 
       await ethers.provider.send("evm_increaseTime", [WEEK]);
-      let new_timestamp = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let new_timestamp = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
 
       let amount = rate.mul(new_timestamp.sub(creation_time));
       await Insure.connect(creator).mint(alice.address, amount);
@@ -90,14 +84,10 @@ describe("InsureToken", function () {
       let initial_supply = await Insure.totalSupply();
       let rate = await Insure.rate();
 
-      let timestamp = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let timestamp = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
       let new_timestamp = timestamp.add(WEEK);
 
-      await ethers.provider.send("evm_setNextBlockTimestamp", [
-        new_timestamp.toNumber(),
-      ]);
+      await ethers.provider.send("evm_setNextBlockTimestamp", [new_timestamp.toNumber()]);
 
       //available supply before mine
       let expected = initial_supply.add(rate.mul(timestamp.sub(creation_time)));
@@ -105,9 +95,7 @@ describe("InsureToken", function () {
 
       //------test_overmint-----//
       let amount = rate.mul(new_timestamp.sub(creation_time)).add(1); //1 token over
-      await expect(Insure.mint(alice.address, amount)).to.be.revertedWith(
-        "exceeds allowable mint amount"
-      ); //block mined at new_timestamp
+      await expect(Insure.mint(alice.address, amount)).to.be.revertedWith("exceeds allowable mint amount"); //block mined at new_timestamp
 
       //available supply after mine
       expected = initial_supply.add(rate.mul(new_timestamp.sub(creation_time)));
@@ -116,16 +104,12 @@ describe("InsureToken", function () {
 
     it("test_minter_only", async () => {
       await Insure.set_minter(creator.address);
-      await expect(
-        Insure.connect(alice).mint(alice.address, 0)
-      ).to.revertedWith("dev: minter only");
+      await expect(Insure.connect(alice).mint(alice.address, 0)).to.revertedWith("dev: minter only");
     });
 
     it("test_zero_address", async () => {
       await Insure.set_minter(creator.address);
-      await expect(
-        Insure.connect(creator).mint(ZERO_ADDRESS, 0)
-      ).to.revertedWith("dev: zero address");
+      await expect(Insure.connect(creator).mint(ZERO_ADDRESS, 0)).to.revertedWith("dev: zero address");
     });
   });
 });

@@ -38,11 +38,7 @@ describe("GaugeController", () => {
   let b = BigNumber.from("5");
 
   const TYPE_WEIGHTS = [ten_to_the_17.mul(b), ten_to_the_18.mul(a)];
-  const GAUGE_WEIGHTS = [
-    ten_to_the_18.mul(a),
-    ten_to_the_18,
-    ten_to_the_17.mul(b),
-  ];
+  const GAUGE_WEIGHTS = [ten_to_the_18.mul(a), ten_to_the_18, ten_to_the_17.mul(b)];
 
   before(async () => {
     //import
@@ -66,35 +62,14 @@ describe("GaugeController", () => {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
 
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "iToken",
-      decimal,
-      ten_to_the_9
-    ); //Not using the actual InsureDAO contract
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "iToken", decimal, ten_to_the_9); //Not using the actual InsureDAO contract
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 
-    lg1 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
-    lg2 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
-    lg3 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    lg1 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
+    lg2 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
+    lg3 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
     three_gauges = [lg1.address, lg2.address, lg3.address];
     gauge = three_gauges[0];
 
@@ -112,29 +87,17 @@ describe("GaugeController", () => {
 
   describe("test_timestamp", function () {
     it("test_timestamp", async () => {
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
-      expect(await gauge_controller.time_total()).to.equal(
-        now.add(WEEK).div(WEEK).or(BigNumber.from("0")).mul(WEEK)
-      );
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+      expect(await gauge_controller.time_total()).to.equal(now.add(WEEK).div(WEEK).or(BigNumber.from("0")).mul(WEEK));
 
       for (let i = 0; i < 5; i++) {
         //await time.increase(YEAR.mul(BigNumber.from('11')).div(BigNumber.from('10')));
-        let t = BigNumber.from(
-          (await ethers.provider.getBlock("latest")).timestamp
-        );
-        await ethers.provider.send("evm_increaseTime", [
-          YEAR.mul("11").div("10").toNumber(),
-        ]);
+        let t = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+        await ethers.provider.send("evm_increaseTime", [YEAR.mul("11").div("10").toNumber()]);
 
         await gauge_controller.checkpoint();
-        now = BigNumber.from(
-          (await ethers.provider.getBlock("latest")).timestamp
-        );
-        expect(await gauge_controller.time_total()).to.equal(
-          now.add(WEEK).div(WEEK).or(BigNumber.from("0")).mul(WEEK)
-        ); //technically, blocktimestamp for this tx is "now+1", but it works fine for here because of .div(WEEK) rounds down the number.
+        now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
+        expect(await gauge_controller.time_total()).to.equal(now.add(WEEK).div(WEEK).or(BigNumber.from("0")).mul(WEEK)); //technically, blocktimestamp for this tx is "now+1", but it works fine for here because of .div(WEEK) rounds down the number.
       }
     });
   });

@@ -12,10 +12,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-
 contract VestingEscrow is ReentrancyGuard {
-    using SafeERC20
-    for IERC20;
+    using SafeERC20 for IERC20;
 
     event Fund(address indexed recipient, uint256 amount);
     event Claim(address indexed recipient, uint256 claimed);
@@ -23,7 +21,6 @@ contract VestingEscrow is ReentrancyGuard {
     event ToggleDisable(address recipient, bool disabled);
     event CommitOwnership(address admin);
     event AcceptOwnership(address admin);
-
 
     address public token; //address of $INSURE
     uint256 public start_time;
@@ -44,8 +41,6 @@ contract VestingEscrow is ReentrancyGuard {
 
     bool public fund_admins_enabled;
     mapping(address => bool) public fund_admins;
-
-
 
     /***
      *@param _token Address of the ERC20 token being distributed
@@ -73,7 +68,7 @@ contract VestingEscrow is ReentrancyGuard {
 
         bool _fund_admins_enabled = false;
         uint256 _length = _fund_admins.length;
-        for (uint256 i; i < _length;) {
+        for (uint256 i; i < _length; ) {
             address addr = _fund_admins[i];
             if (addr != address(0)) {
                 fund_admins[addr] = true;
@@ -87,7 +82,6 @@ contract VestingEscrow is ReentrancyGuard {
             }
         }
     }
-
 
     /***
      *@notice Transfer vestable tokens into the contract
@@ -105,7 +99,10 @@ contract VestingEscrow is ReentrancyGuard {
      *@param _recipients List of addresses to fund
      *@param _amounts Amount of vested tokens for each address
      */
-    function fund(address[100] memory _recipients, uint256[100] memory _amounts) external nonReentrant {
+    function fund(address[100] memory _recipients, uint256[100] memory _amounts)
+        external
+        nonReentrant
+    {
         if (msg.sender != admin) {
             require(fund_admins[msg.sender], "dev admin only");
             require(fund_admins_enabled, "dev fund admins disabled");
@@ -131,10 +128,10 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Disable further flow of tokens and clawback the unvested part to admin
      */
     function rug_pull(address _target) external {
-
         require(msg.sender == admin, "onlyOwner");
 
-        uint256 raggable = initial_locked[_target] - _total_vested_of(_target, block.timestamp); //all unvested token
+        uint256 raggable = initial_locked[_target] -
+            _total_vested_of(_target, block.timestamp); //all unvested token
 
         is_ragged[_target] = true;
         disabled_at[_target] = block.timestamp; //never be updated later on.
@@ -172,7 +169,6 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Disable the ability to call `toggle_disable`
      */
     function disable_can_disable() external {
-
         require(msg.sender == admin, "dev admin only");
         can_disable = false;
     }
@@ -188,18 +184,21 @@ contract VestingEscrow is ReentrancyGuard {
     /***
      * @notice Amount of unlocked token amount of _recipient at _time. (include claimed)
      */
-    function _total_vested_of(address _recipient, uint256 _time) internal view returns(uint256) {
-
+    function _total_vested_of(address _recipient, uint256 _time)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 start = start_time;
         uint256 end = end_time;
         uint256 locked = initial_locked[_recipient];
         if (_time < start) {
             return 0;
         }
-        return min(locked * (_time - start) / (end - start), locked);
+        return min((locked * (_time - start)) / (end - start), locked);
     }
 
-    function _total_vested() internal view returns(uint256) {
+    function _total_vested() internal view returns (uint256) {
         uint256 start = start_time;
         uint256 end = end_time;
         uint256 locked = initial_locked_supply;
@@ -207,7 +206,11 @@ contract VestingEscrow is ReentrancyGuard {
         if (block.timestamp < start) {
             return 0;
         } else {
-            return min(locked * (block.timestamp - start) / (end - start), locked); // when block.timestamp > end, return locked
+            return
+                min(
+                    (locked * (block.timestamp - start)) / (end - start),
+                    locked
+                ); // when block.timestamp > end, return locked
         }
     }
 
@@ -215,7 +218,7 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Get the total number of tokens which have vested, that are held
      *        by this contract
      */
-    function vestedSupply() external view returns(uint256) {
+    function vestedSupply() external view returns (uint256) {
         return _total_vested();
     }
 
@@ -223,7 +226,7 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Get the total number of tokens which are still locked
      *        (have not yet vested)
      */
-    function lockedSupply() external view returns(uint256) {
+    function lockedSupply() external view returns (uint256) {
         return initial_locked_supply - _total_vested();
     }
 
@@ -231,7 +234,7 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Get the number of tokens which have vested for a given address
      *@param _recipient address to check
      */
-    function vestedOf(address _recipient) external view returns(uint256) {
+    function vestedOf(address _recipient) external view returns (uint256) {
         uint256 t = disabled_at[_recipient];
         if (t == 0) {
             t = block.timestamp;
@@ -244,7 +247,7 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Get the number of unclaimed, vested tokens for a given address
      *@param _recipient address to check
      */
-    function balanceOf(address _recipient) external view returns(uint256) {
+    function balanceOf(address _recipient) external view returns (uint256) {
         uint256 t = disabled_at[_recipient];
         if (t == 0) {
             t = block.timestamp;
@@ -257,11 +260,13 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Get the number of locked tokens for a given address
      *@param _recipient address to check
      */
-    function lockedOf(address _recipient) external view returns(uint256) {
+    function lockedOf(address _recipient) external view returns (uint256) {
         if (is_ragged[_recipient] == true) {
             return 0;
         } else {
-            return initial_locked[_recipient] - _total_vested_of(_recipient, block.timestamp);
+            return
+                initial_locked[_recipient] -
+                _total_vested_of(_recipient, block.timestamp);
         }
     }
 
@@ -286,7 +291,7 @@ contract VestingEscrow is ReentrancyGuard {
      *@notice Transfer ownership of GaugeController to `addr`
      *@param addr Address to have ownership transferred to
      */
-    function commit_transfer_ownership(address addr) external returns(bool) {
+    function commit_transfer_ownership(address addr) external returns (bool) {
         require(msg.sender == admin, "onlyOwner");
         future_admin = addr;
         emit CommitOwnership(addr);
@@ -305,7 +310,7 @@ contract VestingEscrow is ReentrancyGuard {
         emit AcceptOwnership(_future_admin);
     }
 
-    function min(uint256 a, uint256 b) internal pure returns(uint256) {
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
 }

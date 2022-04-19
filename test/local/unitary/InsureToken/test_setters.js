@@ -40,15 +40,13 @@ describe("InsureToken", function () {
 
     //revert test
     it("test_set_minter_admin_only", async () => {
-      await expect(
-        Insure.connect(alice).set_minter(bob.address)
-      ).to.revertedWith("Caller is not allowed to operate");
+      await expect(Insure.connect(alice).set_minter(bob.address)).to.revertedWith("Caller is not allowed to operate");
     });
 
     it("test_set_name_admin_only", async () => {
-      await expect(
-        Insure.connect(alice).set_name("Foo Token", "FOO")
-      ).to.revertedWith("Caller is not allowed to operate");
+      await expect(Insure.connect(alice).set_name("Foo Token", "FOO")).to.revertedWith(
+        "Caller is not allowed to operate"
+      );
     });
 
     //set test
@@ -65,23 +63,23 @@ describe("InsureToken", function () {
 
     describe("set_rate()", function () {
       it("revert when not admin", async () => {
-        await expect(Insure.connect(alice).set_rate(0)).to.revertedWith("Caller is not allowed to operate")
+        await expect(Insure.connect(alice).set_rate(0)).to.revertedWith("Caller is not allowed to operate");
       });
 
       it("set RATES[5] correctlly", async () => {
-        let rate = BigNumber.from("2799999").mul("1000000000000000000").div(YEAR) //10**18
+        let rate = BigNumber.from("2799999").mul("1000000000000000000").div(YEAR); //10**18
 
-        await Insure.set_rate(rate)
+        await Insure.set_rate(rate);
 
-        expect(await Insure.RATES(5)).to.equal(rate)
+        expect(await Insure.RATES(5)).to.equal(rate);
       });
 
       it("revert when same or equal", async () => {
-        let rate = BigNumber.from("2800000").mul("1000000000000000000").div(YEAR) //10**18
-        await expect(Insure.set_rate(rate)).to.revertedWith("Decrease Only")
+        let rate = BigNumber.from("2800000").mul("1000000000000000000").div(YEAR); //10**18
+        await expect(Insure.set_rate(rate)).to.revertedWith("Decrease Only");
 
-        rate = BigNumber.from("2800001").mul("1000000000000000000").div(YEAR) //10**18
-        await expect(Insure.set_rate(rate)).to.revertedWith("Decrease Only")
+        rate = BigNumber.from("2800001").mul("1000000000000000000").div(YEAR); //10**18
+        await expect(Insure.set_rate(rate)).to.revertedWith("Decrease Only");
       });
     });
   });

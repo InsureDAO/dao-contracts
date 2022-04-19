@@ -20,9 +20,7 @@ describe("LiquidityGauge", function () {
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-  const two_to_the_256_minus_1 = BigNumber.from("2")
-    .pow(BigNumber.from("256"))
-    .sub(BigNumber.from("1"));
+  const two_to_the_256_minus_1 = BigNumber.from("2").pow(BigNumber.from("256")).sub(BigNumber.from("1"));
   const ten_to_the_21 = BigNumber.from("1000000000000000000000");
   const ten_to_the_20 = BigNumber.from("100000000000000000000");
   const ten_to_the_19 = BigNumber.from("10000000000000000000");
@@ -54,17 +52,11 @@ describe("LiquidityGauge", function () {
     //rdm = Math.floor(Math.random()*9007199254740991);
     //st_value = BigNumber.from(rdm.toString());
 
-    await liquidity_gauge
-      .connect(st_account)
-      .deposit(st_value, st_account.address);
+    await liquidity_gauge.connect(st_account).deposit(st_value, st_account.address);
     balances[st_account.address] = balances[st_account.address].add(st_value);
 
-    expect(await mock_lp_token.balanceOf(st_account.address)).to.equal(
-      balance.sub(st_value)
-    );
-    expect(await liquidity_gauge.balanceOf(st_account.address)).to.equal(
-      balances[st_account.address]
-    );
+    expect(await mock_lp_token.balanceOf(st_account.address)).to.equal(balance.sub(st_value));
+    expect(await liquidity_gauge.balanceOf(st_account.address)).to.equal(balances[st_account.address]);
   }
 
   async function rule_withdraw() {
@@ -72,8 +64,7 @@ describe("LiquidityGauge", function () {
     st_value = rdm_value(9007199254740991);
 
     if (balances[st_account.address].lt(st_value)) {
-      await expect(liquidity_gauge.connect(st_account).withdraw(st_value)).to
-        .reverted;
+      await expect(liquidity_gauge.connect(st_account).withdraw(st_value)).to.reverted;
       console.log("-withdraw revert");
       return;
     }
@@ -82,12 +73,8 @@ describe("LiquidityGauge", function () {
     await liquidity_gauge.connect(st_account).withdraw(st_value);
     balances[st_account.address] = balances[st_account.address].sub(st_value);
 
-    expect(await mock_lp_token.balanceOf(st_account.address)).to.equal(
-      balance.add(st_value)
-    );
-    expect(await liquidity_gauge.balanceOf(st_account.address)).to.equal(
-      balances[st_account.address]
-    );
+    expect(await mock_lp_token.balanceOf(st_account.address)).to.equal(balance.add(st_value));
+    expect(await liquidity_gauge.balanceOf(st_account.address)).to.equal(balances[st_account.address]);
   }
 
   async function rule_advance_time() {
@@ -100,18 +87,11 @@ describe("LiquidityGauge", function () {
   async function rule_checkpoint() {
     console.log("rule_checkpoint");
 
-    await liquidity_gauge
-      .connect(st_account)
-      .user_checkpoint(st_account.address);
+    await liquidity_gauge.connect(st_account).user_checkpoint(st_account.address);
   }
 
   //-------------------------------------------- function array -----------------------------------------------------------//
-  let func = [
-    "rule_deposite",
-    "rule_withdraw",
-    "rule_advance_time",
-    "rule_checkpoint",
-  ];
+  let func = ["rule_deposite", "rule_withdraw", "rule_advance_time", "rule_checkpoint"];
 
   //------------------------------------------------- run tests ------------------------------------------------------------------------//
 
@@ -119,8 +99,7 @@ describe("LiquidityGauge", function () {
     console.log("before each");
 
     //import
-    [creator, alice, bob, chad, dad, eme, fangible, gg, nine, ten] =
-      await ethers.getSigners();
+    [creator, alice, bob, chad, dad, eme, fangible, gg, nine, ten] = await ethers.getSigners();
     accounts = [creator, alice, bob, chad, dad, eme, fangible, gg, nine, ten];
 
     const Ownership = await ethers.getContractFactory("Ownership");
@@ -142,24 +121,11 @@ describe("LiquidityGauge", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "indexSURE",
-      decimal,
-      ten_to_the_21
-    ); //Not using the actual InsureDAO contract
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "indexSURE", decimal, ten_to_the_21); //Not using the actual InsureDAO contract
 
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
-    liquidity_gauge = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    liquidity_gauge = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
 
     let rdm = Math.floor(Math.random() * 5); //0~4 integer
     st_account = accounts[rdm];
@@ -169,9 +135,7 @@ describe("LiquidityGauge", function () {
     }
 
     for (let i = 0; i < 5; i++) {
-      await mock_lp_token
-        .connect(accounts[i])
-        .approve(liquidity_gauge.address, ten_to_the_21);
+      await mock_lp_token.connect(accounts[i]).approve(liquidity_gauge.address, ten_to_the_21);
     }
 
     for (let i = 0; i < 10; i++) {
@@ -190,9 +154,7 @@ describe("LiquidityGauge", function () {
       console.log(await liquidity_gauge.balanceOf(accounts[i].address));
       console.log(balances[accounts[i].address]);
       console.log("-----------------");
-      expect(await liquidity_gauge.balanceOf(accounts[i].address)).to.equal(
-        balances[accounts[i].address]
-      );
+      expect(await liquidity_gauge.balanceOf(accounts[i].address)).to.equal(balances[accounts[i].address]);
     }
 
     //--- invariant_total_supply ---//

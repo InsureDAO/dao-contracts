@@ -12,9 +12,7 @@ describe("InsureToken", function () {
   const YEAR = BigNumber.from(86400 * 365);
 
   const INITIAL_SUPPLY = BigNumber.from("126000000000000000000000000");
-  const INITIAL_RATE = BigNumber.from("28000000")
-    .mul(BigNumber.from("10").pow("18"))
-    .div(YEAR);
+  const INITIAL_RATE = BigNumber.from("28000000").mul(BigNumber.from("10").pow("18")).div(YEAR);
 
   const YEAR_1_SUPPLY = INITIAL_RATE.mul(YEAR);
 
@@ -46,9 +44,7 @@ describe("InsureToken", function () {
 
       let t0 = await Insure.start_epoch_time();
 
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
       let t1 = now.add(BigNumber.from("10").pow(times));
       await ethers.provider.send("evm_setNextBlockTimestamp", [t1.toNumber()]);
 
@@ -67,9 +63,7 @@ describe("InsureToken", function () {
       if (t1 == t0) {
         expect(mintable).to.equal(BigNumber.from("0"));
       } else {
-        expect(available_supply.sub(INITIAL_SUPPLY).div(mintable)).to.equal(
-          BigNumber.from("1")
-        );
+        expect(available_supply.sub(INITIAL_SUPPLY).div(mintable)).to.equal(BigNumber.from("1"));
       }
     });
 
@@ -93,9 +87,7 @@ describe("InsureToken", function () {
 
       let rate = YEAR_1_SUPPLY.div(YEAR);
 
-      expect(await Insure.mintable_in_timeframe(start, end)).to.equal(
-        rate.mul(end.sub(start))
-      );
+      expect(await Insure.mintable_in_timeframe(start, end)).to.equal(rate.mul(end.sub(start)));
     });
 
     it("test_available_supply", async () => {
@@ -111,9 +103,7 @@ describe("InsureToken", function () {
 
       await ethers.provider.send("evm_increaseTime", [duration]);
 
-      let now = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let now = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
       let expected = initial_supply.add(now.sub(creation_time).mul(rate));
       expect(await Insure.available_supply()).to.equal(expected);
     });

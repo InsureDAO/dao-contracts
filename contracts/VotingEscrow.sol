@@ -77,7 +77,7 @@ contract VotingEscrow is ReentrancyGuard {
 
     uint256 constant WEEK = 7 * 86400; // all future times are rounded by week
     uint256 constant MAXTIME = 4 * 365 * 86400; // 4 years
-    uint256 constant MULTIPLIER = 10 ** 18;
+    uint256 constant MULTIPLIER = 10**18;
 
     address public token;
     uint256 public supply;
@@ -176,9 +176,10 @@ contract VotingEscrow is ReentrancyGuard {
      *@return Value of the slope
      */
     function get_last_user_slope(address _addr)
-    external
-    view
-    returns(uint256) {
+        external
+        view
+        returns (uint256)
+    {
         uint256 uepoch = user_point_epoch[_addr];
         return uint256(user_point_history[_addr][uepoch].slope);
     }
@@ -190,9 +191,10 @@ contract VotingEscrow is ReentrancyGuard {
      *@return Epoch time of the checkpoint
      */
     function user_point_history__ts(address _addr, uint256 _idx)
-    external
-    view
-    returns(uint256) {
+        external
+        view
+        returns (uint256)
+    {
         return user_point_history[_addr][_idx].ts;
     }
 
@@ -201,7 +203,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _addr User wallet
      *@return Epoch time of the lock end
      */
-    function locked__end(address _addr) external view returns(uint256) {
+    function locked__end(address _addr) external view returns (uint256) {
         return locked[_addr].end;
     }
 
@@ -282,7 +284,7 @@ contract VotingEscrow is ReentrancyGuard {
         unchecked {
             _t_i = (_last_checkpoint / WEEK) * WEEK;
         }
-        for (uint256 i; i < 255;) {
+        for (uint256 i; i < 255; ) {
             // Hopefully it won't happen that this won't get used in 5 years!
             // If it does, users will be able to withdraw but vote weight will be broken
             _t_i += WEEK;
@@ -416,7 +418,9 @@ contract VotingEscrow is ReentrancyGuard {
         _checkpoint(_beneficiary, _old_locked, _locked);
 
         if (_value != 0) {
-            require(IERC20(token).transferFrom(_depositor, address(this), _value));
+            require(
+                IERC20(token).transferFrom(_depositor, address(this), _value)
+            );
         }
 
         emit Deposit(_beneficiary, _value, _locked.end, _type, block.timestamp);
@@ -444,10 +448,7 @@ contract VotingEscrow is ReentrancyGuard {
 
         require(_value > 0, "dev: need non-zero value");
         require(_locked.amount > 0, "No existing lock found");
-        require(
-            _locked.end > block.timestamp,
-            "Cannot add to expired lock."
-        );
+        require(_locked.end > block.timestamp, "Cannot add to expired lock.");
 
         _deposit_for(msg.sender, _addr, _value, 0, _locked, DEPOSIT_FOR_TYPE);
     }
@@ -457,7 +458,10 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _value Amount to deposit
      *@param _unlock_time Epoch time when tokens unlock, rounded down to whole weeks
      */
-    function create_lock(uint256 _value, uint256 _unlock_time)external nonReentrant {
+    function create_lock(uint256 _value, uint256 _unlock_time)
+        external
+        nonReentrant
+    {
         assert_not_contract(msg.sender);
         _unlock_time = (_unlock_time / WEEK) * WEEK; // Locktime is rounded down to weeks
         LockedBalance memory _locked = locked[msg.sender];
@@ -494,12 +498,16 @@ contract VotingEscrow is ReentrancyGuard {
 
         require(_value > 0);
         require(_locked.amount > 0, "No existing lock found");
-        require(
-            _locked.end > block.timestamp,
-            "Cannot add to expired lock."
-        );
+        require(_locked.end > block.timestamp, "Cannot add to expired lock.");
 
-        _deposit_for(msg.sender, msg.sender, _value, 0, _locked, INCREASE_LOCK_AMOUNT);
+        _deposit_for(
+            msg.sender,
+            msg.sender,
+            _value,
+            0,
+            _locked,
+            INCREASE_LOCK_AMOUNT
+        );
     }
 
     /***
@@ -576,7 +584,11 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _max_epoch Don't go beyond this epoch
      *@return Approximate timestamp for block
      */
-    function find_block_epoch(uint256 _block, uint256 _max_epoch) internal view returns(uint256) {
+    function find_block_epoch(uint256 _block, uint256 _max_epoch)
+        internal
+        view
+        returns (uint256)
+    {
         // Binary search
         uint256 _min = 0;
         uint256 _max = _max_epoch;
@@ -603,8 +615,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _addr User wallet address
      *@return User's present voting power
      */
-    function balanceOf(address _addr) external view returns(uint256) {
-
+    function balanceOf(address _addr) external view returns (uint256) {
         uint256 _t = block.timestamp;
 
         uint256 _epoch = user_point_epoch[_addr];
@@ -628,7 +639,11 @@ contract VotingEscrow is ReentrancyGuard {
      *@return User voting power
      *@dev return the present voting power if _t is 0
      */
-    function balanceOf(address _addr, uint256 _t) external view returns(uint256) {
+    function balanceOf(address _addr, uint256 _t)
+        external
+        view
+        returns (uint256)
+    {
         if (_t == 0) {
             _t = block.timestamp;
         }
@@ -662,7 +677,11 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _block Block to calculate the voting power at
      *@return Voting power
      */
-    function balanceOfAt(address _addr, uint256 _block) external view returns(uint256) {
+    function balanceOfAt(address _addr, uint256 _block)
+        external
+        view
+        returns (uint256)
+    {
         // Copying and pasting totalSupply code because Vyper cannot pass by
         // reference yet
         require(_block <= block.number);
@@ -719,13 +738,17 @@ contract VotingEscrow is ReentrancyGuard {
      *@param t Time to calculate the total voting power at
      *@return Total voting power at that time
      */
-    function supply_at(Point memory point, uint256 t) internal view returns(uint256) {
+    function supply_at(Point memory point, uint256 t)
+        internal
+        view
+        returns (uint256)
+    {
         Point memory _last_point = point;
         uint256 _t_i;
         unchecked {
             _t_i = (_last_point.ts / WEEK) * WEEK;
         }
-        for (uint256 i; i < 255;) {
+        for (uint256 i; i < 255; ) {
             _t_i += WEEK;
             int256 d_slope = 0;
 
@@ -760,7 +783,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@return Total voting power
      */
 
-    function totalSupply() external view returns(uint256) {
+    function totalSupply() external view returns (uint256) {
         uint256 _epoch = epoch;
         Point memory _last_point = point_history[_epoch];
 
@@ -772,7 +795,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
      *@return Total voting power
      */
-    function totalSupply(uint256 _t) external view returns(uint256) {
+    function totalSupply(uint256 _t) external view returns (uint256) {
         if (_t == 0) {
             _t = block.timestamp;
         }
@@ -788,7 +811,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _block Block to calculate the total voting power at
      *@return Total voting power at `_block`
      */
-    function totalSupplyAt(uint256 _block) external view returns(uint256) {
+    function totalSupplyAt(uint256 _block) external view returns (uint256) {
         require(_block <= block.number);
         uint256 _epoch = epoch;
         uint256 _target_epoch = find_block_epoch(_block, _epoch);
@@ -823,9 +846,10 @@ contract VotingEscrow is ReentrancyGuard {
     }
 
     function get_user_point_epoch(address _user)
-    external
-    view
-    returns(uint256) {
+        external
+        view
+        returns (uint256)
+    {
         return user_point_epoch[_user];
     }
 
@@ -836,7 +860,7 @@ contract VotingEscrow is ReentrancyGuard {
      *@param _target address of being unlocked.
      *@return
      */
-    function force_unlock(address _target) external returns(bool) {
+    function force_unlock(address _target) external returns (bool) {
         require(
             msg.sender == collateral_manager,
             "only collateral manager allowed"
@@ -898,7 +922,10 @@ contract VotingEscrow is ReentrancyGuard {
     /***
      *@notice Commit setting external contract to check user's collateral status
      */
-    function commit_collateral_manager(address _new_collateral_manager) external onlyOwner {
+    function commit_collateral_manager(address _new_collateral_manager)
+        external
+        onlyOwner
+    {
         future_collateral_manager = _new_collateral_manager;
 
         emit commitCollateralManager(_new_collateral_manager);

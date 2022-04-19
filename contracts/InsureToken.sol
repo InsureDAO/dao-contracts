@@ -60,15 +60,15 @@ contract InsureToken is IERC20 {
     uint256 constant INITIAL_SUPPLY = 126_000_000; //will be vested
     uint256 constant RATE_REDUCTION_TIME = YEAR;
     uint256[6] public RATES = [
-        (28_000_000 * 10 ** 18) / YEAR, //epoch 0
-        (22_400_000 * 10 ** 18) / YEAR, //epoch 1
-        (16_800_000 * 10 ** 18) / YEAR, //epoch 2
-        (11_200_000 * 10 ** 18) / YEAR, //epoch 3
-        (5_600_000 * 10 ** 18) / YEAR, //epoch 4
-        (2_800_000 * 10 ** 18) / YEAR //epoch 5~
+        (28_000_000 * 10**18) / YEAR, //epoch 0
+        (22_400_000 * 10**18) / YEAR, //epoch 1
+        (16_800_000 * 10**18) / YEAR, //epoch 2
+        (11_200_000 * 10**18) / YEAR, //epoch 3
+        (5_600_000 * 10**18) / YEAR, //epoch 4
+        (2_800_000 * 10**18) / YEAR //epoch 5~
     ];
 
-    uint256 constant RATE_DENOMINATOR = 10 ** 18;
+    uint256 constant RATE_DENOMINATOR = 10**18;
     uint256 constant INFLATION_DELAY = 86400;
 
     // Supply variables
@@ -88,13 +88,16 @@ contract InsureToken is IERC20 {
         _;
     }
 
-
     /***
      * @notice Contract constructor
      * @param _name Token full name
      * @param _symbol Token symbol
      */
-    constructor(string memory _name, string memory _symbol, address _ownership) {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _ownership
+    ) {
         uint256 _init_supply = INITIAL_SUPPLY * RATE_DENOMINATOR;
         name = _name;
         symbol = _symbol;
@@ -165,8 +168,7 @@ contract InsureToken is IERC20 {
      *        while simultaneously updating mining parameters
      *@return Timestamp of the epoch
      */
-    function start_epoch_time_write() external returns(uint256) {
-
+    function start_epoch_time_write() external returns (uint256) {
         uint256 _start_epoch_time = start_epoch_time;
         if (block.timestamp >= _start_epoch_time + RATE_REDUCTION_TIME) {
             _update_mining_parameters();
@@ -181,7 +183,7 @@ contract InsureToken is IERC20 {
      *        while simultaneously updating mining parameters
      *@return Timestamp of the next epoch
      */
-    function future_epoch_time_write() external returns(uint256) {
+    function future_epoch_time_write() external returns (uint256) {
         uint256 _start_epoch_time = start_epoch_time;
         if (block.timestamp >= _start_epoch_time + RATE_REDUCTION_TIME) {
             _update_mining_parameters();
@@ -191,9 +193,9 @@ contract InsureToken is IERC20 {
         }
     }
 
-    function _available_supply() internal view returns(uint256) {
+    function _available_supply() internal view returns (uint256) {
         return
-        start_epoch_supply +
+            start_epoch_supply +
             ((block.timestamp - start_epoch_time) * rate) +
             emergency_minted;
     }
@@ -201,7 +203,7 @@ contract InsureToken is IERC20 {
     /***
      *@notice Current number of tokens in existence (claimed or unclaimed)
      */
-    function available_supply() external view returns(uint256) {
+    function available_supply() external view returns (uint256) {
         return _available_supply();
     }
 
@@ -212,9 +214,10 @@ contract InsureToken is IERC20 {
      *@return Tokens mintable from `start` till `end`
      */
     function mintable_in_timeframe(uint256 start, uint256 end)
-    external
-    view
-    returns(uint256) {
+        external
+        view
+        returns (uint256)
+    {
         require(start <= end, "dev: start > end");
         uint256 _to_mint = 0;
 
@@ -224,7 +227,6 @@ contract InsureToken is IERC20 {
 
         // Special case if end is in future (not yet minted) epoch
         if (end > _current_epoch_time + RATE_REDUCTION_TIME) {
-
             _current_epoch_time += RATE_REDUCTION_TIME;
             if (_current_epoch < 5) {
                 _current_epoch += 1;
@@ -240,7 +242,7 @@ contract InsureToken is IERC20 {
             "dev: too far in future"
         );
 
-        for (uint256 i; i < 999;) {
+        for (uint256 i; i < 999; ) {
             // InsureDAO will not work in 1000 years.
             if (end >= _current_epoch_time) {
                 uint256 current_end = end;
@@ -267,7 +269,9 @@ contract InsureToken is IERC20 {
             if (_current_epoch == 0) {
                 _current_rate = 0;
             } else {
-                _current_rate = _current_epoch < 5 ? RATES[uint256(_current_epoch) - 1] : RATES[5];
+                _current_rate = _current_epoch < 5
+                    ? RATES[uint256(_current_epoch) - 1]
+                    : RATES[5];
             }
 
             _current_epoch -= 1;
@@ -283,7 +287,7 @@ contract InsureToken is IERC20 {
     /***
      *@notice Total number of tokens in existence.
      */
-    function totalSupply() external view override returns(uint256) {
+    function totalSupply() external view override returns (uint256) {
         return total_supply;
     }
 
@@ -294,10 +298,11 @@ contract InsureToken is IERC20 {
      *@return uint256 specifying the amount of tokens still available for the spender
      */
     function allowance(address _owner, address _spender)
-    external
-    view
-    override
-    returns(uint256) {
+        external
+        view
+        override
+        returns (uint256)
+    {
         return allowances[_owner][_spender];
     }
 
@@ -310,9 +315,10 @@ contract InsureToken is IERC20 {
      *@return bool success
      */
     function transfer(address _to, uint256 _value)
-    external
-    override
-    returns(bool) {
+        external
+        override
+        returns (bool)
+    {
         require(_to != address(0), "transfers to 0x0 are not allowed");
         uint256 _fromBalance = balanceOf[msg.sender];
         require(_fromBalance >= _value, "transfer amount exceeds balance");
@@ -335,7 +341,7 @@ contract InsureToken is IERC20 {
         address _from,
         address _to,
         uint256 _value
-    ) external override returns(bool) {
+    ) external override returns (bool) {
         require(_from != address(0), "transfer from the zero address");
         require(_to != address(0), "transfer to the zero address");
 
@@ -374,16 +380,18 @@ contract InsureToken is IERC20 {
      *@return bool success
      */
     function approve(address _spender, uint256 _value)
-    external
-    override
-    returns(bool) {
+        external
+        override
+        returns (bool)
+    {
         _approve(msg.sender, _spender, _value);
         return true;
     }
 
     function increaseAllowance(address _spender, uint256 addedValue)
-    external
-    returns(bool) {
+        external
+        returns (bool)
+    {
         _approve(
             msg.sender,
             _spender,
@@ -394,8 +402,9 @@ contract InsureToken is IERC20 {
     }
 
     function decreaseAllowance(address _spender, uint256 subtractedValue)
-    external
-    returns(bool) {
+        external
+        returns (bool)
+    {
         uint256 currentAllowance = allowances[msg.sender][_spender];
         require(
             currentAllowance >= subtractedValue,
@@ -415,7 +424,7 @@ contract InsureToken is IERC20 {
      *@param _value The amount that will be created
      *@return bool success
      */
-    function mint(address _to, uint256 _value) external returns(bool) {
+    function mint(address _to, uint256 _value) external returns (bool) {
         require(msg.sender == minter, "dev: minter only");
         require(_to != address(0), "dev: zero address");
 
@@ -446,7 +455,7 @@ contract InsureToken is IERC20 {
      *@param _value The amount that will be burned
      *@return bool success
      */
-    function burn(uint256 _value) external returns(bool) {
+    function burn(uint256 _value) external returns (bool) {
         require(
             balanceOf[msg.sender] >= _value,
             "_value > balanceOf[msg.sender]"
@@ -467,7 +476,10 @@ contract InsureToken is IERC20 {
      *@param _name New token name
      *@param _symbol New token symbol
      */
-    function set_name(string memory _name, string memory _symbol) external onlyOwner {
+    function set_name(string memory _name, string memory _symbol)
+        external
+        onlyOwner
+    {
         name = _name;
         symbol = _symbol;
     }
@@ -478,10 +490,7 @@ contract InsureToken is IERC20 {
      *@param _minter Address of the minter
      */
     function set_minter(address _minter) external onlyOwner {
-        require(
-            minter == address(0),
-            "can set the minter at creation"
-        );
+        require(minter == address(0), "can set the minter at creation");
         minter = _minter;
         emit SetMinter(_minter);
     }
@@ -506,8 +515,9 @@ contract InsureToken is IERC20 {
      * @param _to CDS address
      */
     function emergency_mint(uint256 _amount, address _to)
-    external
-    returns(bool) {
+        external
+        returns (bool)
+    {
         require(msg.sender == minter, "dev: minter only");
         //mint
         emergency_minted += _amount;

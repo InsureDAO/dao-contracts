@@ -38,11 +38,7 @@ describe("GaugeController", function () {
   let b = BigNumber.from("5");
 
   const TYPE_WEIGHTS = [ten_to_the_17.mul(b), ten_to_the_18.mul(a)];
-  const GAUGE_WEIGHTS = [
-    ten_to_the_18.mul(a),
-    ten_to_the_18,
-    ten_to_the_17.mul(b),
-  ];
+  const GAUGE_WEIGHTS = [ten_to_the_18.mul(a), ten_to_the_18, ten_to_the_17.mul(b)];
 
   before(async () => {
     //import
@@ -66,35 +62,14 @@ describe("GaugeController", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
 
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "iToken",
-      decimal,
-      ten_to_the_9
-    ); //Not using the actual InsureDAO contract
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "iToken", decimal, ten_to_the_9); //Not using the actual InsureDAO contract
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
 
-    lg1 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
-    lg2 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
-    lg3 = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    lg1 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
+    lg2 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
+    lg3 = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
     three_gauges = [lg1.address, lg2.address, lg3.address];
     gauge = three_gauges[0];
 
@@ -112,9 +87,7 @@ describe("GaugeController", function () {
   describe("test_total_weight", function () {
     it("test_total_weight", async () => {
       await gauge_controller.add_gauge(three_gauges[0], 1, GAUGE_WEIGHTS[0]);
-      expect(await gauge_controller.get_total_weight()).to.equal(
-        GAUGE_WEIGHTS[0].mul(TYPE_WEIGHTS[0])
-      );
+      expect(await gauge_controller.get_total_weight()).to.equal(GAUGE_WEIGHTS[0].mul(TYPE_WEIGHTS[0]));
     });
 
     it("test_change_type_weight", async () => {
@@ -122,9 +95,7 @@ describe("GaugeController", function () {
 
       await gauge_controller.change_type_weight(1, 31337);
 
-      expect(await gauge_controller.get_total_weight()).to.equal(
-        ten_to_the_18.mul(BigNumber.from("31337"))
-      );
+      expect(await gauge_controller.get_total_weight()).to.equal(ten_to_the_18.mul(BigNumber.from("31337")));
     });
 
     it("test_change_gauge_weight", async () => {
@@ -132,9 +103,7 @@ describe("GaugeController", function () {
 
       await gauge_controller.change_gauge_weight(three_gauges[0], 31337);
 
-      expect(await gauge_controller.get_total_weight()).to.equal(
-        TYPE_WEIGHTS[0].mul(BigNumber.from("31337"))
-      );
+      expect(await gauge_controller.get_total_weight()).to.equal(TYPE_WEIGHTS[0].mul(BigNumber.from("31337")));
     });
 
     it("test_multiple", async () => {

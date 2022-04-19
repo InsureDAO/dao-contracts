@@ -75,13 +75,9 @@ describe("InsureToken", function () {
       await Insure.emergency_mint(amount, alice.address);
 
       await ethers.provider.send("evm_increaseTime", [WEEK]);
-      let new_timestamp = BigNumber.from(
-        (await ethers.provider.getBlock("latest")).timestamp
-      );
+      let new_timestamp = BigNumber.from((await ethers.provider.getBlock("latest")).timestamp);
 
-      let expected = initial_supply
-        .add(rate.mul(new_timestamp.sub(creation_time)))
-        .add(amount);
+      let expected = initial_supply.add(rate.mul(new_timestamp.sub(creation_time))).add(amount);
       expect(await Insure.available_supply()).to.equal(expected);
     });
 
@@ -89,9 +85,7 @@ describe("InsureToken", function () {
       await Insure.set_minter(creator.address);
 
       let amount = BigNumber.from("1000000");
-      await expect(
-        Insure.connect(alice).emergency_mint(amount, alice.address)
-      ).to.revertedWith("dev: minter only");
+      await expect(Insure.connect(alice).emergency_mint(amount, alice.address)).to.revertedWith("dev: minter only");
     });
   });
 });

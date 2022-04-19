@@ -49,23 +49,10 @@ describe("LiquidityGauge", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "indexSURE",
-      decimal,
-      ten_to_the_9
-    ); //Not using the actual InsureDAO contract
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "indexSURE", decimal, ten_to_the_9); //Not using the actual InsureDAO contract
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
-    liquidity_gauge = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    liquidity_gauge = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
   });
 
   beforeEach(async () => {
@@ -83,16 +70,12 @@ describe("LiquidityGauge", function () {
 
     it("test_user_checkpoint_new_period", async () => {
       await liquidity_gauge.connect(alice).user_checkpoint(alice.address);
-      await ethers.provider.send("evm_increaseTime", [
-        YEAR.mul("11").div("10").toNumber(),
-      ]);
+      await ethers.provider.send("evm_increaseTime", [YEAR.mul("11").div("10").toNumber()]);
       await liquidity_gauge.connect(alice).user_checkpoint(alice.address);
     });
 
     it("test_user_checkpoint_wrong_account", async () => {
-      await expect(
-        liquidity_gauge.connect(alice).user_checkpoint(bob.address)
-      ).to.revertedWith("dev: unauthorized");
+      await expect(liquidity_gauge.connect(alice).user_checkpoint(bob.address)).to.revertedWith("dev: unauthorized");
     });
   });
 });

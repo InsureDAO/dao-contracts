@@ -16,7 +16,7 @@ import "../Converters/ConverterV1-2.sol";
 import "../interfaces/dao/IDistributor.sol";
 
 interface BURN {
-    function burn(uint256 _value) external returns(bool);
+    function burn(uint256 _value) external returns (bool);
 }
 
 contract FeeDistributorV1 is IDistributor {
@@ -38,8 +38,7 @@ contract FeeDistributorV1 is IDistributor {
      *@notice Buy back INSURE by arbitrary token and burn.
      *@param _token address of token to be used for exchange
      */
-    function distribute(address _token) external override returns(bool) {
-
+    function distribute(address _token) external override returns (bool) {
         //collect _token.
         uint256 claimable = IERC20(_token).allowance(msg.sender, address(this));
         if (claimable > 0) {

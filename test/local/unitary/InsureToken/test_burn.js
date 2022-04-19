@@ -40,15 +40,11 @@ describe("InsureToken", () => {
 
   describe("Constructor", function () {
     it("total_supply = 126000000000000000000000000", async () => {
-      expect(await Insure.total_supply()).to.equal(
-        "126000000000000000000000000"
-      );
+      expect(await Insure.total_supply()).to.equal("126000000000000000000000000");
     });
 
     it("Creator should have 126000000000000000000000000", async () => {
-      expect(await Insure.balanceOf(creator.address)).to.equal(
-        "126000000000000000000000000"
-      );
+      expect(await Insure.balanceOf(creator.address)).to.equal("126000000000000000000000000");
     });
   });
 
@@ -58,9 +54,7 @@ describe("InsureToken", () => {
       let amount = BigNumber.from("31337");
 
       await Insure.burn(amount);
-      expect(await Insure.balanceOf(creator.address)).to.equal(
-        balance.sub(amount)
-      );
+      expect(await Insure.balanceOf(creator.address)).to.equal(balance.sub(amount));
     });
   });
 
@@ -93,9 +87,7 @@ describe("InsureToken", () => {
       let initial_supply = BigNumber.from(await Insure.total_supply());
       let amount = initial_supply.add("1");
 
-      await expect(Insure.burn(amount)).to.revertedWith(
-        "_value > balanceOf[msg.sender]"
-      );
+      await expect(Insure.burn(amount)).to.revertedWith("_value > balanceOf[msg.sender]");
     });
   });
 });

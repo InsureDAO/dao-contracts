@@ -21,13 +21,7 @@ describe("DevFeeForwarder", () => {
 
   before(async () => {
     [creator, alice, bob, chad, dad] = await ethers.getSigners();
-    addresses = [
-      creator.address,
-      alice.address,
-      bob.address,
-      chad.address,
-      dad.address,
-    ];
+    addresses = [creator.address, alice.address, bob.address, chad.address, dad.address];
     const Token = await ethers.getContractFactory("TestToken");
     const Distributor = await ethers.getContractFactory("DevFeeForwarder");
 
@@ -54,9 +48,7 @@ describe("DevFeeForwarder", () => {
   describe("constructor()", function () {
     it("deploy should be reverted", async () => {
       const Distributor = await ethers.getContractFactory("DevFeeForwarder");
-      await expect(Distributor.deploy(ZERO_ADDRESS)).to.revertedWith(
-        "zero address"
-      );
+      await expect(Distributor.deploy(ZERO_ADDRESS)).to.revertedWith("zero address");
     });
   });
 
@@ -67,9 +59,7 @@ describe("DevFeeForwarder", () => {
 
       //creator has 1000, and approve 1000 to the dstr
       expect(await token.balanceOf(creator.address)).to.equal(1000);
-      expect(await token.allowance(creator.address, dstr.address)).to.equal(
-        1000
-      );
+      expect(await token.allowance(creator.address, dstr.address)).to.equal(1000);
       expect(await token.balanceOf(dstr.address)).to.equal(0);
       expect(await token.balanceOf(alice.address)).to.equal(0);
 
@@ -88,9 +78,7 @@ describe("DevFeeForwarder", () => {
 
       //creator has 1000, and approve 1000 to the dstr
       expect(await token.balanceOf(creator.address)).to.equal(1000);
-      expect(await token.allowance(creator.address, dstr.address)).to.equal(
-        1000
-      );
+      expect(await token.allowance(creator.address, dstr.address)).to.equal(1000);
       expect(await token.balanceOf(dstr.address)).to.equal(500);
       expect(await token.balanceOf(alice.address)).to.equal(0);
 
@@ -122,9 +110,7 @@ describe("DevFeeForwarder", () => {
     });
 
     it("test_distribute_fail", async () => {
-      await expect(dstr.distribute(ZERO_ADDRESS)).to.revertedWith(
-        "zero address"
-      );
+      await expect(dstr.distribute(ZERO_ADDRESS)).to.revertedWith("zero address");
     });
   });
 });

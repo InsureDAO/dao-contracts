@@ -21,9 +21,7 @@ describe("LiquidityGauge", function () {
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-  const two_to_the_256_minus_1 = BigNumber.from("2")
-    .pow(BigNumber.from("256"))
-    .sub(BigNumber.from("1"));
+  const two_to_the_256_minus_1 = BigNumber.from("2").pow(BigNumber.from("256")).sub(BigNumber.from("1"));
   const ten_to_the_21 = BigNumber.from("1000000000000000000000");
   const ten_to_the_20 = BigNumber.from("100000000000000000000");
   const ten_to_the_19 = BigNumber.from("10000000000000000000");
@@ -53,29 +51,13 @@ describe("LiquidityGauge", function () {
       "veInsure",
       ownership.address
     );
-    gauge_controller = await GaugeController.deploy(
-      Insure.address,
-      voting_escrow.address,
-      ownership.address
-    );
-    mock_lp_token = await TestLP.deploy(
-      "InsureDAO LP token",
-      "indexSURE",
-      decimal,
-      ten_to_the_9
-    ); //Not using the actual InsureDAO contract
+    gauge_controller = await GaugeController.deploy(Insure.address, voting_escrow.address, ownership.address);
+    mock_lp_token = await TestLP.deploy("InsureDAO LP token", "indexSURE", decimal, ten_to_the_9); //Not using the actual InsureDAO contract
     minter = await Minter.deploy(Insure.address, gauge_controller.address, ownership.address);
-    liquidity_gauge = await LiquidityGauge.deploy(
-      mock_lp_token.address,
-      minter.address,
-      ownership.address
-    );
+    liquidity_gauge = await LiquidityGauge.deploy(mock_lp_token.address, minter.address, ownership.address);
 
     //set up
-    await mock_lp_token.approve(
-      liquidity_gauge.address,
-      two_to_the_256_minus_1
-    );
+    await mock_lp_token.approve(liquidity_gauge.address, two_to_the_256_minus_1);
   });
 
   beforeEach(async () => {
@@ -91,40 +73,24 @@ describe("LiquidityGauge", function () {
       let balance = await mock_lp_token.balanceOf(creator.address);
       await liquidity_gauge.deposit(BigNumber.from("100000"), creator.address);
 
-      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(
-        BigNumber.from("100000")
-      );
-      expect(await mock_lp_token.balanceOf(creator.address)).to.equal(
-        balance.sub(BigNumber.from("100000"))
-      );
-      expect(await liquidity_gauge.totalSupply()).to.equal(
-        BigNumber.from("100000")
-      );
-      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(
-        BigNumber.from("100000")
-      );
+      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(BigNumber.from("100000"));
+      expect(await mock_lp_token.balanceOf(creator.address)).to.equal(balance.sub(BigNumber.from("100000")));
+      expect(await liquidity_gauge.totalSupply()).to.equal(BigNumber.from("100000"));
+      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(BigNumber.from("100000"));
     });
 
     it("test_deposit_zero", async () => {
       let balance = await mock_lp_token.balanceOf(creator.address);
       await liquidity_gauge.deposit(BigNumber.from("0"), creator.address);
 
-      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(
-        BigNumber.from("0")
-      );
+      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(BigNumber.from("0"));
       expect(await mock_lp_token.balanceOf(creator.address)).to.equal(balance);
       expect(await liquidity_gauge.totalSupply()).to.equal(BigNumber.from("0"));
-      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(
-        BigNumber.from("0")
-      );
+      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(BigNumber.from("0"));
     });
 
     it("test_deposit_insufficient_balance", async () => {
-      await expect(
-        liquidity_gauge
-          .connect(alice)
-          .deposit(BigNumber.from("10000"), alice.address)
-      ).to.reverted;
+      await expect(liquidity_gauge.connect(alice).deposit(BigNumber.from("10000"), alice.address)).to.reverted;
     });
 
     it("test_withdraw", async () => {
@@ -133,14 +99,10 @@ describe("LiquidityGauge", function () {
       await liquidity_gauge.deposit(BigNumber.from("100000"), creator.address);
       await liquidity_gauge.withdraw(BigNumber.from("100000"));
 
-      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(
-        BigNumber.from("0")
-      );
+      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(BigNumber.from("0"));
       expect(await mock_lp_token.balanceOf(creator.address)).to.equal(balance);
       expect(await liquidity_gauge.totalSupply()).to.equal(BigNumber.from("0"));
-      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(
-        BigNumber.from("0")
-      );
+      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(BigNumber.from("0"));
     });
 
     it("test_withdraw_zero", async () => {
@@ -148,37 +110,23 @@ describe("LiquidityGauge", function () {
       await liquidity_gauge.deposit(BigNumber.from("100000"), creator.address);
       await liquidity_gauge.withdraw(BigNumber.from("0"));
 
-      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(
-        BigNumber.from("100000")
-      );
-      expect(await mock_lp_token.balanceOf(creator.address)).to.equal(
-        balance.sub(BigNumber.from("100000"))
-      );
-      expect(await liquidity_gauge.totalSupply()).to.equal(
-        BigNumber.from("100000")
-      );
-      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(
-        BigNumber.from("100000")
-      );
+      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(BigNumber.from("100000"));
+      expect(await mock_lp_token.balanceOf(creator.address)).to.equal(balance.sub(BigNumber.from("100000")));
+      expect(await liquidity_gauge.totalSupply()).to.equal(BigNumber.from("100000"));
+      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(BigNumber.from("100000"));
     });
 
     it("test_withdraw_new_epoch", async () => {
       let balance = await mock_lp_token.balanceOf(creator.address);
 
       await liquidity_gauge.deposit(BigNumber.from("100000"), creator.address);
-      await ethers.provider.send("evm_increaseTime", [
-        DAY.mul("400").toNumber(),
-      ]);
+      await ethers.provider.send("evm_increaseTime", [DAY.mul("400").toNumber()]);
       await liquidity_gauge.withdraw(BigNumber.from("100000"));
 
-      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(
-        BigNumber.from("0")
-      );
+      expect(await mock_lp_token.balanceOf(liquidity_gauge.address)).to.equal(BigNumber.from("0"));
       expect(await mock_lp_token.balanceOf(creator.address)).to.equal(balance);
       expect(await liquidity_gauge.totalSupply()).to.equal(BigNumber.from("0"));
-      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(
-        BigNumber.from("0")
-      );
+      expect(await liquidity_gauge.balanceOf(creator.address)).to.equal(BigNumber.from("0"));
     });
   });
 });

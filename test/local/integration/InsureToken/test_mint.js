@@ -79,13 +79,9 @@ describe("InsureToken", function () {
     let now = (await ethers.provider.getBlock("latest")).timestamp;
     await ethers.provider.send("evm_setNextBlockTimestamp", [now + duration]);
 
-    let amount = rate
-      .mul(BigNumber.from(now + duration).sub(creation_time))
-      .add(BigNumber.from("2"));
+    let amount = rate.mul(BigNumber.from(now + duration).sub(creation_time)).add(BigNumber.from("2"));
 
-    await expect(Insure.mint(alice.address, amount)).to.revertedWith(
-      "exceeds allowable mint amount"
-    );
+    await expect(Insure.mint(alice.address, amount)).to.revertedWith("exceeds allowable mint amount");
   }
 
   async function test_mint_multiple() {
