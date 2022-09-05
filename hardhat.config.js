@@ -4,7 +4,7 @@ require("solidity-coverage");
 require("@nomiclabs/hardhat-etherscan");
 require("dotenv").config();
 
-const { ETHERSCAN_API, KEY, INFURA_KEY } = process.env;
+const { ETHERSCAN_API, KEY, INFURA_KEY, GOERLI_URL } = process.env;
 
 module.exports = {
   solidity: "0.8.10",
@@ -23,6 +23,10 @@ module.exports = {
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${INFURA_KEY}`,
+      accounts: [`0x${KEY}`],
+    },
+    goerli: {
+      url: GOERLI_URL,
       accounts: [`0x${KEY}`],
     },
   },
