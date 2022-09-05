@@ -10,17 +10,19 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   const { GAUGE_TYPES } = require("./config.js");
   const LiquidityGauge = await hre.ethers.getContractFactory("LiquidityGauge");
+  const GaugeController = await hre.ethers.getContractFactory("GaugeController");
 
-  let weight = GAUGE_TYPES[el][1];
-  let gauge_controller = "0xbF77F0e2C4A860d5f98d06BbbBA85242D50D3311";
+  let weight = GAUGE_TYPES[0][1];
+  let gc = "0xbF77F0e2C4A860d5f98d06BbbBA85242D50D3311";
   let minter = "0x71Be077d20a6dc38C235BbCCEa900C36eE841F0E";
   let ownership = "0xD62Eb8de81bCa609ed82cC9090c595bD00Dbffa2";
   let lp_token = "0xbC6463bD7F53Db06a2247D181Dc784bE8c3E302f"; //InsureDepositor's vlINSURE
 
   let liquidity_gauge = await LiquidityGauge.deploy(lp_token, minter, ownership);
   await liquidity_gauge.deployed();
-
   console.log("liquidity_gauge.address:", liquidity_gauge.address);
+
+  const gauge_controller = await GaugeController.attach(gc);
   let tx = await gauge_controller.add_gauge(liquidity_gauge.address, 1, weight);
   await tx.wait();
 
