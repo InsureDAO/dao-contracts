@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 interface ILiquidityGauge {
-    function user_checkpoint(address addr)external returns (bool);
-    function integrate_fraction(address addr)external view returns (uint256);
+    function user_checkpoint(address _addr) external returns (bool);
+
+    function integrate_fraction(address _addr) external view returns (uint256);
 }

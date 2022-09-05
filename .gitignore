@@ -1,4 +1,5 @@
 node_modules/
+package-lock.json
 bin/
 contracts/interfaces/.DS_Store
 contracts/.DS_Store
@@ -8,5 +9,7 @@ cache/
 coverage/
 coverage.json
 .DS_Store
-.infuraKey
-.key
+.env
+.idea/
+.yarn-lock
+scripts/Mainnet

@@ -1,10 +1,18 @@
-// SPDX-License-Identifier: MIT
-
-pragma solidity 0.8.7;
+pragma solidity 0.8.10;
 
 interface IIndexTemplate {
-    function setPaused(bool) external; //Universal
-    function changeMetadata(string calldata) external; //Universal
-    function setLeverage(uint256) external;
-    function set(uint256, address, uint256) external;
+    function compensate(uint256) external returns (uint256 _compensated);
+
+    function lock() external;
+
+    function resume() external;
+
+    //onlyOwner
+    function setLeverage(uint256 _target) external;
+    function set(
+        uint256 _indexA,
+        uint256 _indexB,
+        address _pool,
+        uint256 _allocPoint
+    ) external;
 }
