@@ -12,4 +12,4 @@ coverage.json
 .env
 .idea/
 .yarn-lock
-scripts
+scripts/Mainnet
