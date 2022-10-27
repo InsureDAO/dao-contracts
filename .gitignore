@@ -13,3 +13,4 @@ coverage.json
 .idea/
 .yarn-lock
 scripts/Mainnet
+typechain-types

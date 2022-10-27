@@ -21,16 +21,29 @@ describe("ReportingFeeDistributorV1", () => {
 
   before(async () => {
     [creator, alice, bob, chad, dad] = await ethers.getSigners();
-    addresses = [creator.address, alice.address, bob.address, chad.address, dad.address];
+    addresses = [
+      creator.address,
+      alice.address,
+      bob.address,
+      chad.address,
+      dad.address,
+    ];
 
     const Ownership = await ethers.getContractFactory("Ownership");
     const Token = await ethers.getContractFactory("TestToken");
-    const Distributor = await ethers.getContractFactory("ReportingFeeDistributor");
+    const Distributor = await ethers.getContractFactory(
+      "ReportingFeeDistributor"
+    );
 
     ownership = await Ownership.deploy();
     fee = await Token.deploy(name, symbol, decimal);
     rpt_token = await Token.deploy(name, symbol, rpt_decimal);
-    dstr = await Distributor.deploy(rpt_token.address, alice.address, ownership.address, fee.address);
+    dstr = await Distributor.deploy(
+      rpt_token.address,
+      alice.address,
+      ownership.address,
+      fee.address
+    );
   });
 
   beforeEach(async () => {
@@ -76,7 +89,9 @@ describe("ReportingFeeDistributorV1", () => {
       await rpt_token._mint_for_testing(1);
 
       //register
-      await expect(dstr.register_reporter(ZERO_ADDRESS)).to.revertedWith("zero address");
+      await expect(dstr.register_reporter(ZERO_ADDRESS)).to.revertedWith(
+        "zero address"
+      );
     });
 
     it("not added if not rpt member", async () => {
@@ -96,7 +111,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       //register
       await dstr.register_reporter(creator.address);
-      await expect(dstr.register_reporter(creator.address)).to.revertedWith("already registere");
+      await expect(dstr.register_reporter(creator.address)).to.revertedWith(
+        "already registered"
+      );
     });
   });
 
@@ -236,12 +253,16 @@ describe("ReportingFeeDistributorV1", () => {
       await dstr.kill_me();
 
       //update
-      await expect(dstr.update_reporter(creator.address)).to.revertedWith("dev: contract is killed");
+      await expect(dstr.update_reporter(creator.address)).to.revertedWith(
+        "dev: contract is killed"
+      );
     });
 
     it("revert if zero address", async () => {
       //update
-      await expect(dstr.update_reporter(ZERO_ADDRESS)).to.revertedWith("zero address");
+      await expect(dstr.update_reporter(ZERO_ADDRESS)).to.revertedWith(
+        "zero address"
+      );
     });
   });
 
@@ -284,7 +305,9 @@ describe("ReportingFeeDistributorV1", () => {
       await dstr.kill_me();
 
       //update
-      await expect(dstr.update_reporter_many(addresses)).to.revertedWith("dev: contract is killed");
+      await expect(dstr.update_reporter_many(addresses)).to.revertedWith(
+        "dev: contract is killed"
+      );
     });
   });
 
@@ -329,7 +352,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
 
@@ -361,7 +386,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
 
@@ -388,7 +415,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
       expect(await dstr.fee_total()).to.equal(expected);
@@ -401,7 +430,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
       expect(await dstr.fee_total()).to.equal(expected);
@@ -436,7 +467,9 @@ describe("ReportingFeeDistributorV1", () => {
       //check if bonus_total & dee_total tracks the number correctlly
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
 
@@ -446,11 +479,15 @@ describe("ReportingFeeDistributorV1", () => {
 
     it("revert if killed", async () => {
       await dstr.kill_me();
-      await expect(dstr.distribute(fee.address)).to.revertedWith("dev: contract is killed");
+      await expect(dstr.distribute(fee.address)).to.revertedWith(
+        "dev: contract is killed"
+      );
     });
 
     it("revert if token is wrong", async () => {
-      await expect(dstr.distribute(rpt_token.address)).to.revertedWith("cannnot distribute this token");
+      await expect(dstr.distribute(rpt_token.address)).to.revertedWith(
+        "cannnot distribute this token"
+      );
     });
   });
 
@@ -493,7 +530,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
 
@@ -539,7 +578,9 @@ describe("ReportingFeeDistributorV1", () => {
 
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
 
@@ -583,12 +624,18 @@ describe("ReportingFeeDistributorV1", () => {
       //bonus distribtution
       await dstr.bonus_distribution(ids, allocations);
 
-      expect(await dstr.claimable_fee(creator.address)).to.equal(FEE.mul(100).div(757).add(FEE.mul(500).div(757))); //100+157+500
-      expect(await dstr.claimable_fee(alice.address)).to.equal(FEE.mul(157).div(757)); //100+157+500
+      expect(await dstr.claimable_fee(creator.address)).to.equal(
+        FEE.mul(100).div(757).add(FEE.mul(500).div(757))
+      ); //100+157+500
+      expect(await dstr.claimable_fee(alice.address)).to.equal(
+        FEE.mul(157).div(757)
+      ); //100+157+500
 
       let total_distributed = BigNumber.from("0");
       for (i = 0; i < addresses.length; i++) {
-        total_distributed = total_distributed.add(await dstr.claimable_fee(addresses[i]));
+        total_distributed = total_distributed.add(
+          await dstr.claimable_fee(addresses[i])
+        );
       }
       let expected = (await fee.balanceOf(dstr.address)).sub(total_distributed);
 
@@ -606,9 +653,9 @@ describe("ReportingFeeDistributorV1", () => {
         allocations.push(0);
       }
 
-      await expect(dstr.connect(alice).bonus_distribution(ids, allocations)).to.revertedWith(
-        "Caller is not allowed to operate"
-      );
+      await expect(
+        dstr.connect(alice).bonus_distribution(ids, allocations)
+      ).to.revertedWith("Caller is not allowed to operate");
     });
   });
 
@@ -650,7 +697,9 @@ describe("ReportingFeeDistributorV1", () => {
       expect(await dstr.bonus_ratio_divider()).to.equal(100);
     });
     it("revert set bonus", async () => {
-      await expect(dstr.connect(alice).set_bonus_ratio(100)).to.revertedWith("Caller is not allowed to operate");
+      await expect(dstr.connect(alice).set_bonus_ratio(100)).to.revertedWith(
+        "Caller is not allowed to operate"
+      );
       await expect(dstr.set_bonus_ratio(101)).to.revertedWith("exceed max");
     });
 
@@ -665,10 +714,14 @@ describe("ReportingFeeDistributorV1", () => {
     });
 
     it("revert kill_me", async () => {
-      await expect(dstr.connect(alice).kill_me()).to.revertedWith("Caller is not allowed to operate");
+      await expect(dstr.connect(alice).kill_me()).to.revertedWith(
+        "Caller is not allowed to operate"
+      );
 
       await dstr.change_recovery(ZERO_ADDRESS);
-      await expect(dstr.kill_me()).to.revertedWith("dev: recovery address is ZERO_ADDRESS");
+      await expect(dstr.kill_me()).to.revertedWith(
+        "dev: recovery address is ZERO_ADDRESS"
+      );
     });
 
     //recovery
@@ -689,13 +742,17 @@ describe("ReportingFeeDistributorV1", () => {
     });
 
     it("revert recover", async () => {
-      await expect(dstr.connect(alice).recover_balance(fee.address)).to.revertedWith(
-        "Caller is not allowed to operate"
+      await expect(
+        dstr.connect(alice).recover_balance(fee.address)
+      ).to.revertedWith("Caller is not allowed to operate");
+      await expect(dstr.recover_balance(fee.address)).to.revertedWith(
+        "dev: not killed"
       );
-      await expect(dstr.recover_balance(fee.address)).to.revertedWith("dev: not killed");
 
       await dstr.change_recovery(ZERO_ADDRESS);
-      await expect(dstr.recover_balance(fee.address)).to.revertedWith("recovery to ZERO_ADDRESS");
+      await expect(dstr.recover_balance(fee.address)).to.revertedWith(
+        "recovery to ZERO_ADDRESS"
+      );
     });
   });
 });

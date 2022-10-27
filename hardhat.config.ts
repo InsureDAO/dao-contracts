@@ -1,13 +1,16 @@
-require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-web3");
-require("solidity-coverage");
-require("@nomiclabs/hardhat-etherscan");
-require("dotenv").config();
+import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
+import "@nomicfoundation/hardhat-chai-matchers";
+import "solidity-coverage";
+import "@nomiclabs/hardhat-etherscan";
+import "@nomicfoundation/hardhat-network-helpers";
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 const { ETHERSCAN_API, KEY, INFURA_KEY, GOERLI_URL } = process.env;
 
 module.exports = {
-  solidity: "0.8.10",
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {

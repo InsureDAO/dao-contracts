@@ -31,7 +31,11 @@ describe("PoolProxy", () => {
      * parameter admin: alice
      * emergency admin: bob
      */
-    pool_proxy = await PoolProxy.deploy(creator.address, alice.address, bob.address);
+    pool_proxy = await PoolProxy.deploy(
+      creator.address,
+      alice.address,
+      bob.address
+    );
     tokenA = await Token.deploy("Token A", "A", 18);
     tokenB = await Token.deploy("Token B", "B", 18);
     fee_token = await Token.deploy("Admin Fee", "FEE", 18);
@@ -59,50 +63,90 @@ describe("PoolProxy", () => {
   describe("add_distributor", function () {
     it("only_ownership_admin", async () => {
       await expect(
-        pool_proxy.connect(alice).add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address)
+        pool_proxy
+          .connect(alice)
+          .add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address)
       ).to.revertedWith("only ownership admin");
     });
 
     it("token cannot be zero address", async () => {
-      await expect(pool_proxy.add_distributor(ZERO_ADDRESS, "dstrA for zero_address", dstrA.address)).to.revertedWith(
-        "_token cannot be zero address"
-      );
+      await expect(
+        pool_proxy.add_distributor(
+          ZERO_ADDRESS,
+          "dstrA for zero_address",
+          dstrA.address
+        )
+      ).to.revertedWith("_token cannot be zero address");
     });
 
-    it("id incremented correctlly", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address);
+    it("id incremented correctly", async () => {
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "dstrA for tokenA",
+        dstrA.address
+      );
       expect(await pool_proxy.n_distributors(tokenA.address)).to.equal(1);
     });
 
-    it("distributor set correctlly", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address);
-      expect(await pool_proxy.get_distributor_name(tokenA.address, 0)).to.equal("dstrA for tokenA");
-      expect(await pool_proxy.get_distributor_address(tokenA.address, 0)).to.equal(dstrA.address);
+    it("distributor set correctly", async () => {
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "dstrA for tokenA",
+        dstrA.address
+      );
+      expect(await pool_proxy.get_distributor_name(tokenA.address, 0)).to.equal(
+        "dstrA for tokenA"
+      );
+      expect(
+        await pool_proxy.get_distributor_address(tokenA.address, 0)
+      ).to.equal(dstrA.address);
     });
 
     it("distributor weight must be zero", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address);
-      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(0);
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "dstrA for tokenA",
+        dstrA.address
+      );
+      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(
+        0
+      );
     });
   });
 
   describe("set_distributor_weight", function () {
     it("only parameter admin", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address);
-      await expect(pool_proxy.set_distributor_weight(tokenA.address, 0, 1000)).to.revertedWith("only parameter admin");
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "dstrA for tokenA",
+        dstrA.address
+      );
+      await expect(
+        pool_proxy.set_distributor_weight(tokenA.address, 0, 1000)
+      ).to.revertedWith("only parameter admin");
     });
 
     it("cannot set weight for not added ID", async () => {
-      await expect(pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 1000)).to.revertedWith(
-        "not added yet"
-      );
+      await expect(
+        pool_proxy
+          .connect(alice)
+          .set_distributor_weight(tokenA.address, 0, 1000)
+      ).to.revertedWith("distributor not added yet");
     });
 
-    it("set weight correctlly", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address);
-      await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 1000);
+    it("set weight correctly", async () => {
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "dstrA for tokenA",
+        dstrA.address
+      );
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(tokenA.address, 0, 1000);
 
-      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(1000);
+      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(
+        1000
+      );
       expect(await pool_proxy.total_weights(tokenA.address)).to.equal(1000);
     });
   });
@@ -127,15 +171,19 @@ describe("PoolProxy", () => {
 
       //add dstrA and dstrB for TokenA.
       for (i = 0; i < n_id; i++) {
-        await pool_proxy.add_distributor(tokenA.address, "tokenA dstr", addresses[i]);
+        await pool_proxy.add_distributor(
+          tokenA.address,
+          "tokenA dstr",
+          addresses[i]
+        );
       }
 
-      await expect(pool_proxy.set_distributor_weight_many(tokens, ids, weights)).to.revertedWith(
-        "only parameter admin"
-      );
+      await expect(
+        pool_proxy.set_distributor_weight_many(tokens, ids, weights)
+      ).to.revertedWith("only parameter admin");
     });
 
-    it("set weights correctlly", async () => {
+    it("set weights correctly", async () => {
       let addresses = [dstrA.address, dstrB.address];
 
       let tokens = [tokenA.address, tokenA.address];
@@ -154,75 +202,148 @@ describe("PoolProxy", () => {
 
       //add dstrA and dstrB for TokenA.
       for (i = 0; i < n_id; i++) {
-        await pool_proxy.add_distributor(tokenA.address, "tokenA dstr", addresses[i]);
+        await pool_proxy.add_distributor(
+          tokenA.address,
+          "tokenA dstr",
+          addresses[i]
+        );
       }
 
-      await pool_proxy.connect(alice).set_distributor_weight_many(tokens, ids, weights);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight_many(tokens, ids, weights);
 
       //check
-      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(1000);
-      expect(await pool_proxy.distributor_weight(tokenA.address, 1)).to.equal(9000);
+      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(
+        1000
+      );
+      expect(await pool_proxy.distributor_weight(tokenA.address, 1)).to.equal(
+        9000
+      );
       expect(await pool_proxy.total_weights(tokenA.address)).to.equal(10000); //sum of weights
     });
   });
 
   describe("set_distributor", function () {
     it("only admin", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "dstrA for tokenA", dstrA.address);
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "dstrA for tokenA",
+        dstrA.address
+      );
       await expect(
-        pool_proxy.connect(alice).set_distributor(tokenA.address, 0, "tokenA dstr V2", dstrB.address)
+        pool_proxy
+          .connect(alice)
+          .set_distributor(tokenA.address, 0, "tokenA dstr V2", dstrB.address)
       ).to.revertedWith("only ownership admin");
     });
 
     it("cannot set to not added purpose", async () => {
-      await expect(pool_proxy.set_distributor(tokenA.address, 0, "tokenA dstr v2", dstrB.address)).to.revertedWith(
-        "not added yet"
-      );
+      await expect(
+        pool_proxy.set_distributor(
+          tokenA.address,
+          0,
+          "tokenA dstr v2",
+          dstrB.address
+        )
+      ).to.revertedWith("distributor not added yet");
     });
 
-    it("set distributor correctlly", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "tokenA dstr V1", dstrA.address);
-      await pool_proxy.set_distributor(tokenA.address, 0, "tokenA dstr V2", dstrB.address);
+    it("set distributor correctly", async () => {
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "tokenA dstr V1",
+        dstrA.address
+      );
+      await pool_proxy.set_distributor(
+        tokenA.address,
+        0,
+        "tokenA dstr V2",
+        dstrB.address
+      );
 
-      expect(await pool_proxy.get_distributor_name(tokenA.address, 0)).to.equal("tokenA dstr V2");
-      expect(await pool_proxy.get_distributor_address(tokenA.address, 0)).to.equal(dstrB.address);
+      expect(await pool_proxy.get_distributor_name(tokenA.address, 0)).to.equal(
+        "tokenA dstr V2"
+      );
+      expect(
+        await pool_proxy.get_distributor_address(tokenA.address, 0)
+      ).to.equal(dstrB.address);
     });
 
     it("set weight => set distributor. inherit the weight", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "tokenA dstr V1", dstrA.address);
-      await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 1000);
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "tokenA dstr V1",
+        dstrA.address
+      );
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(tokenA.address, 0, 1000);
 
-      await pool_proxy.set_distributor(tokenA.address, 0, "tokenA dstr V2", dstrB.address);
+      await pool_proxy.set_distributor(
+        tokenA.address,
+        0,
+        "tokenA dstr V2",
+        dstrB.address
+      );
 
       //weight
-      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(1000);
+      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(
+        1000
+      );
 
-      //totalweight
+      //total weight
       expect(await pool_proxy.total_weights(tokenA.address)).to.equal(1000);
     });
 
     it("set weight => set distributor to zero address. resets the weight", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "tokenA dstr V1", dstrA.address);
-      await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 1000);
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "tokenA dstr V1",
+        dstrA.address
+      );
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(tokenA.address, 0, 1000);
 
-      await pool_proxy.set_distributor(tokenA.address, 0, "tokenA dstr V2", ZERO_ADDRESS);
+      await pool_proxy.set_distributor(
+        tokenA.address,
+        0,
+        "tokenA dstr V2",
+        ZERO_ADDRESS
+      );
 
       //weight
-      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(0);
+      expect(await pool_proxy.distributor_weight(tokenA.address, 0)).to.equal(
+        0
+      );
 
-      //totalweight
+      //total weight
       expect(await pool_proxy.total_weights(tokenA.address)).to.equal(0);
     });
 
     it("cannot set weight for zero address distributor", async () => {
-      await pool_proxy.add_distributor(tokenA.address, "tokenA dstr V1", dstrA.address);
-      await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 1000);
-
-      await pool_proxy.set_distributor(tokenA.address, 0, "tokenA dstr V2", ZERO_ADDRESS);
-
-      await expect(pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 1000)).to.revertedWith(
-        "distributor not set"
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "tokenA dstr V1",
+        dstrA.address
       );
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(tokenA.address, 0, 1000);
+
+      await pool_proxy.set_distributor(
+        tokenA.address,
+        0,
+        "tokenA dstr V2",
+        ZERO_ADDRESS
+      );
+
+      await expect(
+        pool_proxy
+          .connect(alice)
+          .set_distributor_weight(tokenA.address, 0, 1000)
+      ).to.revertedWith("distributor not set");
     });
   });
 });

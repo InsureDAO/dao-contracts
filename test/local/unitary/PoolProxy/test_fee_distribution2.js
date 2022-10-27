@@ -33,7 +33,11 @@ describe("PoolProxy", () => {
      * parameter admin: alice
      * emergency admin: bob
      */
-    pool_proxy = await PoolProxy.deploy(creator.address, alice.address, bob.address);
+    pool_proxy = await PoolProxy.deploy(
+      creator.address,
+      alice.address,
+      bob.address
+    );
     tokenA = await Token.deploy("Token A", "A", 18);
     tokenB = await Token.deploy("Token B", "B", 18);
     fee_token = await Token.deploy("Admin Fee", "FEE", 18);
@@ -52,7 +56,11 @@ describe("PoolProxy", () => {
     await ownership.commitTransferOwnership(pool_proxy.address);
     await pool_proxy.ownership_accept_transfer_ownership(ownership.address);
 
-    await pool_proxy.parameters_set_vault(parameter.address, fee_token.address, vault.address);
+    await pool_proxy.parameters_set_vault(
+      parameter.address,
+      fee_token.address,
+      vault.address
+    );
     await pool_proxy.set_parameters(parameter.address);
     expect(await parameter.getVault(fee_token.address)).to.equal(vault.address);
   });
@@ -67,22 +75,32 @@ describe("PoolProxy", () => {
 
   describe("withdraw_admin_fee", function () {
     it("_token not zero address", async () => {
-      await expect(pool_proxy.withdraw_admin_fee(ZERO_ADDRESS)).to.revertedWith("_token cannot be zero address");
+      await expect(pool_proxy.withdraw_admin_fee(ZERO_ADDRESS)).to.revertedWith(
+        "_token cannot be zero address"
+      );
     });
 
-    it("allocate correctlly", async () => {
+    it("allocate correctly", async () => {
       //setup
       //token transfer to Vault (1000)
       await fee_token._mint_for_testing(1000);
       await fee_token.transfer(vault.address, 1000);
 
       //add_distributor
-      await pool_proxy.add_distributor(fee_token.address, "fee dstr", dstrA.address); //ID = 0
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstr",
+        dstrA.address
+      ); //ID = 0
 
       //set weight (any#)
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 0, 90);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 0, 90);
 
-      expect(await pool_proxy.distributor_weight(fee_token.address, 0)).to.equal(90);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 0)
+      ).to.equal(90);
       expect(await pool_proxy.total_weights(fee_token.address)).to.equal(90);
       expect(await fee_token.balanceOf(vault.address)).to.equal(1000);
 
@@ -90,10 +108,12 @@ describe("PoolProxy", () => {
       await pool_proxy.withdraw_admin_fee(fee_token.address);
 
       //check (1000)
-      expect(await pool_proxy.distributable(fee_token.address, 0)).to.equal(1000);
+      expect(await pool_proxy.distributable(fee_token.address, 0)).to.equal(
+        1000
+      );
     });
 
-    it("allocate correctlly multiple distributors", async () => {
+    it("allocate correctly multiple distributors", async () => {
       //setup
       //token transfer to Vault
       let amount = BigNumber.from("737373271371234567891");
@@ -101,18 +121,42 @@ describe("PoolProxy", () => {
       await fee_token.transfer(vault.address, amount);
 
       //add_distributor
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrA", dstrA.address); //ID = 0
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrB", dstrB.address); //ID = 1
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //ID = 2
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrA",
+        dstrA.address
+      ); //ID = 0
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrB",
+        dstrB.address
+      ); //ID = 1
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrC",
+        dstrC.address
+      ); //ID = 2
 
       //set weight (any#)
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 0, 10);
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 1, 13);
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 2, 77);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 0, 10);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 1, 13);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 2, 77);
 
-      expect(await pool_proxy.distributor_weight(fee_token.address, 0)).to.equal(10);
-      expect(await pool_proxy.distributor_weight(fee_token.address, 1)).to.equal(13);
-      expect(await pool_proxy.distributor_weight(fee_token.address, 2)).to.equal(77);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 0)
+      ).to.equal(10);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 1)
+      ).to.equal(13);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 2)
+      ).to.equal(77);
       expect(await pool_proxy.total_weights(fee_token.address)).to.equal(100);
       expect(await fee_token.balanceOf(vault.address)).to.equal(amount);
 
@@ -120,9 +164,18 @@ describe("PoolProxy", () => {
       await pool_proxy.withdraw_admin_fee(fee_token.address);
 
       //check
-      let A_distributable = await pool_proxy.distributable(fee_token.address, 0);
-      let B_distributable = await pool_proxy.distributable(fee_token.address, 1);
-      let C_distributable = await pool_proxy.distributable(fee_token.address, 2);
+      let A_distributable = await pool_proxy.distributable(
+        fee_token.address,
+        0
+      );
+      let B_distributable = await pool_proxy.distributable(
+        fee_token.address,
+        1
+      );
+      let C_distributable = await pool_proxy.distributable(
+        fee_token.address,
+        2
+      );
       expect(A_distributable).to.equal(amount.mul(10).div(100));
       expect(B_distributable).to.equal(amount.mul(13).div(100));
       expect(C_distributable).to.equal(amount.mul(77).div(100));
@@ -132,20 +185,44 @@ describe("PoolProxy", () => {
       expect(amount.gte(total)).to.equal(true);
     });
 
-    it("allocate multipletimes correctlly for multiple distributors", async () => {
+    it("allocate multiple times correctly for multiple distributors", async () => {
       //add_distributor
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrA", dstrA.address); //ID = 0
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrB", dstrB.address); //ID = 1
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //ID = 2
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrA",
+        dstrA.address
+      ); //ID = 0
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrB",
+        dstrB.address
+      ); //ID = 1
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrC",
+        dstrC.address
+      ); //ID = 2
 
       //set weight (any#)
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 0, 10);
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 1, 13);
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 2, 77);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 0, 10);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 1, 13);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 2, 77);
 
-      expect(await pool_proxy.distributor_weight(fee_token.address, 0)).to.equal(10);
-      expect(await pool_proxy.distributor_weight(fee_token.address, 1)).to.equal(13);
-      expect(await pool_proxy.distributor_weight(fee_token.address, 2)).to.equal(77);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 0)
+      ).to.equal(10);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 1)
+      ).to.equal(13);
+      expect(
+        await pool_proxy.distributor_weight(fee_token.address, 2)
+      ).to.equal(77);
       expect(await pool_proxy.total_weights(fee_token.address)).to.equal(100);
 
       //token transfer to Vault
@@ -167,9 +244,18 @@ describe("PoolProxy", () => {
       await pool_proxy.withdraw_admin_fee(fee_token.address);
 
       //check
-      let A_distributable = await pool_proxy.distributable(fee_token.address, 0);
-      let B_distributable = await pool_proxy.distributable(fee_token.address, 1);
-      let C_distributable = await pool_proxy.distributable(fee_token.address, 2);
+      let A_distributable = await pool_proxy.distributable(
+        fee_token.address,
+        0
+      );
+      let B_distributable = await pool_proxy.distributable(
+        fee_token.address,
+        1
+      );
+      let C_distributable = await pool_proxy.distributable(
+        fee_token.address,
+        2
+      );
 
       let A_expected = amount.mul(10).div(100).add(amount_2.mul(10).div(100));
       let B_expected = amount.mul(13).div(100).add(amount_2.mul(13).div(100));
@@ -185,9 +271,11 @@ describe("PoolProxy", () => {
     });
   });
 
-  describe("set_deistributor_kill", function () {
+  describe("set_distributor_kill", function () {
     it("expect revert", async () => {
-      await expect(pool_proxy.connect(alice).set_distributor_kill(true)).to.revertedWith("Access denied");
+      await expect(
+        pool_proxy.connect(alice).set_distributor_kill(true)
+      ).to.revertedWith("Access denied");
     });
 
     it("ownership_admin", async () => {
@@ -221,19 +309,29 @@ describe("PoolProxy", () => {
     it("expect revert", async () => {
       await pool_proxy.connect(bob).set_distributor_kill(true);
 
-      await expect(pool_proxy.distribute(fee_token.address, 0)).to.revertedWith("distributor is killed");
+      await expect(pool_proxy.distribute(fee_token.address, 0)).to.revertedWith(
+        "distributor is killed"
+      );
     });
 
     it("expect revert", async () => {
-      await expect(pool_proxy.distribute(fee_token.address, 0)).to.revertedWith("not added yet");
+      await expect(pool_proxy.distribute(fee_token.address, 0)).to.revertedWith(
+        "distributor not added yet"
+      );
     });
 
-    it("distribute successflly", async () => {
+    it("distribute successfully", async () => {
       //add_distributor
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //ID = 0
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrC",
+        dstrC.address
+      ); //ID = 0
 
       //set weight (any#)
-      await pool_proxy.connect(alice).set_distributor_weight(fee_token.address, 0, 10);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(fee_token.address, 0, 10);
 
       //token transfer to Vault (1000)
       await fee_token._mint_for_testing(1000);
@@ -262,12 +360,26 @@ describe("PoolProxy", () => {
 
     it("distribute fail", async () => {
       //add_distributor
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //fee_token, ID = 0
-      await pool_proxy.add_distributor(tokenA.address, "fee dstrC", dstrC.address); //tokenA, ID = 0
-      await pool_proxy.parameters_set_vault(parameter.address, tokenA.address, vault_A.address);
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrC",
+        dstrC.address
+      ); //fee_token, ID = 0
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "fee dstrC",
+        dstrC.address
+      ); //tokenA, ID = 0
+      await pool_proxy.parameters_set_vault(
+        parameter.address,
+        tokenA.address,
+        vault_A.address
+      );
 
       //set weight (any#)
-      await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 10);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(tokenA.address, 0, 10);
 
       //token transfer to Vault (1000)
       await tokenA._mint_for_testing(1000);
@@ -285,7 +397,9 @@ describe("PoolProxy", () => {
       expect(await tokenA.balanceOf(dstrC.address)).to.equal(0);
 
       //distribute()
-      await expect(pool_proxy.distribute(tokenA.address, 0)).to.revertedWith("dev: should implement distribute()");
+      await expect(pool_proxy.distribute(tokenA.address, 0)).to.revertedWith(
+        "dev: should implement distribute()"
+      );
 
       expect(await pool_proxy.distributable(tokenA.address, 0)).to.equal(1000);
 
@@ -296,12 +410,26 @@ describe("PoolProxy", () => {
 
     it("distribute fail, then switch the distributor contract", async () => {
       //add_distributor
-      await pool_proxy.add_distributor(fee_token.address, "fee dstrC", dstrC.address); //fee_token, ID = 0
-      await pool_proxy.add_distributor(tokenA.address, "fee dstrC", dstrC.address); //tokenA, ID = 0
-      await pool_proxy.parameters_set_vault(parameter.address, tokenA.address, vault_A.address);
+      await pool_proxy.add_distributor(
+        fee_token.address,
+        "fee dstrC",
+        dstrC.address
+      ); //fee_token, ID = 0
+      await pool_proxy.add_distributor(
+        tokenA.address,
+        "fee dstrC",
+        dstrC.address
+      ); //tokenA, ID = 0
+      await pool_proxy.parameters_set_vault(
+        parameter.address,
+        tokenA.address,
+        vault_A.address
+      );
 
       //set weight (any#)
-      await pool_proxy.connect(alice).set_distributor_weight(tokenA.address, 0, 10);
+      await pool_proxy
+        .connect(alice)
+        .set_distributor_weight(tokenA.address, 0, 10);
 
       //token transfer to Vault (1000)
       await tokenA._mint_for_testing(1000);
@@ -311,7 +439,9 @@ describe("PoolProxy", () => {
       await pool_proxy.withdraw_admin_fee(tokenA.address);
 
       //distribute()
-      await expect(pool_proxy.distribute(tokenA.address, 0)).to.revertedWith("dev: should implement distribute()");
+      await expect(pool_proxy.distribute(tokenA.address, 0)).to.revertedWith(
+        "dev: should implement distribute()"
+      );
 
       expect(await pool_proxy.distributable(tokenA.address, 0)).to.equal(1000);
 
@@ -320,7 +450,12 @@ describe("PoolProxy", () => {
       expect(await tokenA.balanceOf(dstrC.address)).to.equal(0);
 
       //switch
-      await pool_proxy.set_distributor(tokenA.address, 0, "distributor_V2", dstrA.address);
+      await pool_proxy.set_distributor(
+        tokenA.address,
+        0,
+        "distributor_V2",
+        dstrA.address
+      );
       await pool_proxy.distribute(tokenA.address, 0);
 
       expect(await pool_proxy.distributable(tokenA.address, 0)).to.equal(0);
@@ -342,7 +477,9 @@ describe("PoolProxy", () => {
 
       await pool_proxy.connect(bob).set_distributor_kill(true);
 
-      await expect(pool_proxy.distribute_many(addresses, ids)).to.revertedWith("distribution killed");
+      await expect(pool_proxy.distribute_many(addresses, ids)).to.revertedWith(
+        "distribution killed"
+      );
     });
   });
 });
