@@ -1,16 +1,18 @@
+import { HardhatUserConfig } from "hardhat/types";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "solidity-coverage";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomicfoundation/hardhat-network-helpers";
+import "hardhat-watcher";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 const { ETHERSCAN_API, KEY, INFURA_KEY, GOERLI_URL } = process.env;
 
-module.exports = {
+const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
@@ -53,13 +55,25 @@ module.exports = {
   mocha: {
     timeout: 20000000,
   },
-  gasReporter: {
-    currency: "ETH",
-    gasPrice: 100,
-  },
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: `${ETHERSCAN_API}`,
   },
+  typechain: {
+    externalArtifacts: [
+      "node_modules/@insuredao/pool-contracts/artifacts/contracts/**/*[!dbg].json",
+    ],
+  },
+  watcher: {
+    test: {
+      tasks: [{ command: "test", params: { testFiles: ["{path}"] } }],
+      files: ["./test/**/*"],
+      verbose: true,
+      clearOnStart: true,
+      start: "echo Running my test task now..",
+    },
+  },
 };
+
+export default config;
