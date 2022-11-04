@@ -1,7 +1,6 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
-import { BigNumber } from "ethers";
-
 import { expect } from "chai";
+import { BigNumber, constants } from "ethers";
 import {
   govFeeDistributorDeploy,
   govFeeDistributorWithRunningVotingEscrow,
@@ -9,168 +8,7 @@ import {
 
 const WEEK = BigNumber.from(86_400 * 7);
 
-describe("checkpoint", () => {
-  describe("depositBalanceToReserve", () => {
-    it("should deposit all usdc admin fee into reserve pool", async () => {
-      const { govFeeDistributor, reservePool } = await loadFixture(
-        govFeeDistributorDeploy
-      );
-
-      await expect(
-        reservePool.balanceOf(govFeeDistributor.address)
-      ).to.eventually.eq(0);
-
-      await govFeeDistributor["depositBalanceToReserve()"]();
-
-      await expect(
-        reservePool.balanceOf(govFeeDistributor.address)
-      ).to.eventually.gt(0);
-    });
-
-    it("should withdraw part of usdc admin fee into reserve pool", async () => {
-      const { govFeeDistributor, reservePool, usdc } = await loadFixture(
-        govFeeDistributorDeploy
-      );
-      const usdcBalance = await usdc.balanceOf(govFeeDistributor.address);
-
-      await expect(
-        reservePool.balanceOf(govFeeDistributor.address)
-      ).to.eventually.eq(0);
-
-      await govFeeDistributor["depositBalanceToReserve(uint256)"](
-        usdcBalance.div(2)
-      );
-
-      await expect(
-        usdc.balanceOf(govFeeDistributor.address)
-      ).to.eventually.approximately(usdcBalance.div(2).toNumber(), 1);
-
-      await expect(
-        reservePool.balanceOf(govFeeDistributor.address)
-      ).to.eventually.gt(0);
-    });
-  });
-
-  describe("iTokenCheckpoint", () => {
-    it("should initially checkpoint iToken", async () => {
-      const { govFeeDistributor, reservePool } = await loadFixture(
-        govFeeDistributorDeploy
-      );
-
-      const now = await time.latest();
-      const weekStart = BigNumber.from(now).div(WEEK).mul(WEEK);
-
-      await govFeeDistributor["depositBalanceToReserve()"]();
-      await expect(govFeeDistributor.iTokenSupply(weekStart)).to.eventually.eq(
-        0
-      );
-
-      const iTokenBalance = await reservePool.balanceOf(
-        govFeeDistributor.address
-      );
-
-      await govFeeDistributor.iTokenCheckPoint();
-
-      await expect(govFeeDistributor.iTokenSupply(weekStart)).to.eventually.eq(
-        iTokenBalance
-      );
-    });
-
-    it("should checkpoint multiple weeks", async () => {
-      const { govFeeDistributor, reservePool } = await loadFixture(
-        govFeeDistributorDeploy
-      );
-      const start = BigNumber.from(await govFeeDistributor.lastITokenTime());
-      const thisWeek = start.div(WEEK).mul(WEEK);
-      const nextWeek = thisWeek.add(WEEK);
-      const inTwoWeeks = nextWeek.add(WEEK);
-      const inThreeWeeks = inTwoWeeks.add(WEEK);
-      const destination = WEEK.mul(3).add(start);
-      const entireDuration = destination.sub(start);
-
-      // pass 3 weeks
-      await time.increaseTo(destination);
-      await govFeeDistributor["depositBalanceToReserve()"]();
-      const distribution = await reservePool.balanceOf(
-        govFeeDistributor.address
-      );
-      const expectDistributionThisWeek = nextWeek
-        .sub(start)
-        .mul(distribution)
-        .div(entireDuration);
-      const expectDistributionNextWeek =
-        WEEK.mul(distribution).div(entireDuration);
-      const expectDistributionInTwoWeeks =
-        WEEK.mul(distribution).div(entireDuration);
-      const expectDistributionInThreeWeeks = destination
-        .sub(inThreeWeeks)
-        .mul(distribution)
-        .div(entireDuration);
-
-      await govFeeDistributor.iTokenCheckPoint();
-
-      await expect(
-        govFeeDistributor.iTokenSupply(thisWeek)
-      ).eventually.approximately(
-        expectDistributionThisWeek.toNumber(),
-        100,
-        "first week supply differ"
-      );
-      await expect(
-        govFeeDistributor.iTokenSupply(nextWeek)
-      ).eventually.approximately(
-        expectDistributionNextWeek.toNumber(),
-        100,
-        "nextWeek supply differ"
-      );
-      await expect(
-        govFeeDistributor.iTokenSupply(inTwoWeeks)
-      ).eventually.approximately(
-        expectDistributionInTwoWeeks.toNumber(),
-        100,
-        "in two weeks supply differ"
-      );
-      await expect(
-        govFeeDistributor.iTokenSupply(inThreeWeeks)
-      ).eventually.approximately(
-        expectDistributionInThreeWeeks.toNumber(),
-        100,
-        "in three weeks supply differ"
-      );
-    });
-  });
-
-  describe("veSupplyCheckpoint", async () => {
-    it("should initially checkpoint veINSURE", async () => {
-      const { govFeeDistributor, votingEscrow } = await loadFixture(
-        govFeeDistributorDeploy
-      );
-
-      await time.increase(WEEK.mul(2));
-      const distributionStart = await govFeeDistributor.distributionStart();
-      const latestWeekCursor = distributionStart.add(WEEK);
-
-      // before checkpoint, veSupply should be recorded as zero
-      await expect(
-        govFeeDistributor.veSupply(latestWeekCursor)
-      ).eventually.to.eq(0);
-
-      // checkpoint
-      await govFeeDistributor.veSupplyCheckpoint();
-
-      const thirdCheckpoint = await votingEscrow.point_history(3);
-      const dt = BigNumber.from(latestWeekCursor).sub(thirdCheckpoint.ts);
-
-      // at the week start point, supply should be deducted as much as the time passed since checkpoint
-      const deductedSupply = thirdCheckpoint.bias.sub(
-        thirdCheckpoint.slope.mul(dt)
-      );
-      await expect(
-        govFeeDistributor.veSupply(latestWeekCursor)
-      ).to.eventually.eq(deductedSupply);
-    });
-  });
-
+describe("claim", () => {
   describe("claim()", () => {
     it("should claim all iToken reward for alice", async () => {
       const {
@@ -237,9 +75,15 @@ describe("checkpoint", () => {
         secondWeekITokenAliceReceive
       );
 
+      const beforeBalance = await govFeeDistributor.lastITokenBalance();
+
       await expect(
         govFeeDistributor.connect(alice)["claim()"]()
       ).to.changeTokenBalance(iToken, alice, expectITokenReceive);
+
+      expect(await govFeeDistributor.lastITokenBalance()).to.eq(
+        beforeBalance.sub(expectITokenReceive)
+      );
     });
 
     it("should be 0 if user oldest ve checkpoint is after latest iToken checkpoint", async () => {
@@ -263,6 +107,10 @@ describe("checkpoint", () => {
       await expect(
         govFeeDistributor.connect(alice)["claim()"]()
       ).to.changeTokenBalance(iToken, alice, 0);
+
+      const beforeBalance = await govFeeDistributor.lastITokenBalance();
+
+      expect(await govFeeDistributor.lastITokenBalance()).to.eq(beforeBalance);
     });
 
     it("should be claimed in case user checkpoint veToken multiple times", async () => {
@@ -347,9 +195,15 @@ describe("checkpoint", () => {
         secondWeekITokenAliceReceive
       );
 
+      const beforeBalance = await govFeeDistributor.lastITokenBalance();
+
       await expect(
         govFeeDistributor.connect(alice)["claim()"]()
       ).to.changeTokenBalance(iToken, alice, expectITokenReceive);
+
+      expect(await govFeeDistributor.lastITokenBalance()).to.eq(
+        beforeBalance.sub(expectITokenReceive)
+      );
     });
 
     it("should be claimed in case distribution started in the middle of votingEscrow running", async () => {
@@ -440,9 +294,15 @@ describe("checkpoint", () => {
         .add(secondWeekITokenAliceReceive)
         .add(thirdWeekITokenAliceReceive);
 
+      const beforeBalance = await govFeeDistributor.lastITokenBalance();
+
       await expect(
         govFeeDistributor.connect(alice)["claim()"]()
       ).to.changeTokenBalance(iToken, alice, expectITokenReceive);
+
+      expect(await govFeeDistributor.lastITokenBalance()).to.eq(
+        beforeBalance.sub(expectITokenReceive)
+      );
     });
   });
 
@@ -513,13 +373,135 @@ describe("checkpoint", () => {
         secondWeekITokenBobReceive
       );
 
+      const beforeBalance = await govFeeDistributor.lastITokenBalance();
+
       await expect(
         govFeeDistributor.connect(alice)["claim(address)"](bob.address)
       ).to.changeTokenBalance(iToken, bob, expectITokenReceive);
+
+      expect(await govFeeDistributor.lastITokenBalance()).to.eq(
+        beforeBalance.sub(expectITokenReceive)
+      );
     });
   });
 
-  describe("claimMany", () => {});
-  describe("killMe", () => {});
-  describe("burn", () => {});
+  describe("claimMany", async () => {
+    it("should be claimed for alice and bob both", async () => {
+      const {
+        govFeeDistributor,
+        votingEscrow,
+        reservePool: iToken,
+        alice,
+        bob,
+      } = await loadFixture(govFeeDistributorDeploy);
+
+      // bob locks additional insure
+      await votingEscrow.connect(bob).increase_amount(10_000_000n * 10n ** 18n);
+
+      // assume 2 weeks passed from now
+      await time.increase(WEEK.mul(2));
+
+      // convert USDC to iToken
+      await govFeeDistributor["depositBalanceToReserve()"]();
+
+      // checkpoint to estimate receive amount
+      await govFeeDistributor.iTokenCheckPoint();
+      await govFeeDistributor.veSupplyCheckpoint();
+
+      const distributionStart = await govFeeDistributor.distributionStart();
+      const firstWeek = distributionStart.add(WEEK);
+      const secondWeek = firstWeek.add(WEEK);
+
+      // get global supply
+      const firstWeekVeSupply = await govFeeDistributor.veSupply(firstWeek);
+      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+        firstWeek
+      );
+
+      const secondWeekVeSupply = await govFeeDistributor.veSupply(secondWeek);
+      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+        secondWeek
+      );
+
+      // veINSURE checkpoints
+      const aliceCheckpoint = await votingEscrow.user_point_history(
+        alice.address,
+        1
+      );
+      const bobCheckpoint = await votingEscrow.user_point_history(
+        bob.address,
+        2
+      );
+
+      const aliceDtFromFirstWeek = BigNumber.from(firstWeek).sub(
+        aliceCheckpoint.ts
+      );
+      const aliceDtFromSecondWeek = BigNumber.from(secondWeek).sub(
+        aliceCheckpoint.ts
+      );
+      const bobDtFromFirstWeek = BigNumber.from(firstWeek).sub(
+        bobCheckpoint.ts
+      );
+      const bobDtFromSecondWeek = BigNumber.from(secondWeek).sub(
+        bobCheckpoint.ts
+      );
+
+      // veINSURE balance is deducted during the time
+      const firstWeekAliceVeINSUREBalance = aliceCheckpoint.bias.sub(
+        aliceCheckpoint.slope.mul(aliceDtFromFirstWeek)
+      );
+      const secondWeekAliceVeINSUREBalance = aliceCheckpoint.bias.sub(
+        aliceCheckpoint.slope.mul(aliceDtFromSecondWeek)
+      );
+      const firstWeekBobVeINSUREBalance = bobCheckpoint.bias.sub(
+        bobCheckpoint.slope.mul(bobDtFromFirstWeek)
+      );
+      const secondWeekBobVeINSUREBalance = bobCheckpoint.bias.sub(
+        bobCheckpoint.slope.mul(bobDtFromSecondWeek)
+      );
+
+      // receive iToken amount is sum of two weeks
+      const firstWeekITokenAliceReceive = firstWeekAliceVeINSUREBalance
+        .mul(firstWeekITokenSupply)
+        .div(firstWeekVeSupply);
+
+      const secondWeekITokenAliceReceive = secondWeekAliceVeINSUREBalance
+        .mul(secondWeekITokenSupply)
+        .div(secondWeekVeSupply);
+
+      const firstWeekITokenBobReceive = firstWeekBobVeINSUREBalance
+        .mul(firstWeekITokenSupply)
+        .div(firstWeekVeSupply);
+
+      const secondWeekITokenBobReceive = secondWeekBobVeINSUREBalance
+        .mul(secondWeekITokenSupply)
+        .div(secondWeekVeSupply);
+
+      const expectITokenAliceReceive = firstWeekITokenAliceReceive.add(
+        secondWeekITokenAliceReceive
+      );
+
+      const expectITokenBobReceive = firstWeekITokenBobReceive.add(
+        secondWeekITokenBobReceive
+      );
+
+      const receivers = new Array<string>(20).fill(constants.AddressZero);
+      receivers[0] = alice.address;
+      receivers[1] = bob.address;
+
+      const beforeBalance = await govFeeDistributor.lastITokenBalance();
+
+      await expect(
+        govFeeDistributor.claimMany(receivers)
+      ).to.changeTokenBalances(
+        iToken,
+        [alice, bob],
+        [expectITokenAliceReceive, expectITokenBobReceive]
+      );
+
+      expect(await govFeeDistributor.lastITokenBalance()).to.eq(
+        beforeBalance.sub(expectITokenAliceReceive.add(expectITokenBobReceive))
+      );
+    });
+  });
 });

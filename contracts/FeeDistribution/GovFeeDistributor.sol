@@ -95,11 +95,11 @@ contract GovFeeDistributor {
         timeCursor = _distributionStart;
     }
 
-    function depositBalanceToReserve() external {
+    function depositBalanceToReserve() external notKilled {
         _depositBalanceToReserve(IERC20(depositToken).balanceOf(address(this)));
     }
 
-    function depositBalanceToReserve(uint256 _amount) external {
+    function depositBalanceToReserve(uint256 _amount) external notKilled {
         _depositBalanceToReserve(_amount);
     }
 
@@ -148,13 +148,12 @@ contract GovFeeDistributor {
 
         for (uint256 i = 0; i < 20; i++) {
             address _receiver = _receivers[i];
-            if (_receiver == address(0)) revert AddressZero();
+            // no receiver specified, then end the loop immidiately
+            if (_receiver == address(0)) break;
 
             uint256 _amount = _claim(_receiver);
             _total += _amount;
         }
-
-        if (_total != 0) lastITokenBalance -= _total;
 
         return true;
     }
@@ -171,8 +170,13 @@ contract GovFeeDistributor {
 
     function killMe(address _to) external onlyOwner {
         isKilled = true;
-        uint256 _balance = IERC20(iToken).balanceOf(address(this));
-        IERC20(iToken).safeTransfer(_to, _balance);
+        uint256 _iTokenBalance = IERC20(iToken).balanceOf(address(this));
+        address _vaultToken = IVault(vault).token();
+        uint256 _vaultTokenBalance = IERC20(_vaultToken).balanceOf(
+            address(this)
+        );
+        IERC20(iToken).safeTransfer(_to, _iTokenBalance);
+        IERC20(_vaultToken).safeTransfer(_to, _vaultTokenBalance);
     }
 
     function _claim(address _to) internal returns (uint256) {
