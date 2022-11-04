@@ -45,6 +45,7 @@ export const govFeeDistributorDeploy = async () => {
     deployer,
     alice,
     bob,
+    charlie,
   } = await baseContractsDeploy();
 
   // deploy GovFeeDistributor
@@ -79,6 +80,7 @@ export const govFeeDistributorDeploy = async () => {
     deployer,
     alice,
     bob,
+    charlie,
     usdc,
     govFeeDistributor,
     votingEscrow,
@@ -153,7 +155,7 @@ export const govFeeDistributorWithRunningVotingEscrow = async () => {
 };
 
 const baseContractsDeploy = async () => {
-  const [deployer, alice, bob] = await ethers.getSigners();
+  const [deployer, alice, bob, charlie] = await ethers.getSigners();
   // dao contracts
   const MintableERC20 = await ethers.getContractFactory("MintableERC20");
   const Ownership = await ethers.getContractFactory("Ownership");
@@ -327,6 +329,7 @@ const baseContractsDeploy = async () => {
     deployer,
     alice,
     bob,
+    charlie,
     usdc,
     ownership,
     insureToken,

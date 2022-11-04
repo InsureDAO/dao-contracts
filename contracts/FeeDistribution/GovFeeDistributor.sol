@@ -14,6 +14,8 @@ import "../interfaces/pool/IVault.sol";
 import "../interfaces/pool/ICDSTemplate.sol";
 import "../interfaces/pool/IOwnership.sol";
 
+import {OnlyOwner, AddressZero, AmountZero, ContractUnavailable, InsufficientBalance} from "../errors/CommonErrors.sol";
+
 contract GovFeeDistributor is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeCast for int256;
@@ -57,7 +59,7 @@ contract GovFeeDistributor is ReentrancyGuard {
     }
 
     modifier notKilled() {
-        if (isKilled) revert Killed();
+        if (isKilled) revert ContractUnavailable();
         _;
     }
 
@@ -70,8 +72,12 @@ contract GovFeeDistributor is ReentrancyGuard {
         _;
     }
 
-    event ITokenIncreased(uint256 _amount);
+    event ITokenReceived(uint256 _amount);
     event Claimed(address _to, uint256 _amount);
+    event ITokenCheckpointed(uint256 _checkpointTime);
+    event VeCheckpointed(uint256 _lastCheckpointTime);
+    event Burnt(address _from, uint256 _amount);
+    event Killed(uint256 _time);
 
     constructor(
         address _vault,
@@ -81,7 +87,14 @@ contract GovFeeDistributor is ReentrancyGuard {
         address _depositToken,
         uint256 _startTime
     ) {
-        // actual start time is rounded to the nearest week start time
+        if (
+            _vault == address(0) ||
+            _votingEscrow == address(0) ||
+            _ownership == address(0) ||
+            _iToken == address(0) ||
+            _depositToken == address(0)
+        ) revert AddressZero();
+
         uint256 _distributionStart = (_startTime / WEEK) * WEEK;
 
         vault = _vault;
@@ -126,6 +139,8 @@ contract GovFeeDistributor is ReentrancyGuard {
         assert(
             IERC20(iToken).balanceOf(address(this)) == _beforeDeposit + _minted
         );
+
+        emit ITokenReceived(_minted);
     }
 
     function claim()
@@ -145,6 +160,7 @@ contract GovFeeDistributor is ReentrancyGuard {
         claimPreparation
         returns (uint256)
     {
+        if (_to == address(0)) revert AddressZero();
         return _claim(_to);
     }
 
@@ -171,11 +187,15 @@ contract GovFeeDistributor is ReentrancyGuard {
 
     function burn() external nonReentrant notKilled returns (bool) {
         uint256 _amount = IERC20(iToken).balanceOf(msg.sender);
-        if (_amount != 0) {
-            IERC20(iToken).safeTransferFrom(msg.sender, address(this), _amount);
-            if (block.timestamp > lastITokenTime + TOKEN_CHECKPOINT_INTERVAL)
-                _iTokenCheckPoint();
-        }
+
+        if (_amount == 0) return false;
+
+        IERC20(iToken).safeTransferFrom(msg.sender, address(this), _amount);
+        if (block.timestamp > lastITokenTime + TOKEN_CHECKPOINT_INTERVAL)
+            _iTokenCheckPoint();
+
+        emit Burnt(msg.sender, _amount);
+
         return true;
     }
 
@@ -188,6 +208,8 @@ contract GovFeeDistributor is ReentrancyGuard {
         );
         IERC20(iToken).safeTransfer(_to, _iTokenBalance);
         IERC20(depositToken).safeTransfer(_to, _depositTokenBalance);
+
+        emit Killed(block.timestamp);
     }
 
     function _claim(address _to) internal returns (uint256) {
@@ -311,6 +333,8 @@ contract GovFeeDistributor is ReentrancyGuard {
         }
 
         timeCursor = _timeCursor;
+
+        emit VeCheckpointed(_timeCursor);
     }
 
     function veSupplyCheckpoint() external {
@@ -363,6 +387,8 @@ contract GovFeeDistributor is ReentrancyGuard {
             _start = _nextWeek;
             _currentWeek = _nextWeek;
         }
+
+        emit ITokenCheckpointed(lastITokenTime);
     }
 
     function iTokenCheckPoint() external {
@@ -431,9 +457,3 @@ contract GovFeeDistributor is ReentrancyGuard {
         return _min;
     }
 }
-
-error OnlyOwner();
-error AddressZero();
-error AmountZero();
-error Killed();
-error InsufficientBalance();

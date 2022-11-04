@@ -42,6 +42,6 @@ describe("burn", () => {
 
     await expect(
       govFeeDistributor.connect(alice).burn()
-    ).to.be.revertedWithCustomError(govFeeDistributor, "Killed");
+    ).to.be.revertedWithCustomError(govFeeDistributor, "ContractUnavailable");
   });
 });

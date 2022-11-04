@@ -10,6 +10,25 @@ const WEEK = BigNumber.from(86_400 * 7);
 
 describe("claim", () => {
   describe("claim()", () => {
+    it("should checkpoint token supply before claim", async () => {
+      const { govFeeDistributor } = await loadFixture(govFeeDistributorDeploy);
+
+      await expect(govFeeDistributor["claim()"]())
+        .to.emit(govFeeDistributor, "ITokenCheckpointed")
+        .to.emit(govFeeDistributor, "VeCheckpointed");
+    });
+
+    it("should returns 0 in case no lock found", async () => {
+      const { govFeeDistributor, charlie } = await loadFixture(
+        govFeeDistributorDeploy
+      );
+
+      await expect(govFeeDistributor.connect(charlie)["claim()"]()).not.to.emit(
+        govFeeDistributor,
+        "Claimed"
+      );
+    });
+
     it("should claim all iToken reward for alice", async () => {
       const {
         govFeeDistributor,
