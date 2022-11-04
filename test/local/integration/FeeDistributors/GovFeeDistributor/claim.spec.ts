@@ -108,7 +108,6 @@ describe("claim", () => {
     it("should be 0 if user oldest ve checkpoint is after latest iToken checkpoint", async () => {
       const {
         govFeeDistributor,
-        votingEscrow,
         reservePool: iToken,
         alice,
       } = await loadFixture(govFeeDistributorDeploy);
