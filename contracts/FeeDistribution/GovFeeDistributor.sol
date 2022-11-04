@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import {IVotingEscrow} from "../interfaces/dao/IVotingEscrow.sol";
 import {VotingEscrow} from "../VotingEscrow.sol";
@@ -13,9 +14,7 @@ import "../interfaces/pool/IVault.sol";
 import "../interfaces/pool/ICDSTemplate.sol";
 import "../interfaces/pool/IOwnership.sol";
 
-import "hardhat/console.sol";
-
-contract GovFeeDistributor {
+contract GovFeeDistributor is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeCast for int256;
     using SafeCast for uint256;
@@ -95,11 +94,15 @@ contract GovFeeDistributor {
         timeCursor = _distributionStart;
     }
 
-    function depositBalanceToReserve() external notKilled {
+    function depositBalanceToReserve() external nonReentrant notKilled {
         _depositBalanceToReserve(IERC20(depositToken).balanceOf(address(this)));
     }
 
-    function depositBalanceToReserve(uint256 _amount) external notKilled {
+    function depositBalanceToReserve(uint256 _amount)
+        external
+        nonReentrant
+        notKilled
+    {
         _depositBalanceToReserve(_amount);
     }
 
@@ -125,12 +128,19 @@ contract GovFeeDistributor {
         );
     }
 
-    function claim() external notKilled claimPreparation returns (uint256) {
+    function claim()
+        external
+        nonReentrant
+        notKilled
+        claimPreparation
+        returns (uint256)
+    {
         return _claim(msg.sender);
     }
 
     function claim(address _to)
         external
+        nonReentrant
         notKilled
         claimPreparation
         returns (uint256)
@@ -140,6 +150,7 @@ contract GovFeeDistributor {
 
     function claimMany(address[20] calldata _receivers)
         external
+        nonReentrant
         notKilled
         claimPreparation
         returns (bool)
@@ -158,7 +169,7 @@ contract GovFeeDistributor {
         return true;
     }
 
-    function burn() external notKilled returns (bool) {
+    function burn() external nonReentrant notKilled returns (bool) {
         uint256 _amount = IERC20(iToken).balanceOf(msg.sender);
         if (_amount != 0) {
             IERC20(iToken).safeTransferFrom(msg.sender, address(this), _amount);
@@ -168,15 +179,15 @@ contract GovFeeDistributor {
         return true;
     }
 
-    function killMe(address _to) external onlyOwner {
+    function killMe(address _to) external nonReentrant onlyOwner {
         isKilled = true;
+
         uint256 _iTokenBalance = IERC20(iToken).balanceOf(address(this));
-        address _vaultToken = IVault(vault).token();
-        uint256 _vaultTokenBalance = IERC20(_vaultToken).balanceOf(
+        uint256 _depositTokenBalance = IERC20(depositToken).balanceOf(
             address(this)
         );
         IERC20(iToken).safeTransfer(_to, _iTokenBalance);
-        IERC20(_vaultToken).safeTransfer(_to, _vaultTokenBalance);
+        IERC20(depositToken).safeTransfer(_to, _depositTokenBalance);
     }
 
     function _claim(address _to) internal returns (uint256) {
