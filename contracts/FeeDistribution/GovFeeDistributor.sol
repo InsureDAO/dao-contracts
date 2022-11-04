@@ -107,6 +107,10 @@ contract GovFeeDistributor is ReentrancyGuard {
         timeCursor = _distributionStart;
     }
 
+    /**
+     * external functions
+     */
+
     function depositBalanceToReserve() external nonReentrant notKilled {
         _depositBalanceToReserve(IERC20(depositToken).balanceOf(address(this)));
     }
@@ -117,30 +121,6 @@ contract GovFeeDistributor is ReentrancyGuard {
         notKilled
     {
         _depositBalanceToReserve(_amount);
-    }
-
-    function _depositBalanceToReserve(uint256 _amount) internal {
-        uint256 _balance = IERC20(depositToken).balanceOf(address(this));
-        if (_amount == 0) revert AmountZero();
-        if (_balance < _amount) revert InsufficientBalance();
-
-        uint256 _allowanceShortage = _amount -
-            IERC20(depositToken).allowance(address(this), vault);
-
-        if (_allowanceShortage > 0)
-            IERC20(depositToken).safeIncreaseAllowance(
-                vault,
-                _allowanceShortage
-            );
-
-        uint256 _beforeDeposit = IERC20(iToken).balanceOf(address(this));
-        uint256 _minted = ICDSTemplate(iToken).deposit(_amount);
-
-        assert(
-            IERC20(iToken).balanceOf(address(this)) == _beforeDeposit + _minted
-        );
-
-        emit ITokenReceived(_minted);
     }
 
     function claim()
@@ -185,6 +165,14 @@ contract GovFeeDistributor is ReentrancyGuard {
         return true;
     }
 
+    function veSupplyCheckpoint() external {
+        _veSupplyCheckpoint();
+    }
+
+    function iTokenCheckPoint() external {
+        _iTokenCheckPoint();
+    }
+
     function burn() external nonReentrant notKilled returns (bool) {
         uint256 _amount = IERC20(iToken).balanceOf(msg.sender);
 
@@ -210,6 +198,34 @@ contract GovFeeDistributor is ReentrancyGuard {
         IERC20(depositToken).safeTransfer(_to, _depositTokenBalance);
 
         emit Killed(block.timestamp);
+    }
+
+    /**
+     * internal functions
+     */
+
+    function _depositBalanceToReserve(uint256 _amount) internal {
+        uint256 _balance = IERC20(depositToken).balanceOf(address(this));
+        if (_amount == 0) revert AmountZero();
+        if (_balance < _amount) revert InsufficientBalance();
+
+        uint256 _allowanceShortage = _amount -
+            IERC20(depositToken).allowance(address(this), vault);
+
+        if (_allowanceShortage > 0)
+            IERC20(depositToken).safeIncreaseAllowance(
+                vault,
+                _allowanceShortage
+            );
+
+        uint256 _beforeDeposit = IERC20(iToken).balanceOf(address(this));
+        uint256 _minted = ICDSTemplate(iToken).deposit(_amount);
+
+        assert(
+            IERC20(iToken).balanceOf(address(this)) == _beforeDeposit + _minted
+        );
+
+        emit ITokenReceived(_minted);
     }
 
     function _claim(address _to) internal returns (uint256) {
@@ -337,10 +353,6 @@ contract GovFeeDistributor is ReentrancyGuard {
         emit VeCheckpointed(_timeCursor);
     }
 
-    function veSupplyCheckpoint() external {
-        _veSupplyCheckpoint();
-    }
-
     function _iTokenCheckPoint() internal {
         uint256 _iTokenBalance = IERC20(iToken).balanceOf(address(this));
         uint256 _distribution = _iTokenBalance - lastITokenBalance;
@@ -389,10 +401,6 @@ contract GovFeeDistributor is ReentrancyGuard {
         }
 
         emit ITokenCheckpointed(lastITokenTime);
-    }
-
-    function iTokenCheckPoint() external {
-        _iTokenCheckPoint();
     }
 
     function _findGlobalEpoch(uint256 _targetTs)
