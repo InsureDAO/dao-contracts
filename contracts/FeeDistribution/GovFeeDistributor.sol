@@ -270,7 +270,7 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _maxUserEpoch = VotingEscrow(votingEscrow).user_point_epoch(
             _to
         );
-        uint256 _latestITokenSupplyStart = (iTokenCheckpointRecord
+        uint256 _latestITokenSupplyTime = (iTokenCheckpointRecord
             .lastITokenTime / WEEK) * WEEK;
 
         // no lock exist
@@ -284,7 +284,7 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _weekCursor = _getUserWeekCursor(_to, _userPoint.ts);
 
         // no reward claimable
-        if (_weekCursor >= _latestITokenSupplyStart) return 0;
+        if (_weekCursor >= _latestITokenSupplyTime) return 0;
 
         VotingEscrow.Point memory _oldUserPoint = VotingEscrow.Point(
             0,
@@ -296,47 +296,54 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _distribution = 0;
 
         for (uint256 i = 0; i < 50; i++) {
-            if (_weekCursor > _latestITokenSupplyStart) break;
+            // distribution should be executed until last iToken checkpoint
+            if (_weekCursor > _latestITokenSupplyTime) break;
 
+            // user ve point before than current distribution point, then move epoch and point forward
             if (_weekCursor >= _userPoint.ts && _userEpoch <= _maxUserEpoch) {
                 _userEpoch++;
                 _oldUserPoint = _userPoint;
 
-                if (_userEpoch > _maxUserEpoch) {
+                if (_userEpoch > _maxUserEpoch)
                     _userPoint = VotingEscrow.Point(0, 0, 0, 0);
-                } else {
-                    _userPoint = _getUserPoint(_to, _userEpoch);
-                }
-            } else {
+                else _userPoint = _getUserPoint(_to, _userEpoch);
+            }
+            // otherwise, add iToken distribution
+            else {
                 int256 _dt = (_weekCursor - _oldUserPoint.ts).toInt256();
                 int256 _val = _oldUserPoint.bias - _dt * _oldUserPoint.slope;
-                uint256 _balance = _val > 0 ? _val.toUint256() : 0;
+                uint256 _userVeBalance = _val > 0 ? _val.toUint256() : 0;
 
-                if (_balance == 0 && _userEpoch > _maxUserEpoch) break;
+                if (_userVeBalance == 0 && _userEpoch > _maxUserEpoch) break;
 
-                if (_balance > 0)
+                if (_userVeBalance > 0) {
+                    uint256 _iTokenSupply = iTokenCheckpointRecord
+                        .iTokenSupplyPerWeek[_weekCursor];
+                    uint256 _veTotalSupply = veCheckpointRecord.veSupplyPerWeek[
+                        _weekCursor
+                    ];
+                    // distribution determined depending on the share of user veINSURE balance
                     _distribution +=
-                        (_balance *
-                            iTokenCheckpointRecord.iTokenSupplyPerWeek[
-                                _weekCursor
-                            ]) /
-                        veCheckpointRecord.veSupplyPerWeek[_weekCursor];
+                        (_userVeBalance * _iTokenSupply) /
+                        _veTotalSupply;
+                }
                 _weekCursor += WEEK;
             }
         }
 
+        // update user current state
         _userEpoch = Math.min(_maxUserEpoch, _userEpoch - 1);
         userEpochs[_to] = _userEpoch;
         userTimeCursors[_to] = _weekCursor;
 
+        // if distribution exists, transfer it to the user
         if (_distribution != 0) {
             IERC20(iToken).safeTransfer(_to, _distribution);
             unchecked {
                 iTokenCheckpointRecord.lastITokenBalance -= _distribution;
             }
+            emit Claimed(_to, _distribution);
         }
-
-        emit Claimed(_to, _distribution);
 
         return _distribution;
     }
