@@ -267,9 +267,11 @@ contract GovFeeDistributor is ReentrancyGuard {
     }
 
     function _claim(address _to) internal returns (uint256) {
+        // current veINSURE checkpoint the user is at
         uint256 _maxUserEpoch = VotingEscrow(votingEscrow).user_point_epoch(
             _to
         );
+        // latest week boundary distribution completed
         uint256 _latestITokenSupplyTime = (iTokenCheckpointRecord
             .lastITokenTime / WEEK) * WEEK;
 
@@ -279,19 +281,18 @@ contract GovFeeDistributor is ReentrancyGuard {
         // if this claim is the first time, initialize epoch
         uint256 _userEpoch = _getCurrentUserEpoch(_to, _maxUserEpoch);
 
-        VotingEscrow.Point memory _userPoint = _getUserPoint(_to, _userEpoch);
+        // anchored to next user point
+        VotingEscrow.Point memory _nextUserPoint = _getUserPoint(
+            _to,
+            _userEpoch
+        );
+        // actually calculated by this point. start from zero
+        VotingEscrow.Point memory _userPoint = VotingEscrow.Point(0, 0, 0, 0);
 
-        uint256 _weekCursor = _getUserWeekCursor(_to, _userPoint.ts);
+        uint256 _weekCursor = _getUserWeekCursor(_to, _nextUserPoint.ts);
 
         // no reward claimable
         if (_weekCursor >= _latestITokenSupplyTime) return 0;
-
-        VotingEscrow.Point memory _oldUserPoint = VotingEscrow.Point(
-            0,
-            0,
-            0,
-            0
-        );
 
         uint256 _distribution = 0;
 
@@ -300,29 +301,35 @@ contract GovFeeDistributor is ReentrancyGuard {
             if (_weekCursor > _latestITokenSupplyTime) break;
 
             // user ve point before than current distribution point, then move epoch and point forward
-            if (_weekCursor >= _userPoint.ts && _userEpoch <= _maxUserEpoch) {
+            if (
+                _weekCursor >= _nextUserPoint.ts && _userEpoch <= _maxUserEpoch
+            ) {
                 _userEpoch++;
-                _oldUserPoint = _userPoint;
+                _userPoint = _nextUserPoint;
 
+                // in this case, no userchecpoint found anymore, so keep it zero
                 if (_userEpoch > _maxUserEpoch)
-                    _userPoint = VotingEscrow.Point(0, 0, 0, 0);
-                else _userPoint = _getUserPoint(_to, _userEpoch);
+                    _nextUserPoint = VotingEscrow.Point(0, 0, 0, 0);
+                    // otherwise, keep updating user point
+                else _nextUserPoint = _getUserPoint(_to, _userEpoch);
             }
             // otherwise, add iToken distribution
             else {
-                int256 _dt = (_weekCursor - _oldUserPoint.ts).toInt256();
-                int256 _val = _oldUserPoint.bias - _dt * _oldUserPoint.slope;
+                // calculate veINSURE balance from user point
+                int256 _dt = (_weekCursor - _userPoint.ts).toInt256();
+                int256 _val = _userPoint.bias - _dt * _userPoint.slope;
                 uint256 _userVeBalance = _val > 0 ? _val.toUint256() : 0;
 
+                // even if passed user's max epoch, continue until veINSURE worth zero
                 if (_userVeBalance == 0 && _userEpoch > _maxUserEpoch) break;
 
+                // distribution determined by the share of user veINSURE balance
                 if (_userVeBalance > 0) {
                     uint256 _iTokenSupply = iTokenCheckpointRecord
                         .iTokenSupplyPerWeek[_weekCursor];
                     uint256 _veTotalSupply = veCheckpointRecord.veSupplyPerWeek[
                         _weekCursor
                     ];
-                    // distribution determined depending on the share of user veINSURE balance
                     _distribution +=
                         (_userVeBalance * _iTokenSupply) /
                         _veTotalSupply;
@@ -336,7 +343,7 @@ contract GovFeeDistributor is ReentrancyGuard {
         userEpochs[_to] = _userEpoch;
         userTimeCursors[_to] = _weekCursor;
 
-        // if distribution exists, transfer it to the user
+        // finally, if distribution exists, transfer it to the user
         if (_distribution != 0) {
             IERC20(iToken).safeTransfer(_to, _distribution);
             unchecked {
