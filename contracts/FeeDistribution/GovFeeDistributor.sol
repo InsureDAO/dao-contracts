@@ -270,39 +270,22 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _maxUserEpoch = VotingEscrow(votingEscrow).user_point_epoch(
             _to
         );
-        uint256 _roundedITokenTime = (iTokenCheckpointRecord.lastITokenTime /
-            WEEK) * WEEK;
+        uint256 _latestITokenSupplyStart = (iTokenCheckpointRecord
+            .lastITokenTime / WEEK) * WEEK;
 
         // no lock exist
         if (_maxUserEpoch == 0) return 0;
 
-        uint256 _weekCursor = userTimeCursors[_to];
         // if this claim is the first time, initialize epoch
-        uint256 _userEpoch = _weekCursor == 0
-            ? _findUserEpoch(_to, distributionStart, _maxUserEpoch)
-            : userEpochs[_to];
+        uint256 _userEpoch = _getCurrentUserEpoch(_to, _maxUserEpoch);
 
-        if (_userEpoch == 0) _userEpoch = 1;
+        VotingEscrow.Point memory _userPoint = _getUserPoint(_to, _userEpoch);
 
-        (int256 _bias, int256 _slope, uint256 _ts, uint256 _blk) = VotingEscrow(
-            votingEscrow
-        ).user_point_history(_to, _userEpoch);
-
-        // distribution will be active from next week boundary
-        if (_weekCursor == 0) _weekCursor = ((_ts + WEEK - 1) / WEEK) * WEEK;
+        uint256 _weekCursor = _getUserWeekCursor(_to, _userPoint.ts);
 
         // no reward claimable
-        if (_weekCursor >= _roundedITokenTime) return 0;
+        if (_weekCursor >= _latestITokenSupplyStart) return 0;
 
-        // skip for the start of distribution
-        if (_weekCursor < distributionStart) _weekCursor = distributionStart;
-
-        VotingEscrow.Point memory _userPoint = VotingEscrow.Point(
-            _bias,
-            _slope,
-            _ts,
-            _blk
-        );
         VotingEscrow.Point memory _oldUserPoint = VotingEscrow.Point(
             0,
             0,
@@ -313,7 +296,7 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _distribution = 0;
 
         for (uint256 i = 0; i < 50; i++) {
-            if (_weekCursor > _roundedITokenTime) break;
+            if (_weekCursor > _latestITokenSupplyStart) break;
 
             if (_weekCursor >= _userPoint.ts && _userEpoch <= _maxUserEpoch) {
                 _userEpoch++;
@@ -322,10 +305,7 @@ contract GovFeeDistributor is ReentrancyGuard {
                 if (_userEpoch > _maxUserEpoch) {
                     _userPoint = VotingEscrow.Point(0, 0, 0, 0);
                 } else {
-                    (_bias, _slope, _ts, _blk) = VotingEscrow(votingEscrow)
-                        .user_point_history(_to, _userEpoch);
-
-                    _userPoint = VotingEscrow.Point(_bias, _slope, _ts, _blk);
+                    _userPoint = _getUserPoint(_to, _userEpoch);
                 }
             } else {
                 int256 _dt = (_weekCursor - _oldUserPoint.ts).toInt256();
@@ -421,5 +401,54 @@ contract GovFeeDistributor is ReentrancyGuard {
         }
 
         return _min;
+    }
+
+    // private functions
+    function _getCurrentUserEpoch(address _user, uint256 _maxUserEpoch)
+        private
+        view
+        returns (uint256)
+    {
+        uint256 _weekCursor = userTimeCursors[_user];
+        if (_weekCursor == 0) {
+            uint256 _userEpoch = _findUserEpoch(
+                _user,
+                distributionStart,
+                _maxUserEpoch
+            );
+            return _userEpoch != 0 ? _userEpoch : 1;
+        }
+
+        return userEpochs[_user];
+    }
+
+    function _getUserPoint(address _user, uint256 _userEpoch)
+        private
+        view
+        returns (VotingEscrow.Point memory)
+    {
+        (int256 _bias, int256 _slope, uint256 _ts, uint256 _blk) = VotingEscrow(
+            votingEscrow
+        ).user_point_history(_user, _userEpoch);
+
+        return VotingEscrow.Point(_bias, _slope, _ts, _blk);
+    }
+
+    function _getUserWeekCursor(address _user, uint256 _userPointTs)
+        private
+        view
+        returns (uint256)
+    {
+        uint256 _weekCursor = userTimeCursors[_user];
+
+        if (_weekCursor != 0) return _weekCursor;
+
+        // if first time, distribution will be active from next week boundary
+        uint256 _roundedUserPointTs = ((_userPointTs + WEEK - 1) / WEEK) * WEEK;
+
+        // if the rounded cursor before than distribution start, skip for it
+        if (_roundedUserPointTs < distributionStart) return distributionStart;
+
+        return _roundedUserPointTs;
     }
 }
