@@ -52,13 +52,13 @@ describe("claim", () => {
       const secondWeek = firstWeek.add(WEEK);
 
       // get global supply
-      const firstWeekVeSupply = await govFeeDistributor.veSupply(firstWeek);
-      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const firstWeekVeSupply = await govFeeDistributor.veSupplyAt(firstWeek);
+      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         firstWeek
       );
 
-      const secondWeekVeSupply = await govFeeDistributor.veSupply(secondWeek);
-      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const secondWeekVeSupply = await govFeeDistributor.veSupplyAt(secondWeek);
+      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         secondWeek
       );
 
@@ -164,13 +164,13 @@ describe("claim", () => {
       const secondWeek = firstWeek.add(WEEK);
 
       // get global supply
-      const firstWeekVeSupply = await govFeeDistributor.veSupply(firstWeek);
-      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const firstWeekVeSupply = await govFeeDistributor.veSupplyAt(firstWeek);
+      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         firstWeek
       );
 
-      const secondWeekVeSupply = await govFeeDistributor.veSupply(secondWeek);
-      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const secondWeekVeSupply = await govFeeDistributor.veSupplyAt(secondWeek);
+      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         secondWeek
       );
 
@@ -247,18 +247,18 @@ describe("claim", () => {
       const thirdWeek = secondWeek.add(WEEK);
 
       // get global supply
-      const firstWeekVeSupply = await govFeeDistributor.veSupply(firstWeek);
-      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const firstWeekVeSupply = await govFeeDistributor.veSupplyAt(firstWeek);
+      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         firstWeek
       );
 
-      const secondWeekVeSupply = await govFeeDistributor.veSupply(secondWeek);
-      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const secondWeekVeSupply = await govFeeDistributor.veSupplyAt(secondWeek);
+      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         secondWeek
       );
 
-      const thirdWeekVeSupply = await govFeeDistributor.veSupply(thirdWeek);
-      const thirdWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const thirdWeekVeSupply = await govFeeDistributor.veSupplyAt(thirdWeek);
+      const thirdWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         thirdWeek
       );
 
@@ -349,13 +349,13 @@ describe("claim", () => {
       const secondWeek = firstWeek.add(WEEK);
 
       // get global supply
-      const firstWeekVeSupply = await govFeeDistributor.veSupply(firstWeek);
-      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const firstWeekVeSupply = await govFeeDistributor.veSupplyAt(firstWeek);
+      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         firstWeek
       );
 
-      const secondWeekVeSupply = await govFeeDistributor.veSupply(secondWeek);
-      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const secondWeekVeSupply = await govFeeDistributor.veSupplyAt(secondWeek);
+      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         secondWeek
       );
 
@@ -431,13 +431,13 @@ describe("claim", () => {
       const secondWeek = firstWeek.add(WEEK);
 
       // get global supply
-      const firstWeekVeSupply = await govFeeDistributor.veSupply(firstWeek);
-      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const firstWeekVeSupply = await govFeeDistributor.veSupplyAt(firstWeek);
+      const firstWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         firstWeek
       );
 
-      const secondWeekVeSupply = await govFeeDistributor.veSupply(secondWeek);
-      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupply(
+      const secondWeekVeSupply = await govFeeDistributor.veSupplyAt(secondWeek);
+      const secondWeekITokenSupply = await govFeeDistributor.iTokenSupplyAt(
         secondWeek
       );
 

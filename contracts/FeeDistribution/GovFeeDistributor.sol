@@ -14,6 +14,9 @@ import "../interfaces/pool/IVault.sol";
 import "../interfaces/pool/ICDSTemplate.sol";
 import "../interfaces/pool/IOwnership.sol";
 
+import {ITokenCheckpointLogic} from "../libraries/ITokenCheckpointLogic.sol";
+import {VeCheckpointLogic} from "../libraries/VeCheckpointLogic.sol";
+
 import {OnlyOwner, AddressZero, AmountZero, ContractUnavailable, InsufficientBalance} from "../errors/CommonErrors.sol";
 
 contract GovFeeDistributor is ReentrancyGuard {
@@ -37,21 +40,16 @@ contract GovFeeDistributor is ReentrancyGuard {
     /// @notice iToken address
     address public iToken;
 
-    /// @dev veToken total supply of each week boundary
-    uint256[1e15] public veSupply;
-
-    uint256[1e15] public iTokenSupply;
-
-    /// @dev last global checkpointed time
-    uint256 public timeCursor;
     mapping(address => uint256) public userTimeCursors;
-
-    uint256 public lastITokenTime;
-    uint256 public lastITokenBalance;
 
     mapping(address => uint256) public userEpochs;
 
     bool public isKilled;
+
+    /// @notice see VeCheckpointLogic.sol
+    VeCheckpointLogic.VeCheckpoint public veCheckpointRecord;
+    /// @notice see ITokenCheckpointLogic.sol
+    ITokenCheckpointLogic.ITokenCheckpoint public iTokenCheckpointRecord;
 
     modifier onlyOwner() {
         if (msg.sender != IOwnership(ownership).owner()) revert OnlyOwner();
@@ -65,10 +63,18 @@ contract GovFeeDistributor is ReentrancyGuard {
 
     modifier claimPreparation() {
         // check if veINSURE to be checkpointed
-        if (block.timestamp > timeCursor) _veSupplyCheckpoint();
+        if (block.timestamp > veCheckpointRecord.latestTimeCursor)
+            VeCheckpointLogic.checkpoint(votingEscrow, veCheckpointRecord);
         // check if fee token to be checkpointed
-        if (block.timestamp > lastITokenTime + TOKEN_CHECKPOINT_INTERVAL)
-            _iTokenCheckPoint();
+        if (
+            block.timestamp >
+            iTokenCheckpointRecord.lastITokenTime + TOKEN_CHECKPOINT_INTERVAL
+        )
+            ITokenCheckpointLogic.checkpoint(
+                iToken,
+                address(this),
+                iTokenCheckpointRecord
+            );
         _;
     }
 
@@ -103,8 +109,9 @@ contract GovFeeDistributor is ReentrancyGuard {
         iToken = _iToken;
         depositToken = _depositToken;
         distributionStart = _distributionStart;
-        lastITokenTime = _distributionStart;
-        timeCursor = _distributionStart;
+
+        veCheckpointRecord.latestTimeCursor = _distributionStart;
+        iTokenCheckpointRecord.lastITokenTime = _distributionStart;
     }
 
     /**
@@ -166,11 +173,15 @@ contract GovFeeDistributor is ReentrancyGuard {
     }
 
     function veSupplyCheckpoint() external {
-        _veSupplyCheckpoint();
+        VeCheckpointLogic.checkpoint(votingEscrow, veCheckpointRecord);
     }
 
     function iTokenCheckPoint() external {
-        _iTokenCheckPoint();
+        ITokenCheckpointLogic.checkpoint(
+            iToken,
+            address(this),
+            iTokenCheckpointRecord
+        );
     }
 
     function burn() external nonReentrant notKilled returns (bool) {
@@ -179,8 +190,15 @@ contract GovFeeDistributor is ReentrancyGuard {
         if (_amount == 0) return false;
 
         IERC20(iToken).safeTransferFrom(msg.sender, address(this), _amount);
-        if (block.timestamp > lastITokenTime + TOKEN_CHECKPOINT_INTERVAL)
-            _iTokenCheckPoint();
+        if (
+            block.timestamp >
+            iTokenCheckpointRecord.lastITokenTime + TOKEN_CHECKPOINT_INTERVAL
+        )
+            ITokenCheckpointLogic.checkpoint(
+                iToken,
+                address(this),
+                iTokenCheckpointRecord
+            );
 
         emit Burnt(msg.sender, _amount);
 
@@ -198,6 +216,26 @@ contract GovFeeDistributor is ReentrancyGuard {
         IERC20(depositToken).safeTransfer(_to, _depositTokenBalance);
 
         emit Killed(block.timestamp);
+    }
+
+    function iTokenSupplyAt(uint256 _weekCursor)
+        external
+        view
+        returns (uint256)
+    {
+        return iTokenCheckpointRecord.iTokenSupplyPerWeek[_weekCursor];
+    }
+
+    function veSupplyAt(uint256 _weekCursor) external view returns (uint256) {
+        return veCheckpointRecord.veSupplyPerWeek[_weekCursor];
+    }
+
+    function lastITokenBalance() external view returns (uint256) {
+        return iTokenCheckpointRecord.lastITokenBalance;
+    }
+
+    function lastITokenTime() external view returns (uint256) {
+        return iTokenCheckpointRecord.lastITokenTime;
     }
 
     /**
@@ -232,7 +270,8 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _maxUserEpoch = VotingEscrow(votingEscrow).user_point_epoch(
             _to
         );
-        uint256 _roundedITokenTime = (lastITokenTime / WEEK) * WEEK;
+        uint256 _roundedITokenTime = (iTokenCheckpointRecord.lastITokenTime /
+            WEEK) * WEEK;
 
         // no lock exist
         if (_maxUserEpoch == 0) return 0;
@@ -297,8 +336,11 @@ contract GovFeeDistributor is ReentrancyGuard {
 
                 if (_balance > 0)
                     _distribution +=
-                        (_balance * iTokenSupply[_weekCursor]) /
-                        veSupply[_weekCursor];
+                        (_balance *
+                            iTokenCheckpointRecord.iTokenSupplyPerWeek[
+                                _weekCursor
+                            ]) /
+                        veCheckpointRecord.veSupplyPerWeek[_weekCursor];
                 _weekCursor += WEEK;
             }
         }
@@ -310,97 +352,13 @@ contract GovFeeDistributor is ReentrancyGuard {
         if (_distribution != 0) {
             IERC20(iToken).safeTransfer(_to, _distribution);
             unchecked {
-                lastITokenBalance -= _distribution;
+                iTokenCheckpointRecord.lastITokenBalance -= _distribution;
             }
         }
 
         emit Claimed(_to, _distribution);
 
         return _distribution;
-    }
-
-    function _veSupplyCheckpoint() internal {
-        // round by week
-        uint256 _weekStartTs = (block.timestamp / WEEK) * WEEK;
-        VotingEscrow(votingEscrow).checkpoint();
-
-        uint256 _timeCursor = timeCursor;
-
-        // record veINSURE supply each week
-        for (uint256 i = 0; i < 20; i++) {
-            if (_timeCursor > _weekStartTs) break;
-
-            uint256 _epoch = _findGlobalEpoch(_timeCursor);
-            (int256 _bias, int256 _slope, uint256 _ts, ) = VotingEscrow(
-                votingEscrow
-            ).point_history(_epoch);
-
-            int256 _dt = _timeCursor > _ts
-                ? int256(_timeCursor - _ts)
-                : int256(0);
-
-            int256 _supply = _bias - _dt * _slope;
-
-            veSupply[_timeCursor] = uint256(_supply);
-
-            unchecked {
-                _timeCursor += WEEK;
-            }
-        }
-
-        timeCursor = _timeCursor;
-
-        emit VeCheckpointed(_timeCursor);
-    }
-
-    function _iTokenCheckPoint() internal {
-        uint256 _iTokenBalance = IERC20(iToken).balanceOf(address(this));
-        uint256 _distribution = _iTokenBalance - lastITokenBalance;
-
-        uint256 _start = lastITokenTime;
-        uint256 _entireDuration = block.timestamp - _start;
-
-        uint256 _currentWeek = (_start / WEEK) * WEEK;
-        uint256 _nextWeek;
-
-        lastITokenBalance = _iTokenBalance;
-        lastITokenTime = block.timestamp;
-
-        for (uint256 i = 0; i < 20; i++) {
-            _nextWeek = _currentWeek + WEEK;
-
-            // reached latest week, loop end
-            if (block.timestamp < _nextWeek) {
-                // no duration but balance increased
-                if (_entireDuration == 0 && block.timestamp == _start) {
-                    iTokenSupply[_currentWeek] = _distribution;
-                }
-                // decide the portion of distribution
-                else {
-                    uint256 _currentDuration = (block.timestamp - _start);
-                    iTokenSupply[_currentWeek] =
-                        (_distribution * _currentDuration) /
-                        _entireDuration;
-                }
-                break;
-            }
-            // unrecorded weeks remaining, loop continue
-            else {
-                if (_entireDuration == 0 && _nextWeek == _start) {
-                    iTokenSupply[_currentWeek] += _distribution;
-                } else {
-                    uint256 _currentDuration = (_nextWeek - _start);
-                    iTokenSupply[_currentWeek] +=
-                        (_distribution * _currentDuration) /
-                        _entireDuration;
-                }
-            }
-
-            _start = _nextWeek;
-            _currentWeek = _nextWeek;
-        }
-
-        emit ITokenCheckpointed(lastITokenTime);
     }
 
     function _findGlobalEpoch(uint256 _targetTs)

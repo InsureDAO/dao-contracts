@@ -17,9 +17,6 @@ describe("checkpoint methods", () => {
       const weekStart = BigNumber.from(now).div(WEEK).mul(WEEK);
 
       await govFeeDistributor["depositBalanceToReserve()"]();
-      await expect(govFeeDistributor.iTokenSupply(weekStart)).to.eventually.eq(
-        0
-      );
 
       const iTokenBalance = await reservePool.balanceOf(
         govFeeDistributor.address
@@ -27,9 +24,9 @@ describe("checkpoint methods", () => {
 
       await govFeeDistributor.iTokenCheckPoint();
 
-      await expect(govFeeDistributor.iTokenSupply(weekStart)).to.eventually.eq(
-        iTokenBalance
-      );
+      await expect(
+        govFeeDistributor.iTokenSupplyAt(weekStart)
+      ).to.eventually.eq(iTokenBalance);
     });
 
     it("should checkpoint multiple weeks", async () => {
@@ -66,28 +63,28 @@ describe("checkpoint methods", () => {
       await govFeeDistributor.iTokenCheckPoint();
 
       await expect(
-        govFeeDistributor.iTokenSupply(thisWeek)
+        govFeeDistributor.iTokenSupplyAt(thisWeek)
       ).eventually.approximately(
         expectDistributionThisWeek.toNumber(),
         100,
         "first week supply differ"
       );
       await expect(
-        govFeeDistributor.iTokenSupply(nextWeek)
+        govFeeDistributor.iTokenSupplyAt(nextWeek)
       ).eventually.approximately(
         expectDistributionNextWeek.toNumber(),
         100,
         "nextWeek supply differ"
       );
       await expect(
-        govFeeDistributor.iTokenSupply(inTwoWeeks)
+        govFeeDistributor.iTokenSupplyAt(inTwoWeeks)
       ).eventually.approximately(
         expectDistributionInTwoWeeks.toNumber(),
         100,
         "in two weeks supply differ"
       );
       await expect(
-        govFeeDistributor.iTokenSupply(inThreeWeeks)
+        govFeeDistributor.iTokenSupplyAt(inThreeWeeks)
       ).eventually.approximately(
         expectDistributionInThreeWeeks.toNumber(),
         100,
@@ -108,7 +105,7 @@ describe("checkpoint methods", () => {
 
       // before checkpoint, veSupply should be recorded as zero
       await expect(
-        govFeeDistributor.veSupply(latestWeekCursor)
+        govFeeDistributor.veSupplyAt(latestWeekCursor)
       ).eventually.to.eq(0);
 
       // checkpoint
@@ -122,7 +119,7 @@ describe("checkpoint methods", () => {
         thirdCheckpoint.slope.mul(dt)
       );
       await expect(
-        govFeeDistributor.veSupply(latestWeekCursor)
+        govFeeDistributor.veSupplyAt(latestWeekCursor)
       ).to.eventually.eq(deductedSupply);
     });
   });
