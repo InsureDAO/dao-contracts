@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.10;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -7,17 +6,23 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import {IVotingEscrow} from "../interfaces/dao/IVotingEscrow.sol";
-import {VotingEscrow} from "../VotingEscrow.sol";
-
-import "../interfaces/pool/IVault.sol";
-import "../interfaces/pool/ICDSTemplate.sol";
-import "../interfaces/pool/IOwnership.sol";
-
 import {ITokenCheckpointLogic} from "../libraries/ITokenCheckpointLogic.sol";
 import {VeCheckpointLogic} from "../libraries/VeCheckpointLogic.sol";
 
+import {VotingEscrow} from "../VotingEscrow.sol";
+
+import {ICDSTemplate} from "../interfaces/pool/ICDSTemplate.sol";
+import {IOwnership} from "../interfaces/pool/IOwnership.sol";
+
 import {OnlyOwner, AddressZero, AmountZero, ContractUnavailable, InsufficientBalance} from "../errors/CommonErrors.sol";
+
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * @title InsureDAO governance fee distributor
+ * @author InsureDAO
+ * @notice This distributes governance fee, which is occured each insurance and saved in the vault,
+ *         to veINSURE holders.
+ */
 
 contract GovFeeDistributor is ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -25,11 +30,10 @@ contract GovFeeDistributor is ReentrancyGuard {
     using SafeCast for uint256;
 
     uint256 constant WEEK = 7 * 86_400;
+    /// @dev the minimum interval for next iToken checkpoint
     uint256 constant TOKEN_CHECKPOINT_INTERVAL = 86_400;
 
-    uint256 public immutable distributionStart;
-
-    /// @notice dao contracts
+    /// @notice dao contract
     address public votingEscrow;
 
     /// @notice pool contracts
@@ -40,10 +44,14 @@ contract GovFeeDistributor is ReentrancyGuard {
     /// @notice iToken address
     address public iToken;
 
+    /// @notice distribution start time(rounded by WEEK)
+    uint256 public immutable distributionStart;
+    /// @notice week boundaries where each user currently is
     mapping(address => uint256) public userTimeCursors;
-
+    /// @notice the last veINSURE epochs each user receives their govanance fee reward
     mapping(address => uint256) public userEpochs;
 
+    /// @notice if this true, the contract will be permanently unavailable
     bool public isKilled;
 
     /// @notice see VeCheckpointLogic.sol
@@ -61,6 +69,10 @@ contract GovFeeDistributor is ReentrancyGuard {
         _;
     }
 
+    /**
+     * @notice checkpoints total veINSURE and iToken supply
+     *         before user claiming their iToken reward.
+     */
     modifier claimPreparation() {
         // check if veINSURE to be checkpointed
         if (block.timestamp > veCheckpointRecord.latestTimeCursor)
@@ -118,10 +130,18 @@ contract GovFeeDistributor is ReentrancyGuard {
      * external functions
      */
 
+    /**
+     * @notice deposits all govanance fee this contract has,
+     *         then receives iToken(Reserve pool's LP token).
+     */
     function depositBalanceToReserve() external nonReentrant notKilled {
         _depositBalanceToReserve(IERC20(depositToken).balanceOf(address(this)));
     }
 
+    /**
+     * @notice overload function to specify the amount for LP token conversion.
+     * @param _amount the amount deposited into reserve pool
+     */
     function depositBalanceToReserve(uint256 _amount)
         external
         nonReentrant
@@ -130,6 +150,11 @@ contract GovFeeDistributor is ReentrancyGuard {
         _depositBalanceToReserve(_amount);
     }
 
+    /**
+     * @notice claim all eligible amount of iToken to msg sender.
+     *         this should be called by a veINSURE holder.
+     * @return claimed iToken amount
+     */
     function claim()
         external
         nonReentrant
@@ -140,6 +165,12 @@ contract GovFeeDistributor is ReentrancyGuard {
         return _claim(msg.sender);
     }
 
+    /**
+     * @notice claim all eligible amount of iToken on behalf of holder.
+     *         anyone can call this function.
+     * @param _to veINSURE holder address all claimed reward send
+     * @return claimed iToken amount
+     */
     function claim(address _to)
         external
         nonReentrant
@@ -151,6 +182,14 @@ contract GovFeeDistributor is ReentrancyGuard {
         return _claim(_to);
     }
 
+    /**
+     * @notice execute claim for multiple addresses, this used for multi user distribution,
+     *         or claim for same user who has large veINSURE hisrory.
+     * @param _receivers the addresses of veINSURE holders.
+     * @dev you can include same addresses as params for large veINSURE history.
+     * @dev addresses should be left aligned, otherwise claim will be cancelled in the middle of process.
+     * @return claim success
+     */
     function claimMany(address[20] calldata _receivers)
         external
         nonReentrant
@@ -172,10 +211,18 @@ contract GovFeeDistributor is ReentrancyGuard {
         return true;
     }
 
+    /**
+     * @notice checkpoints veINSURE total supply each week.
+     *         see VeCheckpointLogic.sol for more details.
+     */
     function veSupplyCheckpoint() external {
         VeCheckpointLogic.checkpoint(votingEscrow, veCheckpointRecord);
     }
 
+    /**
+     * @notice checkpoints iToken(Reseve pool LP token) total supply each week.
+     *         see ITokenCheckpointLogic.sol for more details.
+     */
     function iTokenCheckPoint() external {
         ITokenCheckpointLogic.checkpoint(
             iToken,
@@ -184,16 +231,24 @@ contract GovFeeDistributor is ReentrancyGuard {
         );
     }
 
+    /**
+     * @notice burn all iToken of msg.sender.
+     * @dev technically, token does not go to address(0) but goes to this contract.
+     *      so burning increases this contract balance and distributed to holders again.
+     * @return burn success
+     */
     function burn() external nonReentrant notKilled returns (bool) {
         uint256 _amount = IERC20(iToken).balanceOf(msg.sender);
 
         if (_amount == 0) return false;
 
         IERC20(iToken).safeTransferFrom(msg.sender, address(this), _amount);
-        if (
-            block.timestamp >
-            iTokenCheckpointRecord.lastITokenTime + TOKEN_CHECKPOINT_INTERVAL
-        )
+
+        // needs to wait for interval to checkpoint
+        bool _checkpointable = block.timestamp >
+            iTokenCheckpointRecord.lastITokenTime + TOKEN_CHECKPOINT_INTERVAL;
+
+        if (_checkpointable)
             ITokenCheckpointLogic.checkpoint(
                 iToken,
                 address(this),
@@ -205,6 +260,10 @@ contract GovFeeDistributor is ReentrancyGuard {
         return true;
     }
 
+    /**
+     * @notice deactivate the distributor contract. once killed,
+     *         the contract permanently unavailable.
+     */
     function killMe(address _to) external nonReentrant onlyOwner {
         isKilled = true;
 
@@ -218,24 +277,43 @@ contract GovFeeDistributor is ReentrancyGuard {
         emit Killed(block.timestamp);
     }
 
-    function iTokenSupplyAt(uint256 _weekCursor)
-        external
-        view
-        returns (uint256)
-    {
-        return iTokenCheckpointRecord.iTokenSupplyPerWeek[_weekCursor];
-    }
-
-    function veSupplyAt(uint256 _weekCursor) external view returns (uint256) {
-        return veCheckpointRecord.veSupplyPerWeek[_weekCursor];
-    }
-
+    /**
+     * @notice get last checkpointed iToken balance.
+     * @return last checkpointed iToken balance.
+     */
     function lastITokenBalance() external view returns (uint256) {
         return iTokenCheckpointRecord.lastITokenBalance;
     }
 
+    /**
+     * @notice get last iToken checkpointed time.
+     * @return last iToken checkpointed time.
+     */
     function lastITokenTime() external view returns (uint256) {
         return iTokenCheckpointRecord.lastITokenTime;
+    }
+
+    /**
+     * public functions
+     */
+    /**
+     * @notice get total iToken distribution of a week.
+     * @param _weekCursor week boundary distribution activated
+     * @dev week cursor must be rounded for the start of a week.
+     * @return total iToken distribution of a week.
+     */
+    function iTokenSupplyAt(uint256 _weekCursor) public view returns (uint256) {
+        return iTokenCheckpointRecord.iTokenSupplyPerWeek[_weekCursor];
+    }
+
+    /**
+     * @notice get total veINSURE supply of a week.
+     * @param _weekCursor week boundary iToken distribution activated
+     * @dev week cursor must be rounded for the start of a week.
+     * @return total veINSURE supply of a week.
+     */
+    function veSupplyAt(uint256 _weekCursor) public view returns (uint256) {
+        return veCheckpointRecord.veSupplyPerWeek[_weekCursor];
     }
 
     /**
@@ -245,8 +323,10 @@ contract GovFeeDistributor is ReentrancyGuard {
     function _depositBalanceToReserve(uint256 _amount) internal {
         uint256 _balance = IERC20(depositToken).balanceOf(address(this));
         if (_amount == 0) revert AmountZero();
+        // needs enough amount to deposit
         if (_balance < _amount) revert InsufficientBalance();
 
+        // allowance increased on demand
         uint256 _allowanceShortage = _amount -
             IERC20(depositToken).allowance(address(this), vault);
 
@@ -259,6 +339,7 @@ contract GovFeeDistributor is ReentrancyGuard {
         uint256 _beforeDeposit = IERC20(iToken).balanceOf(address(this));
         uint256 _minted = ICDSTemplate(iToken).deposit(_amount);
 
+        // check balance correctly increased
         assert(
             IERC20(iToken).balanceOf(address(this)) == _beforeDeposit + _minted
         );
@@ -266,6 +347,13 @@ contract GovFeeDistributor is ReentrancyGuard {
         emit ITokenReceived(_minted);
     }
 
+    /**
+     * @dev claim proceeds in following steps:
+     *      1. get(or initialize) user's current veINSURE and iToken distribution state
+     *      2. calculate distribution amount(iterate distribution cursor and user point)
+     *      3. update user's state to latest
+     *      4. execute distribution(if any distribution is)
+     */
     function _claim(address _to) internal returns (uint256) {
         // current veINSURE checkpoint the user is at
         uint256 _maxUserEpoch = VotingEscrow(votingEscrow).user_point_epoch(
@@ -325,11 +413,9 @@ contract GovFeeDistributor is ReentrancyGuard {
 
                 // distribution determined by the share of user veINSURE balance
                 if (_userVeBalance > 0) {
-                    uint256 _iTokenSupply = iTokenCheckpointRecord
-                        .iTokenSupplyPerWeek[_weekCursor];
-                    uint256 _veTotalSupply = veCheckpointRecord.veSupplyPerWeek[
-                        _weekCursor
-                    ];
+                    uint256 _iTokenSupply = iTokenSupplyAt(_weekCursor);
+                    uint256 _veTotalSupply = veSupplyAt(_weekCursor);
+
                     _distribution +=
                         (_userVeBalance * _iTokenSupply) /
                         _veTotalSupply;
@@ -355,71 +441,12 @@ contract GovFeeDistributor is ReentrancyGuard {
         return _distribution;
     }
 
-    function _findGlobalEpoch(uint256 _targetTs)
-        internal
-        view
-        returns (uint256)
-    {
-        uint256 _max = VotingEscrow(votingEscrow).epoch();
-        uint256 _min = 0;
-
-        for (uint256 i = 0; i < 128; i++) {
-            if (_min >= _max) break;
-            uint256 _mid = (_min + _max + 2) / 2;
-
-            (, , uint256 _ts, ) = VotingEscrow(votingEscrow).point_history(
-                _mid
-            );
-
-            if (_ts > _targetTs) {
-                unchecked {
-                    _max = _mid - 1;
-                }
-            } else {
-                unchecked {
-                    _min = _mid;
-                }
-            }
-        }
-
-        return _min;
-    }
-
-    function _findUserEpoch(
-        address _user,
-        uint256 _targetTs,
-        uint256 _maxUserEpoch
-    ) internal view returns (uint256) {
-        uint256 _min = 0;
-        uint256 _max = _maxUserEpoch;
-
-        for (uint256 i = 0; i < 20; i++) {
-            if (_min >= _max) break;
-
-            uint256 _mid = (_min + _max + 2) / 2;
-
-            (, , uint256 _ts, ) = VotingEscrow(votingEscrow).user_point_history(
-                _user,
-                _mid
-            );
-
-            if (_ts > _targetTs) {
-                unchecked {
-                    _max = _mid - 1;
-                }
-            } else {
-                unchecked {
-                    _min = _mid;
-                }
-            }
-        }
-
-        return _min;
-    }
-
-    // private functions
+    /**
+     * @dev if user epoch saved in storage, return it.
+     *      otherwise, do binary search to find nearest epoch
+     */
     function _getCurrentUserEpoch(address _user, uint256 _maxUserEpoch)
-        private
+        internal
         view
         returns (uint256)
     {
@@ -436,8 +463,11 @@ contract GovFeeDistributor is ReentrancyGuard {
         return userEpochs[_user];
     }
 
+    /**
+     * @dev get user point by epoch, reconstruct it to struct
+     */
     function _getUserPoint(address _user, uint256 _userEpoch)
-        private
+        internal
         view
         returns (VotingEscrow.Point memory)
     {
@@ -448,8 +478,12 @@ contract GovFeeDistributor is ReentrancyGuard {
         return VotingEscrow.Point(_bias, _slope, _ts, _blk);
     }
 
+    /**
+     * @dev if user cursor saved in storage, return it.
+     *      otherwise, initialize cursor.
+     */
     function _getUserWeekCursor(address _user, uint256 _userPointTs)
-        private
+        internal
         view
         returns (uint256)
     {
@@ -464,5 +498,43 @@ contract GovFeeDistributor is ReentrancyGuard {
         if (_roundedUserPointTs < distributionStart) return distributionStart;
 
         return _roundedUserPointTs;
+    }
+
+    /**
+     * @dev find nearest user epoch less than given ts
+     * @param _user user address
+     * @param _targetTs timestamp to find user epoch
+     * @param _maxUserEpoch upper limit for the exploration
+     */
+    function _findUserEpoch(
+        address _user,
+        uint256 _targetTs,
+        uint256 _maxUserEpoch
+    ) internal view returns (uint256) {
+        uint256 _min = 0;
+        uint256 _max = _maxUserEpoch;
+
+        for (uint256 i = 0; i < 20; i++) {
+            if (_min >= _max) break;
+
+            uint256 _mid = (_min + _max + 2) / 2;
+
+            uint256 _ts = VotingEscrow(votingEscrow).user_point_history__ts(
+                _user,
+                _mid
+            );
+
+            if (_ts > _targetTs) {
+                unchecked {
+                    _max = _mid - 1;
+                }
+            } else {
+                unchecked {
+                    _min = _mid;
+                }
+            }
+        }
+
+        return _min;
     }
 }

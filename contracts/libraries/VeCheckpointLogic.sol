@@ -48,8 +48,6 @@ library VeCheckpointLogic {
         emit VeCheckpointed(_timeCursor);
     }
 
-    function iTokenCheckpoint() internal {}
-
     function _findGlobalEpoch(address _votingEscrow, uint256 _targetTs)
         private
         view
