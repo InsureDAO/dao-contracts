@@ -5,7 +5,18 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 uint256 constant WEEK = 7 * 86_400;
 
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * @title Voting Escrow checkpoint logic
+ * @author InsureDAO
+ * @notice call checkpoint of voting escrow, and save week boundary to storage
+ */
 library ITokenCheckpointLogic {
+    /**
+     * @param lastITokenTime last checkpointed week boundary
+     * @param lastITokenBalance the balance at last checkpointed week boundary
+     * @param iTokenSupplyPerWeek iToken token distribution amount each week
+     */
     struct ITokenCheckpoint {
         uint256 lastITokenTime;
         uint256 lastITokenBalance;
@@ -14,18 +25,27 @@ library ITokenCheckpointLogic {
 
     event ITokenCheckpointed(uint256 _checkpointTime);
 
+    /**
+     * @notice checkpoints iToken total distribution of each week boundary.
+     *         this continues to reach latest week.
+     */
     function checkpoint(
         address _iToken,
         address _distributor,
         ITokenCheckpoint storage record
     ) internal {
         uint256 _currentBalance = IERC20(_iToken).balanceOf(_distributor);
+        // distributes incremental balance from last checkpoint
         uint256 _distribution = _currentBalance - record.lastITokenBalance;
+        // saved last checkpoint
         uint256 _start = record.lastITokenTime;
+        // the time from last checkpoint
         uint256 _entireDuration = block.timestamp - _start;
 
         uint256 _currentWeek = (_start / WEEK) * WEEK;
         uint256 _nextWeek;
+
+        // saves last checkpoint state
         record.lastITokenBalance = _currentBalance;
         record.lastITokenTime = block.timestamp;
 
@@ -49,9 +69,12 @@ library ITokenCheckpointLogic {
             }
             // unrecorded weeks remaining, loop continue
             else {
+                // no duration but balance increased
                 if (_entireDuration == 0 && _nextWeek == _start) {
                     record.iTokenSupplyPerWeek[_currentWeek] += _distribution;
-                } else {
+                }
+                // decide the portion of distribution
+                else {
                     uint256 _currentDuration = (_nextWeek - _start);
                     record.iTokenSupplyPerWeek[_currentWeek] +=
                         (_distribution * _currentDuration) /
@@ -59,6 +82,7 @@ library ITokenCheckpointLogic {
                 }
             }
 
+            // tracks to calculate duration
             _start = _nextWeek;
             _currentWeek = _nextWeek;
         }
