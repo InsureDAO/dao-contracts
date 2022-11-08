@@ -505,6 +505,7 @@ contract GovFeeDistributor is ReentrancyGuard {
      * @param _user user address
      * @param _targetTs timestamp to find user epoch
      * @param _maxUserEpoch upper limit for the exploration
+     * @return user epoch found
      */
     function _findUserEpoch(
         address _user,
