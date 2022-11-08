@@ -34,15 +34,15 @@ contract GovFeeDistributor is ReentrancyGuard {
     uint256 constant TOKEN_CHECKPOINT_INTERVAL = 86_400;
 
     /// @notice dao contract
-    address public votingEscrow;
+    address public immutable votingEscrow;
 
     /// @notice pool contracts
-    address public vault;
-    address public ownership;
-    address public depositToken;
+    address public immutable ownership;
+    address public immutable vault;
+    address public immutable depositToken;
 
     /// @notice iToken address
-    address public iToken;
+    address public immutable iToken;
 
     /// @notice distribution start time(rounded by WEEK)
     uint256 public immutable distributionStart;
