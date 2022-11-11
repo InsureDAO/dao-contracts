@@ -1,6 +1,12 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.10;
 
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * @title InsureDAO governance fee distributor
+ * @author InsureDAO
+ * @notice This distributes governance fee, which is occured each insurance and saved in the vault,
+ *         to veINSURE holders.
+ */
 interface IGovFeeDistributor {
     /**
      * @notice deposits all govanance fee this contract has,
