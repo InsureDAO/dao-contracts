@@ -2,9 +2,10 @@ import { HardhatUserConfig } from "hardhat/types";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
-import "solidity-coverage";
 import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-vyper";
 import "@nomicfoundation/hardhat-network-helpers";
+import "solidity-coverage";
 import "hardhat-watcher";
 import * as dotenv from "dotenv";
 
