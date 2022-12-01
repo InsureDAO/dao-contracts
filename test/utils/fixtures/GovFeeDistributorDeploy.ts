@@ -154,6 +154,68 @@ export const govFeeDistributorWithRunningVotingEscrow = async () => {
   };
 };
 
+export const govFeeDistributorDeployAfterLock = async () => {
+  const now = await time.latest();
+  const GovFeeDistributor = await ethers.getContractFactory(
+    "GovFeeDistributor"
+  );
+
+  const {
+    vault,
+    votingEscrow,
+    ownership,
+    reservePool,
+    insureToken,
+    usdc,
+    deployer,
+    alice,
+    bob,
+    charlie,
+  } = await baseContractsDeploy();
+
+  // lock insure token
+  await insureToken
+    .connect(alice)
+    .approve(votingEscrow.address, constants.MaxUint256);
+  await insureToken
+    .connect(bob)
+    .approve(votingEscrow.address, constants.MaxUint256);
+  const fourYearsLater = now + 4 * YEAR.toNumber();
+  await votingEscrow
+    .connect(alice)
+    .create_lock(10_000_000n * 10n ** 18n, fourYearsLater);
+  await votingEscrow
+    .connect(bob)
+    .create_lock(10_000_000n * 10n ** 18n, fourYearsLater);
+
+  // 1 week passed
+  await time.increase(WEEK);
+
+  // deploy GovFeeDistributor
+  const govFeeDistributor = await GovFeeDistributor.deploy(
+    vault.address,
+    votingEscrow.address,
+    ownership.address,
+    reservePool.address,
+    usdc.address,
+    WEEK.add(now)
+  );
+
+  // transfer admin fee to FeeDistributor
+  await vault.withdrawAllAttribution(govFeeDistributor.address);
+
+  return {
+    deployer,
+    alice,
+    bob,
+    charlie,
+    usdc,
+    govFeeDistributor,
+    votingEscrow,
+    reservePool,
+  };
+};
+
 const baseContractsDeploy = async () => {
   const [deployer, alice, bob, charlie] = await ethers.getSigners();
   // dao contracts

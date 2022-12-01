@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { BigNumber, constants } from "ethers";
 import {
   govFeeDistributorDeploy,
+  govFeeDistributorDeployAfterLock,
   govFeeDistributorWithRunningVotingEscrow,
 } from "../../../../utils/fixtures/GovFeeDistributorDeploy";
 
@@ -13,9 +14,22 @@ describe("claim", () => {
     it("should checkpoint token supply before claim", async () => {
       const { govFeeDistributor } = await loadFixture(govFeeDistributorDeploy);
 
+      await time.increase(WEEK);
+
       await expect(govFeeDistributor["claim()"]())
         .to.emit(govFeeDistributor, "ITokenCheckpointed")
         .to.emit(govFeeDistributor, "VeCheckpointed");
+    });
+
+    it("should not claim any amount of the reward in case the INSURE is deposited before", async () => {
+      const { govFeeDistributor, alice, reservePool, usdc } = await loadFixture(
+        govFeeDistributorDeployAfterLock
+      );
+
+      await govFeeDistributor["depositBalanceToReserve()"]();
+      await expect(
+        govFeeDistributor.connect(alice)["claim()"]()
+      ).changeTokenBalance(reservePool, alice, 0);
     });
 
     it("should returns 0 in case no lock found", async () => {

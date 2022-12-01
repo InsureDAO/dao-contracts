@@ -137,11 +137,9 @@ contract GovFeeDistributor is ReentrancyGuard, IGovFeeDistributor {
     }
 
     /// @inheritdoc IGovFeeDistributor
-    function depositBalanceToReserve(uint256 _amount)
-        external
-        nonReentrant
-        notKilled
-    {
+    function depositBalanceToReserve(
+        uint256 _amount
+    ) external nonReentrant notKilled {
         _depositBalanceToReserve(_amount);
     }
 
@@ -157,25 +155,17 @@ contract GovFeeDistributor is ReentrancyGuard, IGovFeeDistributor {
     }
 
     /// @inheritdoc IGovFeeDistributor
-    function claim(address _to)
-        external
-        nonReentrant
-        notKilled
-        claimPreparation
-        returns (uint256)
-    {
+    function claim(
+        address _to
+    ) external nonReentrant notKilled claimPreparation returns (uint256) {
         if (_to == address(0)) revert AddressZero();
         return _claim(_to);
     }
 
     /// @inheritdoc IGovFeeDistributor
-    function claimMany(address[20] calldata _receivers)
-        external
-        nonReentrant
-        notKilled
-        claimPreparation
-        returns (bool)
-    {
+    function claimMany(
+        address[20] calldata _receivers
+    ) external nonReentrant notKilled claimPreparation returns (bool) {
         uint256 _total = 0;
 
         for (uint256 i = 0; i < 20; i++) {
@@ -286,13 +276,7 @@ contract GovFeeDistributor is ReentrancyGuard, IGovFeeDistributor {
                 _allowanceShortage
             );
 
-        uint256 _beforeDeposit = IERC20(iToken).balanceOf(address(this));
         uint256 _minted = ICDSTemplate(iToken).deposit(_amount);
-
-        // check balance correctly increased
-        assert(
-            IERC20(iToken).balanceOf(address(this)) == _beforeDeposit + _minted
-        );
 
         emit ITokenReceived(_minted);
     }
@@ -395,11 +379,10 @@ contract GovFeeDistributor is ReentrancyGuard, IGovFeeDistributor {
      * @dev if user epoch saved in storage, return it.
      *      otherwise, do binary search to find nearest epoch
      */
-    function _getCurrentUserEpoch(address _user, uint256 _maxUserEpoch)
-        internal
-        view
-        returns (uint256)
-    {
+    function _getCurrentUserEpoch(
+        address _user,
+        uint256 _maxUserEpoch
+    ) internal view returns (uint256) {
         uint256 _weekCursor = userTimeCursors[_user];
         if (_weekCursor == 0) {
             uint256 _userEpoch = _findUserEpoch(
@@ -416,11 +399,10 @@ contract GovFeeDistributor is ReentrancyGuard, IGovFeeDistributor {
     /**
      * @dev get user point by epoch, reconstruct it to struct
      */
-    function _getUserPoint(address _user, uint256 _userEpoch)
-        internal
-        view
-        returns (VotingEscrow.Point memory)
-    {
+    function _getUserPoint(
+        address _user,
+        uint256 _userEpoch
+    ) internal view returns (VotingEscrow.Point memory) {
         (int256 _bias, int256 _slope, uint256 _ts, uint256 _blk) = VotingEscrow(
             votingEscrow
         ).user_point_history(_user, _userEpoch);
@@ -432,11 +414,10 @@ contract GovFeeDistributor is ReentrancyGuard, IGovFeeDistributor {
      * @dev if user cursor saved in storage, return it.
      *      otherwise, initialize cursor.
      */
-    function _getUserWeekCursor(address _user, uint256 _userPointTs)
-        internal
-        view
-        returns (uint256)
-    {
+    function _getUserWeekCursor(
+        address _user,
+        uint256 _userPointTs
+    ) internal view returns (uint256) {
         uint256 _weekCursor = userTimeCursors[_user];
 
         if (_weekCursor != 0) return _weekCursor;
